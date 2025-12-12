@@ -1,0 +1,45 @@
+{
+  "name": "decklab_ecommerce",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@neondatabase/serverless": "^1.0.2",
+    "@prisma/client": "^7.1.0",
+    "@stripe/stripe-js": "^8.5.3",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "decimal.js": "^10.6.0",
+    "framer-motion": "^12.23.26",
+    "jspdf": "^3.0.4",
+    "jspdf-autotable": "^5.0.2",
+    "lucide-react": "^0.561.0",
+    "next": "16.0.10",
+    "next-auth": "^5.0.0-beta.30",
+    "prisma": "^7.1.0",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
+    "react-email": "^5.0.8",
+    "react-hook-form": "^7.68.0",
+    "resend": "^6.6.0",
+    "stripe": "^20.0.0",
+    "tailwind-merge": "^3.4.0",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.0.10",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

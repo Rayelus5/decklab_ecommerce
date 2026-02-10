@@ -69,6 +69,8 @@ CREATE TABLE "Address" (
     "country" TEXT NOT NULL DEFAULT 'ES',
     "phone" TEXT NOT NULL,
     "isDefault" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Address_pkey" PRIMARY KEY ("id")
 );

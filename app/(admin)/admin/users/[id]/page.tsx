@@ -31,38 +31,47 @@ export default async function AdminUserDetailPage({
 }) {
   const { id } = await params;
 
-  const user = await prisma.user.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      isPro: true,
-      isTelegramMember: true,
-      telegramUsername: true,
-      telegramId: true,
-      proAllowanceBalance: true,
-      proSince: true,
-      createdAt: true,
-      proTier: { select: { name: true, monthlyAllowance: true } },
-      addresses: {
-        select: { id: true, label: true, line1: true, city: true, country: true, isDefault: true },
-        orderBy: { isDefault: "desc" },
-      },
-      orders: {
-        orderBy: { createdAt: "desc" },
-        take: 10,
-        select: {
-          id: true,
-          orderNumber: true,
-          status: true,
-          total: true,
-          createdAt: true,
+  const [user, proTiers] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isPro: true,
+        isBlocked: true,
+        isTelegramMember: true,
+        telegramUsername: true,
+        telegramId: true,
+        proAllowanceBalance: true,
+        proTierId: true,
+        proSince: true,
+        createdAt: true,
+        proTier: { select: { name: true, monthlyAllowance: true } },
+        addresses: {
+          select: { id: true, label: true, line1: true, city: true, country: true, isDefault: true },
+          orderBy: { isDefault: "desc" },
+        },
+        orders: {
+          orderBy: { createdAt: "desc" },
+          take: 10,
+          select: {
+            id: true,
+            orderNumber: true,
+            status: true,
+            total: true,
+            createdAt: true,
+          },
         },
       },
-    },
-  });
+    }),
+    prisma.proTier.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, name: true, monthlyAllowance: true },
+    }),
+  ]);
 
   if (!user) notFound();
 
@@ -199,6 +208,14 @@ export default async function AdminUserDetailPage({
             userId={user.id}
             currentAllowance={balance}
             isTelegramMember={user.isTelegramMember}
+            isPro={user.isPro}
+            isBlocked={user.isBlocked}
+            proTierId={user.proTierId ?? null}
+            proTiers={proTiers.map((t) => ({
+              id: t.id,
+              name: t.name,
+              monthlyAllowance: Number(t.monthlyAllowance),
+            }))}
           />
         </div>
       </div>

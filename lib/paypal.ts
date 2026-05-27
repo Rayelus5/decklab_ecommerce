@@ -17,12 +17,26 @@ const PAYPAL_BASE =
 // OAuth — access token
 // -------------------------------------------------------
 export async function getPayPalAccessToken(): Promise<string> {
-  const clientId = process.env.PAYPAL_CLIENT_ID;
-  const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+  const clientId = process.env.PAYPAL_CLIENT_ID?.trim();
+  const clientSecret = process.env.PAYPAL_CLIENT_SECRET?.trim();
+  const env = process.env.PAYPAL_ENV ?? "sandbox";
 
   if (!clientId || !clientSecret) {
-    throw new Error("PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET no configurados");
+    throw new Error(
+      `PayPal: PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET no configurados (PAYPAL_ENV=${env})`
+    );
   }
+
+  // Detectar mismatch típico: credenciales de sandbox usadas contra live (o al revés)
+  const isSandboxId = clientId.startsWith("A") && clientId.length > 60;
+  if (env === "live" && isSandboxId) {
+    console.warn(
+      "[PayPal] ADVERTENCIA: PAYPAL_ENV=live pero PAYPAL_CLIENT_ID parece ser de sandbox. " +
+      "Usa las credenciales de la app de producción en developer.paypal.com."
+    );
+  }
+
+  console.log(`[PayPal] Auth → endpoint: ${PAYPAL_BASE} (PAYPAL_ENV=${env})`);
 
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
 
@@ -38,7 +52,9 @@ export async function getPayPalAccessToken(): Promise<string> {
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`PayPal auth error ${res.status}: ${err}`);
+    throw new Error(
+      `PayPal auth error ${res.status} (env=${env}, endpoint=${PAYPAL_BASE}): ${err}`
+    );
   }
 
   const data = await res.json();

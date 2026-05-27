@@ -123,11 +123,12 @@ export const authConfig: NextAuthConfig = {
         token.proTierId = (user as Record<string, unknown>).proTierId as string | null;
         token.isTelegramMember = (user as Record<string, unknown>).isTelegramMember as boolean;
         token.telegramId = (user as Record<string, unknown>).telegramId as string | null;
+        token.lastRefreshed = Date.now();
+        return token;
       }
 
-      // Actualizar datos si se hace update de sesión
-      if (trigger === "update" && session) {
-        // Refrescar datos del usuario desde BD
+      // Helper: re-fetch desde BD y actualizar token
+      const refreshFromDb = async () => {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
           select: {
@@ -139,18 +140,29 @@ export const authConfig: NextAuthConfig = {
             isBlocked: true,
           },
         });
+        if (!dbUser) return token;
+        if (dbUser.isBlocked) return {}; // invalidar token → fuerza logout
+        token.role = dbUser.role;
+        token.isPro = dbUser.isPro;
+        token.proTierId = dbUser.proTierId;
+        token.isTelegramMember = dbUser.isTelegramMember;
+        token.telegramId = dbUser.telegramId;
+        token.lastRefreshed = Date.now();
+        return token;
+      };
 
-        if (dbUser) {
-          if (dbUser.isBlocked) {
-            // Usuario bloqueado → invalidar token
-            return {};
-          }
-          token.role = dbUser.role;
-          token.isPro = dbUser.isPro;
-          token.proTierId = dbUser.proTierId;
-          token.isTelegramMember = dbUser.isTelegramMember;
-          token.telegramId = dbUser.telegramId;
-        }
+      // Actualizar datos si se hace update de sesión explícito
+      if (trigger === "update" && session) {
+        return await refreshFromDb();
+      }
+
+      // Refresh periódico: si el token tiene más de 5 minutos, re-fetch silencioso.
+      // Esto garantiza que cambios del admin (activar PRO, bloquear usuario…)
+      // se propaguen sin que el usuario tenga que cerrar sesión.
+      const lastRefreshed = (token.lastRefreshed as number) ?? 0;
+      const FIVE_MINUTES = 5 * 60 * 1000;
+      if (Date.now() - lastRefreshed > FIVE_MINUTES) {
+        return await refreshFromDb();
       }
 
       return token;

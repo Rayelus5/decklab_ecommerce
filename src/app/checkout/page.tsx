@@ -8,6 +8,7 @@ import Image from "next/image";
 import CheckoutForm from "@/components/checkout/checkout-form";
 import { ShippingRate } from "@prisma/client";
 import { ShieldCheck, Loader2 } from "lucide-react";
+import { Card, CardTitle } from "@/components/ui/card";
 
 export default function CheckoutPage() {
     const router = useRouter();
@@ -35,7 +36,7 @@ export default function CheckoutPage() {
 
     return (
         <div className="container mx-auto px-4 py-8 md:py-12">
-            <h1 className="text-3xl font-bold text-white mb-8">Tramitar Pedido</h1>
+            <h1 className="text-display font-aeonikpro font-medium text-ghost-white mb-8">Tramitar Pedido</h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
 
@@ -51,22 +52,22 @@ export default function CheckoutPage() {
 
                 {/* DERECHA: RESUMEN DE ORDEN */}
                 <div className="lg:col-span-5">
-                    <div className="sticky top-24 rounded-2xl bg-card border border-white/5 p-6 space-y-6">
-                        <h2 className="text-lg font-bold text-white mb-4">Tu Pedido</h2>
+                    <Card variant="glassy-feature" className="sticky top-24 space-y-6">
+                        <CardTitle className="text-heading">Tu Pedido</CardTitle>
 
                         {/* Lista mini de items */}
                         <div className="space-y-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                             {items.map((item) => (
                                 <div key={item.variantId} className="flex gap-3">
-                                    <div className="relative h-12 w-12 rounded bg-secondary/20 overflow-hidden flex-shrink-0">
+                                    <div className="relative h-12 w-12 rounded-[6px] bg-[rgba(0,0,0,0.5)] border border-white/5 overflow-hidden flex-shrink-0">
                                         <Image src={item.image} alt={item.title} fill className="object-cover" />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-sm font-medium text-white line-clamp-1">{item.title}</p>
-                                        <p className="text-xs text-muted-foreground">Cant: {item.quantity}</p>
+                                        <p className="text-body font-medium text-ghost-white line-clamp-1">{item.title}</p>
+                                        <p className="text-caption text-arctic-mist">Cant: {item.quantity}</p>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-sm font-bold text-white">
+                                        <p className="text-body font-bold text-ghost-white">
                                             {isPro && item.pricePro
                                                 ? (item.pricePro * item.quantity).toFixed(2)
                                                 : (item.price * item.quantity).toFixed(2)
@@ -77,37 +78,37 @@ export default function CheckoutPage() {
                             ))}
                         </div>
 
-                        <div className="h-px bg-white/10 my-4" />
+                        <div className="h-px bg-white/5 my-4" />
 
                         {/* Totales */}
-                        <div className="space-y-2 text-sm">
-                            <div className="flex justify-between text-muted-foreground">
+                        <div className="space-y-2 text-body">
+                            <div className="flex justify-between text-arctic-mist">
                                 <span>Subtotal</span>
-                                <span className="text-white">{subtotal.toFixed(2)}€</span>
+                                <span className="text-ghost-white">{subtotal.toFixed(2)}€</span>
                             </div>
-                            <div className="flex justify-between text-muted-foreground">
+                            <div className="flex justify-between text-arctic-mist">
                                 <span>Envío {shippingRate && `(${shippingRate.name})`}</span>
-                                <span className={shippingCost === 0 ? "text-yellow-500" : "text-white"}>
+                                <span className={shippingCost === 0 ? "text-yellow-500" : "text-ghost-white"}>
                                     {shippingCost === 0 ? "Pendiente" : `${shippingCost.toFixed(2)}€`}
                                 </span>
                             </div>
                             {isPro && (
-                                <div className="flex items-center gap-2 text-xs text-pro mt-2">
+                                <div className="flex items-center gap-2 text-caption text-neon-violet mt-2">
                                     <ShieldCheck className="w-3 h-3" />
                                     <span>Precio PRO aplicado</span>
                                 </div>
                             )}
                         </div>
 
-                        <div className="h-px bg-white/10 my-4" />
+                        <div className="h-px bg-white/5 my-4" />
 
                         <div className="flex justify-between items-end">
-                            <span className="text-lg font-bold text-white">Total</span>
-                            <span className="text-2xl font-bold text-white">{total.toFixed(2)}€</span>
+                            <span className="text-subheading font-bold text-ghost-white">Total</span>
+                            <span className="text-heading font-bold text-ghost-white">{total.toFixed(2)}€</span>
                         </div>
 
                         {/* El botón de Pagar estará en el formulario de la izquierda, pero este resumen es visual */}
-                    </div>
+                    </Card>
                 </div>
             </div>
         </div>

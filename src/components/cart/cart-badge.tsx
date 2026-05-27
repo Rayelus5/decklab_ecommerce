@@ -21,7 +21,7 @@ export default function CartBadge() {
     if (!mounted || totalItems === 0) return null;
 
     return (
-        <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-white text-[10px] font-extrabold flex items-center justify-center rounded-full animate-in zoom-in border border-background">
+        <span className="absolute -top-1 -right-1 h-4 w-4 bg-neon-violet text-ghost-white text-[10px] font-extrabold flex items-center justify-center rounded-full animate-in zoom-in border border-midnight-abyss">
             {totalItems > 99 ? "+99" : totalItems}
         </span>
     );

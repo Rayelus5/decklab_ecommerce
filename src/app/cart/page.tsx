@@ -7,7 +7,7 @@ import { SessionProvider } from "next-auth/react";
 export default function CartPage() {
     return (
         <div className="container mx-auto px-4 py-8 md:py-12">
-            <h1 className="text-3xl font-bold text-white mb-8">Tu Carrito</h1>
+            <h1 className="text-display font-aeonikpro font-medium text-ghost-white mb-8">Tu Carrito</h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 {/* Lista de Items (Ocupa 8 columnas en desktop) */}

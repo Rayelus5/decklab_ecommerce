@@ -5,7 +5,7 @@ import Stripe from "stripe";
 
 const prisma = new PrismaClient();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2024-12-18.acacia", // Usa la última versión disponible o la que te sugiera VSCode
+    apiVersion: "2026-02-25.clover", // Usa la última versión disponible o la que te sugiera VSCode
 });
 
 export async function POST(req: Request) {

@@ -4,16 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { Trash2, Minus, Plus, ShieldCheck } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart";
-import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function CartItems() {
     const { items, removeItem, updateQuantity } = useCartStore();
 
     if (items.length === 0) {
         return (
-            <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/5">
-                <p className="text-muted-foreground mb-4">Tu carrito está vacío.</p>
-                <Link href="/products" className="text-white underline hover:text-primary">
+            <div className="text-center py-20 bg-[rgba(186,214,247,0.03)] rounded-[16px] border border-white/5 shadow-subtle-4">
+                <p className="text-whisper-blue text-body mb-4">Tu carrito está vacío.</p>
+                <Link href="/products" className="text-ghost-white underline hover:text-celestial-light transition-colors">
                     Volver a la tienda
                 </Link>
             </div>
@@ -23,14 +24,13 @@ export default function CartItems() {
     return (
         <div className="space-y-6">
             {items.map((item) => {
-                // Lógica visual PRO
                 const hasProPrice = item.pricePro !== null;
                 const savings = hasProPrice ? (item.price - (item.pricePro || 0)) * item.quantity : 0;
 
                 return (
-                    <div key={item.variantId} className="flex gap-4 sm:gap-6 p-4 rounded-xl bg-card border border-white/5">
+                    <Card key={item.variantId} variant="default" className="flex gap-4 sm:gap-6 p-4 bg-[rgba(186,214,247,0.01)] hover:bg-[rgba(186,214,247,0.03)] transition-colors border-white/5">
                         {/* Imagen */}
-                        <div className="relative h-24 w-24 sm:h-32 sm:w-32 flex-shrink-0 overflow-hidden rounded-lg bg-secondary/20">
+                        <div className="relative h-24 w-24 sm:h-32 sm:w-32 flex-shrink-0 overflow-hidden rounded-[8px] bg-[rgba(0,0,0,0.5)] border border-white/5 shadow-subtle-5">
                             <Image
                                 src={item.image}
                                 alt={item.title}
@@ -44,19 +44,19 @@ export default function CartItems() {
                             <div>
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <h3 className="font-medium text-white">
-                                            <Link href={`/products/${item.productId}`} className="hover:underline">
+                                        <h3 className="text-subheading font-medium text-ghost-white">
+                                            <Link href={`/products/${item.productId}`} className="hover:underline hover:text-celestial-light transition-colors">
                                                 {item.title}
                                             </Link>
                                         </h3>
-                                        <p className="text-sm text-muted-foreground mt-1">{item.variantTitle}</p>
+                                        <p className="text-caption text-arctic-mist mt-1">{item.variantTitle}</p>
                                     </div>
 
                                     {/* Precio Unitario */}
                                     <div className="text-right">
-                                        <p className="font-bold text-white">{item.price.toFixed(2)}€</p>
+                                        <p className="text-subheading font-bold text-ghost-white">{item.price.toFixed(2)}€</p>
                                         {hasProPrice && (
-                                            <div className="flex items-center justify-end gap-1 text-xs text-pro font-medium">
+                                            <div className="flex items-center justify-end gap-1 text-caption text-neon-violet font-medium mt-1">
                                                 <ShieldCheck className="w-3 h-3" />
                                                 <span>{(item.pricePro!).toFixed(2)}€ PRO</span>
                                             </div>
@@ -68,18 +68,18 @@ export default function CartItems() {
                             {/* Controles: Cantidad y Eliminar */}
                             <div className="flex items-end justify-between mt-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="flex items-center rounded-lg border border-white/10 bg-black/20">
+                                    <div className="flex items-center rounded-[4px] border border-white/10 bg-[rgba(199,211,234,0.06)]">
                                         <button
                                             onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
-                                            className="p-1.5 hover:bg-white/10 rounded-md text-white transition disabled:opacity-30"
+                                            className="p-1.5 hover:bg-white/10 rounded-l-[4px] text-ghost-white transition disabled:opacity-30"
                                             disabled={item.quantity <= 1}
                                         >
                                             <Minus className="w-3 h-3" />
                                         </button>
-                                        <span className="w-8 text-center text-sm font-medium text-white">{item.quantity}</span>
+                                        <span className="w-8 text-center text-caption font-medium text-ghost-white font-dotdigital">{item.quantity}</span>
                                         <button
                                             onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
-                                            className="p-1.5 hover:bg-white/10 rounded-md text-white transition disabled:opacity-30"
+                                            className="p-1.5 hover:bg-white/10 rounded-r-[4px] text-ghost-white transition disabled:opacity-30"
                                             disabled={item.quantity >= item.maxStock}
                                         >
                                             <Plus className="w-3 h-3" />
@@ -88,7 +88,7 @@ export default function CartItems() {
 
                                     <button
                                         onClick={() => removeItem(item.variantId)}
-                                        className="text-muted-foreground hover:text-red-400 text-xs flex items-center gap-1 transition-colors"
+                                        className="text-whisper-blue hover:text-red-400 text-caption flex items-center gap-1 transition-colors"
                                     >
                                         <Trash2 className="w-3 h-3" /> Eliminar
                                     </button>
@@ -97,13 +97,12 @@ export default function CartItems() {
                                 {/* Subtotal del item */}
                                 <div className="text-right">
                                     {savings > 0 && (
-                                        <p className="text-xs text-green-400 mb-0.5">Ahorro pot. PRO: -{savings.toFixed(2)}€</p>
+                                        <p className="text-caption text-[#4ade80] mb-0.5 font-medium">Ahorro pot. PRO: -{savings.toFixed(2)}€</p>
                                     )}
-                                    {/* Aquí mostramos el total base, el cálculo final se hace en el resumen */}
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </Card>
                 );
             })}
         </div>

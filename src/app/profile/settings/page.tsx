@@ -5,28 +5,30 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { ArrowLeft, Save, Lock, User, AlertTriangle, Trash2 } from "lucide-react";
 import { updateProfile, changePassword } from "@/actions/user-settings";
-import Loader from "@/components/ui/loader";
 import { deleteAccount } from "@/actions/delete-account";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
     const { data: session, update } = useSession();
     const [loadingProfile, setLoadingProfile] = useState(false);
     const [loadingPass, setLoadingPass] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deletingAccount, setDeletingAccount] = useState(false);
 
     const handleUpdateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoadingProfile(true);
-        setMessage(null);
 
         const formData = new FormData(e.currentTarget);
         const res = await updateProfile(formData);
 
         if (res.success) {
-            await update(); // Actualizar sesión en cliente
-            setMessage({ type: 'success', text: res.success });
+            await update();
+            toast.success(res.success);
         } else {
-            setMessage({ type: 'error', text: res.error || "Error" });
+            toast.error(res.error || "Error al actualizar el perfil.");
         }
         setLoadingProfile(false);
     };
@@ -34,141 +36,178 @@ export default function SettingsPage() {
     const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoadingPass(true);
-        setMessage(null);
 
         const formData = new FormData(e.currentTarget);
         const res = await changePassword(formData);
 
         if (res.success) {
-            setMessage({ type: 'success', text: res.success });
+            toast.success(res.success);
             (e.target as HTMLFormElement).reset();
         } else {
-            setMessage({ type: 'error', text: res.error || "Error" });
+            toast.error(res.error || "Error al cambiar la contraseña.");
         }
         setLoadingPass(false);
     };
 
+    const handleDeleteAccount = async () => {
+        setDeletingAccount(true);
+        await deleteAccount();
+    };
+
+    const sectionClass = "rounded-[16px] border border-[rgba(186,215,247,0.12)] bg-[rgba(186,214,247,0.03)] shadow-subtle-4 p-6";
+    const labelClass = "block text-caption text-whisper-blue uppercase tracking-wider font-medium mb-1.5";
+
     return (
         <div className="container mx-auto px-4 py-12 max-w-2xl">
-            <Link href="/profile" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-white mb-8">
-                <ArrowLeft className="w-4 h-4" /> Volver al Perfil
+            <Link
+                href="/profile"
+                className="inline-flex items-center gap-2 text-body text-whisper-blue hover:text-ghost-white transition-colors mb-8"
+            >
+                <ArrowLeft className="w-4 h-4" />
+                Volver al Perfil
             </Link>
 
-            <h1 className="text-3xl font-bold text-white mb-8">Ajustes de Cuenta</h1>
-
-            {message && (
-                <div className={`p-4 rounded-xl mb-6 text-sm font-medium ${message.type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                    {message.text}
-                </div>
-            )}
+            <h1 className="text-heading-lg font-aeonikpro font-medium text-ghost-white mb-8">
+                Ajustes de Cuenta
+            </h1>
 
             {/* 1. Datos Personales */}
-            <section className="bg-card border border-white/10 rounded-2xl p-6 mb-8">
-                <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <User className="w-5 h-5 text-primary" /> Datos Personales
+            <section className={`${sectionClass} mb-6`}>
+                <h2 className="text-subheading font-medium text-ghost-white mb-5 flex items-center gap-2">
+                    <User className="w-4 h-4 text-neon-violet" />
+                    Datos Personales
                 </h2>
                 <form onSubmit={handleUpdateProfile} className="space-y-4">
                     <div>
-                        <label className="text-xs uppercase font-bold text-muted-foreground">Nombre</label>
-                        <input
+                        <label className={labelClass}>Nombre</label>
+                        <Input
                             name="name"
                             defaultValue={session?.user?.name || ""}
-                            className="w-full mt-1 bg-input border border-white/10 rounded-lg px-4 py-2 text-white focus:border-primary outline-none"
+                            className="h-11"
                         />
                     </div>
                     <div>
-                        <label className="text-xs uppercase font-bold text-muted-foreground">Email</label>
-                        <input
+                        <label className={labelClass}>Email</label>
+                        <Input
                             disabled
                             value={session?.user?.email || ""}
-                            className="w-full mt-1 bg-white/5 border border-white/5 rounded-lg px-4 py-2 text-muted-foreground cursor-not-allowed"
+                            className="h-11 opacity-50 cursor-not-allowed"
                         />
-                        <p className="text-[10px] text-muted-foreground mt-1">El email no se puede cambiar por seguridad.</p>
+                        <p className="text-caption text-interstellar-gray mt-1.5">
+                            El email no se puede cambiar por seguridad.
+                        </p>
                     </div>
-                    <button
+                    <Button
                         type="submit"
-                        disabled={loadingProfile}
-                        className="px-6 py-2 bg-white text-black font-bold rounded-lg hover:bg-gray-200 transition disabled:opacity-50 flex items-center gap-2"
+                        variant="solid-primary"
+                        isLoading={loadingProfile}
+                        className="px-6"
                     >
-                        {loadingProfile ? <Loader size={16} color="black" /> : <><Save className="w-4 h-4" /> Guardar Cambios</>}
-                    </button>
+                        <Save className="w-4 h-4" />
+                        Guardar Cambios
+                    </Button>
                 </form>
             </section>
 
             {/* 2. Seguridad */}
-            <section className="bg-card border border-white/10 rounded-2xl p-6">
-                <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                    <Lock className="w-5 h-5 text-primary" /> Seguridad
+            <section className={`${sectionClass} mb-6`}>
+                <h2 className="text-subheading font-medium text-ghost-white mb-5 flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-neon-violet" />
+                    Seguridad
                 </h2>
                 <form onSubmit={handleChangePassword} className="space-y-4">
                     <div>
-                        <label className="text-xs uppercase font-bold text-muted-foreground">Contraseña Actual</label>
-                        <input
+                        <label className={labelClass}>Contraseña Actual</label>
+                        <Input
                             name="currentPassword"
                             type="password"
                             required
-                            className="w-full mt-1 bg-input border border-white/10 rounded-lg px-4 py-2 text-white focus:border-primary outline-none"
+                            placeholder="••••••••"
+                            className="h-11"
                         />
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-xs uppercase font-bold text-muted-foreground">Nueva Contraseña</label>
-                            <input
+                            <label className={labelClass}>Nueva Contraseña</label>
+                            <Input
                                 name="newPassword"
                                 type="password"
                                 required
-                                className="w-full mt-1 bg-input border border-white/10 rounded-lg px-4 py-2 text-white focus:border-primary outline-none"
+                                placeholder="••••••••"
+                                className="h-11"
                             />
                         </div>
                         <div>
-                            <label className="text-xs uppercase font-bold text-muted-foreground">Repetir Nueva</label>
-                            <input
+                            <label className={labelClass}>Repetir Nueva</label>
+                            <Input
                                 name="confirmPassword"
                                 type="password"
                                 required
-                                className="w-full mt-1 bg-input border border-white/10 rounded-lg px-4 py-2 text-white focus:border-primary outline-none"
+                                placeholder="••••••••"
+                                className="h-11"
                             />
                         </div>
                     </div>
-                    <button
+                    <Button
                         type="submit"
-                        disabled={loadingPass}
-                        className="px-6 py-2 bg-white/10 text-white font-bold rounded-lg hover:bg-white/20 border border-white/10 transition disabled:opacity-50 flex items-center gap-2"
+                        variant="secondary-outline"
+                        isLoading={loadingPass}
+                        className="px-6"
                     >
-                        {loadingPass ? <Loader size={16} color="white" /> : "Actualizar Contraseña"}
-                    </button>
+                        Actualizar Contraseña
+                    </Button>
                 </form>
             </section>
 
-            {/* ... secciones anteriores ... */}
-
-            {/* 3. ZONA DE PELIGRO */}
-            <section className="bg-red-950/10 border border-red-500/20 rounded-2xl p-6 mt-12">
-                <h2 className="text-xl font-bold text-red-500 mb-4 flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5" />Eliminar Cuenta
+            {/* 3. Zona de Peligro */}
+            <section className="rounded-[16px] border border-red-500/20 bg-red-950/8 p-6">
+                <h2 className="text-subheading font-medium text-red-400 mb-3 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    Eliminar Cuenta
                 </h2>
 
-                <p className="text-sm text-red-200/70 mb-6">
+                <p className="text-body text-red-200/60 mb-5">
                     Esta acción es irreversible. Se borrarán todos tus datos personales,
                     historial de pedidos y se cancelará tu suscripción PRO inmediatamente.
                 </p>
 
-                <form
-                    action={async () => {
-                        // Confirmación nativa simple pero efectiva
-                        if (confirm("¿ESTÁS SEGURO? Esta acción no se puede deshacer y perderás tu saldo PRO.")) {
-                            await deleteAccount();
-                        }
-                    }}
-                >
-                    <button
-                        type="submit"
-                        className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-red-900/20"
+                {!showDeleteConfirm ? (
+                    <Button
+                        type="button"
+                        variant="secondary-outline"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50"
                     >
                         <Trash2 className="w-4 h-4" />
                         Eliminar mi cuenta permanentemente
-                    </button>
-                </form>
+                    </Button>
+                ) : (
+                    <div className="space-y-3 p-4 rounded-[10px] bg-red-500/5 border border-red-500/20">
+                        <p className="text-body font-medium text-red-300">
+                            ¿Estás completamente seguro? Esta acción no se puede deshacer y perderás tu saldo PRO.
+                        </p>
+                        <div className="flex gap-3">
+                            <Button
+                                type="button"
+                                variant="secondary-outline"
+                                onClick={() => setShowDeleteConfirm(false)}
+                                className="flex-1"
+                                disabled={deletingAccount}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={handleDeleteAccount}
+                                isLoading={deletingAccount}
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white border-0 rounded-md"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                Sí, eliminar cuenta
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </section>
         </div>
     );

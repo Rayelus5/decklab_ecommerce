@@ -2,6 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Product, ProductImage, ProductVariant, Category } from "@prisma/client";
 import { ShieldCheck } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 // Tipo extendido para incluir relaciones
 type ProductWithRelations = Product & {
@@ -22,63 +24,65 @@ export function ProductCard({ product }: ProductCardProps) {
 
     return (
         <Link href={`/products/${product.slug}`} className="group block h-full">
-            <div className="relative h-full flex flex-col overflow-hidden rounded-xl border border-white/5 bg-card transition-all duration-300 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5">
+            <Card variant="glassy-feature" className="relative h-full flex flex-col overflow-hidden transition-all duration-300 hover:border-white/20 p-0 rounded-2xl">
 
                 {/* Imagen con efecto Zoom suave */}
-                <div className="relative aspect-[4/5] w-full overflow-hidden bg-secondary/50">
+                <div className="relative aspect-[4/5] w-full overflow-hidden bg-[rgba(0,0,0,0.5)]">
                     <Image
                         src={image}
                         alt={product.title}
                         fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
 
                     {/* Badge PRO si aplica */}
                     {hasProPrice && (
-                        <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-[10px] font-bold text-pro backdrop-blur-md border border-pro/20">
-                            <ShieldCheck className="w-3 h-3" />
-                            <span>PRO</span>
+                        <div className="absolute top-3 right-3">
+                            <Badge variant="status" className="px-2 py-1 text-[10px] bg-black/60 backdrop-blur-md">
+                                <ShieldCheck className="w-3 h-3 text-neon-violet" />
+                                <span className="text-neon-violet">PRO</span>
+                            </Badge>
                         </div>
                     )}
                 </div>
 
                 {/* Info */}
-                <div className="flex flex-1 flex-col p-4">
-                    <div className="mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <div className="flex flex-1 flex-col p-5">
+                    <div className="mb-2 text-caption text-arctic-mist uppercase tracking-wider">
                         {product.category?.name || "General"}
                     </div>
 
-                    <h3 className="mb-2 text-lg font-bold text-white leading-tight group-hover:text-primary transition-colors">
+                    <h3 className="mb-2 text-subheading font-bold text-ghost-white leading-tight group-hover:text-celestial-light transition-colors">
                         {product.title}
                     </h3>
 
-                    <div className="mt-auto pt-2 flex items-end gap-2">
+                    <div className="mt-auto pt-4 flex items-end gap-3 border-t border-white/5">
                         {hasProPrice ? (
                             <>
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] text-muted-foreground uppercase">Precio</span>
-                                    <span className="text-sm text-muted-foreground line-through decoration-white/30">
+                                    <span className="text-[10px] text-whisper-blue font-dotdigital">ESTÁNDAR</span>
+                                    <span className="text-body text-arctic-mist line-through decoration-white/30">
                                         {Number(mainVariant.price).toFixed(2)}€
                                     </span>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-[10px] text-pro font-bold uppercase">Precio PRO</span>
-                                    <span className="text-xl font-bold text-white">
+                                    <span className="text-[10px] text-neon-violet font-bold font-dotdigital">PRO</span>
+                                    <span className="text-heading font-bold text-ghost-white">
                                         {Number(mainVariant.pricePro).toFixed(2)}€
                                     </span>
                                 </div>
                             </>
                         ) : (
                             <div className="flex flex-col">
-                                <span className="text-xl font-bold text-white">
+                                <span className="text-heading font-bold text-ghost-white">
                                     {Number(mainVariant.price).toFixed(2)}€
                                 </span>
                             </div>
                         )}
                     </div>
                 </div>
-            </div>
+            </Card>
         </Link>
     );
 }

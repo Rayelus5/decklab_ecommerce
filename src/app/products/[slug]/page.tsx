@@ -33,7 +33,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
             {/* Breadcrumb simple */}
             <Link
                 href="/products"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-white transition-colors mb-8"
+                className="inline-flex items-center gap-2 text-body text-whisper-blue hover:text-ghost-white transition-colors mb-8"
             >
                 <ArrowLeft className="w-4 h-4" />
                 Volver al catálogo

@@ -3,7 +3,6 @@ import { ProductCard } from "@/components/product/product-card";
 
 const prisma = new PrismaClient();
 
-// Server Component: Fetching directo a DB
 async function getProducts() {
     return await prisma.product.findMany({
         where: { isArchived: false },
@@ -12,7 +11,7 @@ async function getProducts() {
             category: true,
             variants: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
     });
 }
 
@@ -21,21 +20,20 @@ export default async function ProductsPage() {
 
     return (
         <div className="container mx-auto px-4 py-12">
-            {/* Header de sección */}
-            <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6">
+            <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[rgba(186,215,247,0.12)] pb-6">
                 <div>
-                    <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">Catálogo</h1>
-                    <p className="mt-2 text-muted-foreground max-w-lg">
+                    <h1 className="text-heading-lg md:text-display font-aeonikpro font-medium text-ghost-white">
+                        Catálogo
+                    </h1>
+                    <p className="mt-2 text-body text-whisper-blue max-w-lg">
                         Explora nuestra colección de barajas premium y accesorios.
                         Únete a PRO para acceder a precios exclusivos.
                     </p>
                 </div>
-                {/* Aquí podríamos poner filtros en el futuro */}
             </div>
 
-            {/* Grid de productos */}
             {products.length === 0 ? (
-                <div className="text-center py-20 text-muted-foreground">
+                <div className="text-center py-20 text-whisper-blue text-body">
                     No hay productos disponibles en este momento.
                 </div>
             ) : (

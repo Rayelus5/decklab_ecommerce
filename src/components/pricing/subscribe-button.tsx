@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import Loader from "@/components/ui/loader";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface SubscribeButtonProps {
     priceId: string;
@@ -37,28 +37,25 @@ export default function SubscribeButton({ priceId, tierId, isPopular }: Subscrib
             if (data.url) {
                 window.location.href = data.url;
             } else {
-                alert("Error: " + (data.error || "No se pudo iniciar la suscripción"));
+                toast.error("Error: " + (data.error || "No se pudo iniciar la suscripción"));
                 setLoading(false);
             }
         } catch (error) {
             console.error(error);
-            alert("Error de conexión");
+            toast.error("Error de conexión");
             setLoading(false);
         }
     };
 
     return (
-        <button
+        <Button
             onClick={handleSubscribe}
-            disabled={loading}
-            className={cn(
-                "w-full py-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2",
-                isPopular
-                    ? "bg-white text-black hover:bg-gray-200 shadow-lg shadow-white/10"
-                    : "bg-white/10 text-white hover:bg-white/20 border border-white/10"
-            )}
+            isLoading={loading}
+            variant={isPopular ? "solid-primary" : "secondary-outline"}
+            size="lg"
+            className="w-full mt-auto"
         >
-            {loading ? <Loader size={18} color={isPopular ? "black" : "white"} /> : "Seleccionar Plan"}
-        </button>
+            Seleccionar Plan
+        </Button>
     );
 }

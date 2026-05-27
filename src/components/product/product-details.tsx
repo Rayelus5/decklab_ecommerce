@@ -6,6 +6,8 @@ import { Product, ProductImage, ProductVariant } from "@prisma/client";
 import { ShieldCheck, ShoppingCart, Check, Minus, Plus, AlertCircle } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type ProductFull = Product & {
     images: ProductImage[];
@@ -14,7 +16,7 @@ type ProductFull = Product & {
 
 export default function ProductDetails({ product }: { product: ProductFull }) {
     const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(product.variants[0]);
-    const [quantity, setQuantity] = useState(1); // Estado local para la cantidad
+    const [quantity, setQuantity] = useState(1);
     const { addItem } = useCartStore();
 
     const price = Number(selectedVariant.price);
@@ -22,7 +24,6 @@ export default function ProductDetails({ product }: { product: ProductFull }) {
     const maxStock = selectedVariant.stock;
     const hasStock = maxStock > 0;
 
-    // Resetear cantidad si cambia la variante
     useEffect(() => {
         setQuantity(1);
     }, [selectedVariant.id]);
@@ -47,21 +48,19 @@ export default function ProductDetails({ product }: { product: ProductFull }) {
             price: price,
             pricePro: pricePro,
             image: product.images[0]?.url || "",
-            quantity: quantity, // Usamos la cantidad seleccionada
+            quantity: quantity,
             weight: selectedVariant.weight,
             maxStock: maxStock
         });
 
-        // Feedback visual simple (alert temporal)
-        alert(`Añadidas ${quantity} unidades al carrito`);
-        // Opcional: Resetear a 1 tras añadir
+        toast.success(`Añadidas ${quantity} unidades al carrito`);
         setQuantity(1);
     };
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
             {/* 1. Galería */}
-            <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-white/5 bg-secondary/20">
+            <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-white/5 bg-[rgba(0,0,0,0.5)] shadow-subtle-5">
                 {product.images[0] && (
                     <Image
                         src={product.images[0].url}
@@ -75,24 +74,24 @@ export default function ProductDetails({ product }: { product: ProductFull }) {
 
             {/* 2. Info y Acciones */}
             <div className="flex flex-col justify-center">
-                <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">{product.title}</h1>
+                <h1 className="text-display font-aeonikpro font-medium text-ghost-white mb-2">{product.title}</h1>
 
                 {/* Precios */}
-                <div className="flex items-end gap-4 mb-6 border-b border-white/10 pb-6">
+                <div className="flex items-end gap-4 mb-6 border-b border-white/5 pb-6">
                     <div>
-                        <p className="text-xs text-muted-foreground uppercase mb-1">Precio estándar</p>
-                        <p className={cn("text-2xl font-bold", pricePro ? "text-muted-foreground line-through" : "text-white")}>
+                        <p className="text-caption font-dotdigital text-whisper-blue uppercase mb-1">Precio estándar</p>
+                        <p className={cn("text-heading font-bold", pricePro ? "text-arctic-mist line-through decoration-white/30" : "text-ghost-white")}>
                             {price.toFixed(2)}€
                         </p>
                     </div>
 
                     {pricePro && (
                         <div>
-                            <div className="flex items-center gap-1 text-pro mb-1">
+                            <div className="flex items-center gap-1 text-neon-violet mb-1">
                                 <ShieldCheck className="w-3 h-3" />
-                                <span className="text-xs font-bold uppercase">Precio PRO</span>
+                                <span className="text-caption font-dotdigital font-bold uppercase">Precio PRO</span>
                             </div>
-                            <p className="text-3xl font-bold text-white">
+                            <p className="text-display font-bold text-ghost-white">
                                 {pricePro.toFixed(2)}€
                             </p>
                         </div>
@@ -102,7 +101,7 @@ export default function ProductDetails({ product }: { product: ProductFull }) {
                 {/* Selector de Variantes */}
                 {product.variants.length > 1 && (
                     <div className="mb-6">
-                        <label className="text-sm font-medium text-muted-foreground mb-3 block">
+                        <label className="text-body font-medium text-arctic-mist mb-3 block">
                             Opción:
                         </label>
                         <div className="flex flex-wrap gap-3">
@@ -114,10 +113,10 @@ export default function ProductDetails({ product }: { product: ProductFull }) {
                                         key={v.id}
                                         onClick={() => setSelectedVariant(v)}
                                         className={cn(
-                                            "px-4 py-2 rounded-lg border text-sm transition-all",
+                                            "px-4 py-2 rounded-[6px] border text-body transition-all",
                                             isSelected
-                                                ? "border-primary bg-primary text-primary-foreground font-bold"
-                                                : "border-white/10 bg-card hover:bg-white/5 text-white"
+                                                ? "border-celestial-light bg-[rgba(186,214,247,0.1)] text-ghost-white font-bold"
+                                                : "border-white/10 bg-transparent hover:bg-white/5 text-arctic-mist hover:text-ghost-white"
                                         )}
                                     >
                                         {label}
@@ -129,73 +128,70 @@ export default function ProductDetails({ product }: { product: ProductFull }) {
                 )}
 
                 {/* Control de Stock y Cantidad */}
-                <div className="mb-8 p-4 rounded-xl bg-white/5 border border-white/5">
+                <div className="mb-8 p-6 rounded-2xl bg-[rgba(186,214,247,0.01)] border border-white/5 shadow-subtle-3">
                     <div className="flex items-center justify-between mb-4">
-                        <span className="text-sm font-medium text-white">Cantidad</span>
-                        <span className={cn("text-xs font-bold", hasStock ? "text-green-400" : "text-red-400")}>
+                        <span className="text-body font-medium text-ghost-white">Cantidad</span>
+                        <span className={cn("text-caption font-dotdigital", hasStock ? "text-[#4ade80]" : "text-red-400")}>
                             {hasStock ? `${maxStock} disponibles` : "Sin stock"}
                         </span>
                     </div>
 
                     <div className="flex items-center gap-4">
                         {/* Selector Numérico */}
-                        <div className="flex items-center rounded-lg bg-black/40 border border-white/10 p-1">
+                        <div className="flex items-center rounded-[6px] bg-[rgba(199,211,234,0.06)] border border-white/10 p-1">
                             <button
                                 onClick={() => handleQuantityChange(-1)}
                                 disabled={quantity <= 1 || !hasStock}
-                                className="p-2 hover:bg-white/10 rounded-md text-white disabled:opacity-30 transition"
+                                className="p-2 hover:bg-white/10 rounded-[4px] text-ghost-white disabled:opacity-30 transition"
                             >
                                 <Minus className="w-4 h-4" />
                             </button>
 
-                            <div className="w-12 text-center font-bold text-white">
+                            <div className="w-12 text-center font-bold text-ghost-white font-dotdigital">
                                 {quantity}
                             </div>
 
                             <button
                                 onClick={() => handleQuantityChange(1)}
                                 disabled={quantity >= maxStock || !hasStock}
-                                className="p-2 hover:bg-white/10 rounded-md text-white disabled:opacity-30 transition"
+                                className="p-2 hover:bg-white/10 rounded-[4px] text-ghost-white disabled:opacity-30 transition"
                             >
                                 <Plus className="w-4 h-4" />
                             </button>
                         </div>
 
                         {/* Botón Añadir */}
-                        <button
+                        <Button
                             onClick={handleAddToCart}
                             disabled={!hasStock}
-                            className={cn(
-                                "flex-1 py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-white/5",
-                                hasStock
-                                    ? "bg-white text-black hover:bg-gray-200 active:scale-95"
-                                    : "bg-white/5 text-white/30 cursor-not-allowed"
-                            )}
+                            variant="solid-primary"
+                            size="lg"
+                            className="flex-1"
                         >
                             {hasStock ? (
                                 <>
                                     <ShoppingCart className="w-4 h-4" />
-                                    Añadir {quantity * price}€
+                                    Añadir {(quantity * (pricePro || price)).toFixed(2)}€
                                 </>
                             ) : (
                                 "Agotado"
                             )}
-                        </button>
+                        </Button>
                     </div>
 
                     {/* Aviso si intenta añadir más del stock */}
                     {quantity === maxStock && hasStock && (
-                        <div className="mt-3 flex items-center gap-2 text-xs text-yellow-500">
-                            <AlertCircle className="w-3 h-3" />
+                        <div className="mt-4 flex items-center gap-2 text-caption text-yellow-500">
+                            <AlertCircle className="w-4 h-4" />
                             Has alcanzado el límite de stock disponible.
                         </div>
                     )}
                 </div>
 
                 {/* Info Footer */}
-                <div className="flex flex-col gap-2 text-xs text-muted-foreground">
+                <div className="flex flex-col gap-2 text-caption text-whisper-blue">
                     <p className="flex items-center gap-2">
-                        <Check className="w-3 h-3 text-green-500" />
+                        <Check className="w-4 h-4 text-[#4ade80]" />
                         Envío calculado en checkout según peso ({selectedVariant.weight * quantity}g).
                     </p>
                 </div>

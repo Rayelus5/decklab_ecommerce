@@ -222,6 +222,18 @@
 ---
 
 ## 📊 SPRINT 11 — Analytics & Monitoring ✅
+- [x] Sentry wizard oficial ejecutado: `instrumentation.ts`, `instrumentation-client.ts`, `global-error.tsx` generados con DSN real
+- [x] `tracesSampleRate` ajustado a 0.1 en producción
+- [x] `app/global-error.tsx` rediseñado con UI DECKLAB
+- [x] `app/not-found.tsx` página 404 personalizada
+- [x] Bug cupones Stripe corregido: descuento aplicado via `stripe.coupons.create` + `discounts[]` en sesión
+- [x] Webhook Stripe actualizado: usa `session.amount_total` como total real + guarda `discountTotal`
+
+## HOTFIXES
+- [x] `app/not-found.tsx` — página 404 con diseño DECKLAB (404 decorativo + acciones)
+- [x] `components/ui/back-button.tsx` — botón "volver atrás" client component
+
+
 
 - [x] GA4: script condicional en `app/layout.tsx` con `NEXT_PUBLIC_GA_MEASUREMENT_ID`
 - [x] Eventos personalizados en `lib/analytics.ts`: add_to_cart, begin_checkout, purchase, sign_up, login, trackProSubscription
@@ -269,7 +281,7 @@
 - [ ] Stripe Live: claves live + webhook endpoint `decklab.rayelus.com/api/webhooks/stripe`
 - [ ] PayPal producción (si implementado en Sprint 6)
 - [ ] BotFather: `/setdomain` → `decklab.rayelus.com`
-- [ ] Resend: verificar dominio `decklab.rayelus.com`
+- [X] Resend: verificar dominio `rayelus.com` (contacto@rayelus.com)
 - [ ] QA final: compra real de prueba end-to-end
 
 ---

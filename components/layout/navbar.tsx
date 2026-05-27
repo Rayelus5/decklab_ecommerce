@@ -25,8 +25,9 @@ interface NavbarProps {
 }
 
 const NAV_LINKS = [
-  { href: "/products", label: "Tienda" },
-  { href: "/pricing", label: "PRO" },
+  { href: "/products", label: "Productos" },
+  { href: "/pricing", label: "Házte PRO" },
+  { href: "/cart", label: "Carrito" },
 ];
 
 export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
@@ -44,7 +45,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
         {/* Logo */}
         <Link
-          href="/products"
+          href="/"
           className="flex items-center gap-2 font-semibold text-snow hover:text-ash-50 transition-colors shrink-0"
         >
           <div className="w-7 h-7 bg-graphite-500 border border-white/15 rounded-[6px] flex items-center justify-center">
@@ -84,7 +85,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
                   : "text-slate-300 hover:text-ember-red hover:bg-ember-red/10"
               )}
             >
-              Admin
+              ADMIN
             </Link>
           )}
         </nav>

@@ -90,7 +90,7 @@ export function ProductCard({
       )}
     >
       {/* ── Imagen ─────────────────────────────────────────── */}
-      <div className="relative aspect-[4/3] bg-graphite-600/60 overflow-hidden">
+      <div className="relative aspect-[1/1] bg-graphite-600/60 overflow-hidden">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -163,7 +163,7 @@ export function ProductCard({
       </div>
 
       {/* ── Info ────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-2 px-4 pt-3 pb-4">
+      <div className="flex flex-col gap-2 px-4 pt-3 pb-4 justify-between h-full max-h-[160px]">
 
         {/* Categoría */}
         {categoryName && (
@@ -179,7 +179,7 @@ export function ProductCard({
 
         {/* ── Bloque de precios ── */}
         {variant ? (
-          <div className="mt-1 flex flex-col gap-2">
+          <div className="mt-1 flex flex-col justify-between gap-2">
 
             {/* Precio principal — tamaño y peso dominantes */}
             <div className="flex items-end gap-2.5">
@@ -227,11 +227,11 @@ export function ProductCard({
         )}
 
         {/* Sin devoluciones */}
-        {noReturns && (
+        {/* {noReturns && (
           <p className="text-[9px] text-slate-300/35 mt-0.5 tracking-wide">
             SIN DEVOLUCIONES
           </p>
-        )}
+        )} */}
       </div>
     </Link>
   );

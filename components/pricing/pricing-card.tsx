@@ -96,12 +96,12 @@ export function PricingCard({
   return (
     <div
       className={clsx(
-        "relative flex flex-col rounded-[16px] border p-6 transition-all",
+        "relative flex flex-col rounded-4xl border-3 p-6 transition-all",
         isCurrent
           ? "border-amber-500/40 bg-amber-500/5"
           : isRecommended
-          ? "border-ash-50/25 bg-graphite-700/60 shadow-2xl"
-          : "border-white/8 bg-graphite-700/40 hover:border-white/15"
+            ? "border-ash-50/25 bg-graphite-700/60 shadow-2xl"
+            : "border-white/8 bg-graphite-700/40 hover:border-white/15"
       )}
     >
       {/* Badge */}
@@ -134,7 +134,7 @@ export function PricingCard({
           <span className="text-3xl font-bold text-snow tabular-nums">
             {priceMonthly.toFixed(2).replace(".", ",")}
           </span>
-          <span className="text-lg text-snow">&euro;</span>
+          <span className="text-lg text-amber-200">&euro;</span>
           <span className="text-slate-300 text-sm">/mes</span>
         </div>
         <p className="text-xs text-slate-300/70 mt-1">

@@ -30,7 +30,7 @@ export function CartClient({ isPro, proAllowanceBalance }: CartClientProps) {
   const { itemStates, totalSavings, remainingAllowance } = breakdown;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -79,15 +79,13 @@ export function CartClient({ isPro, proAllowanceBalance }: CartClientProps) {
                   </div>
                   <button
                     onClick={toggleProPricing}
-                    className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${
-                      useProPricing ? "bg-amber-500" : "bg-white/15"
-                    }`}
+                    className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${useProPricing ? "bg-amber-500" : "bg-white/15"
+                      }`}
                     aria-label={useProPricing ? "Desactivar precios PRO" : "Activar precios PRO"}
                   >
                     <span
-                      className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform duration-200 ${
-                        useProPricing ? "translate-x-5" : "translate-x-0"
-                      }`}
+                      className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform duration-200 ${useProPricing ? "translate-x-5" : "translate-x-0"
+                        }`}
                     />
                   </button>
                 </div>

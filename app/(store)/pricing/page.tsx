@@ -41,7 +41,7 @@ export default async function PricingPage() {
       {/* Hero con wave background */}
       <div className="relative py-20 overflow-hidden">
         <Waves
-          strokeColor="rgba(251,191,36,0.18)"
+          strokeColor="rgba(251, 190, 36, 0.25)"
           backgroundColor="transparent"
           className="absolute inset-0 w-full h-full"
         />
@@ -68,7 +68,7 @@ export default async function PricingPage() {
             No hay planes disponibles actualmente. Vuelve pronto.
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {tiers.map((tier, i) => {
               const benefits = (tier.benefits ?? {}) as ProBenefits;
               const isCurrent = tier.id === currentTierId;

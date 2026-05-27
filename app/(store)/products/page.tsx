@@ -112,88 +112,87 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           {Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)}
         </div>
       }>
-      {products.length > 0 ? (
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
-            {products.map((product) => {
-              const firstVariant = product.variants[0];
-              const productImage = product.images[0];
+        {products.length > 0 ? (
+          <>
+            <div className="grid grid-cols- sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+              {products.map((product) => {
+                const firstVariant = product.variants[0];
+                const productImage = product.images[0];
 
-              return (
-                <ProductCard
-                  key={product.id}
-                  id={product.id}
-                  slug={product.slug}
-                  title={product.title}
-                  imageUrl={productImage?.url}
-                  imageAlt={productImage?.alt ?? product.title}
-                  variant={firstVariant ? {
-                    id: firstVariant.id,
-                    title: firstVariant.title ?? undefined,
-                    price: Number(firstVariant.price),
-                    pricePro: firstVariant.pricePro != null ? Number(firstVariant.pricePro) : null,
-                    stock: firstVariant.stock,
-                    proExempt: firstVariant.proExempt,
-                  } : undefined}
-                  isExclusive={product.isExclusive}
-                  earlyAccessTierLevel={product.earlyAccessTierLevel}
-                  noReturns={product.noReturns}
-                  isPro={isPro}
-                  hasAccess={
-                    isAdmin ||
-                    (!product.earlyAccessTierLevel && !product.isExclusive) ||
-                    isPro
-                  }
-                  categoryName={product.category?.name}
-                />
-              );
-            })}
-          </div>
+                return (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    slug={product.slug}
+                    title={product.title}
+                    imageUrl={productImage?.url}
+                    imageAlt={productImage?.alt ?? product.title}
+                    variant={firstVariant ? {
+                      id: firstVariant.id,
+                      title: firstVariant.title ?? undefined,
+                      price: Number(firstVariant.price),
+                      pricePro: firstVariant.pricePro != null ? Number(firstVariant.pricePro) : null,
+                      stock: firstVariant.stock,
+                      proExempt: firstVariant.proExempt,
+                    } : undefined}
+                    isExclusive={product.isExclusive}
+                    earlyAccessTierLevel={product.earlyAccessTierLevel}
+                    noReturns={product.noReturns}
+                    isPro={isPro}
+                    hasAccess={
+                      isAdmin ||
+                      (!product.earlyAccessTierLevel && !product.isExclusive) ||
+                      isPro
+                    }
+                    categoryName={product.category?.name}
+                  />
+                );
+              })}
+            </div>
 
-          {/* Paginación */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-8">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <a
-                  key={p}
-                  href={`/products?page=${p}${params.categoryId ? `&categoryId=${params.categoryId}` : ""}${params.q ? `&q=${params.q}` : ""}`}
-                  className={`w-9 h-9 flex items-center justify-center rounded-[8px] text-sm transition-colors ${
-                    p === page
+            {/* Paginación */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-8">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <a
+                    key={p}
+                    href={`/products?page=${p}${params.categoryId ? `&categoryId=${params.categoryId}` : ""}${params.q ? `&q=${params.q}` : ""}`}
+                    className={`w-9 h-9 flex items-center justify-center rounded-[8px] text-sm transition-colors ${p === page
                       ? "bg-ash-50 text-graphite-700 font-semibold"
                       : "text-slate-300 hover:text-snow hover:bg-white/5"
-                  }`}
-                  aria-label={`Página ${p}`}
-                  aria-current={p === page ? "page" : undefined}
-                >
-                  {p}
-                </a>
-              ))}
+                      }`}
+                    aria-label={`Página ${p}`}
+                    aria-current={p === page ? "page" : undefined}
+                  >
+                    {p}
+                  </a>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-16 h-16 mb-4 rounded-[14px] bg-graphite-700/60 border border-white/8 flex items-center justify-center" aria-hidden="true">
+              <ImageOff size={24} className="text-white/20" />
             </div>
-          )}
-        </>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 mb-4 rounded-[14px] bg-graphite-700/60 border border-white/8 flex items-center justify-center" aria-hidden="true">
-            <ImageOff size={24} className="text-white/20" />
+            <h2 className="text-lg font-medium text-snow">
+              {params.q ? "Sin resultados" : "No hay productos disponibles"}
+            </h2>
+            <p className="text-slate-300 text-sm mt-2">
+              {params.q
+                ? `No encontramos productos para "${params.q}". Prueba con otro término.`
+                : "Pronto habrá nuevos productos disponibles. ¡Estate atento!"}
+            </p>
+            {params.q && (
+              <a
+                href="/products"
+                className="mt-4 text-sm text-ash-50 hover:text-snow underline underline-offset-2 transition-colors"
+              >
+                Ver todos los productos
+              </a>
+            )}
           </div>
-          <h2 className="text-lg font-medium text-snow">
-            {params.q ? "Sin resultados" : "No hay productos disponibles"}
-          </h2>
-          <p className="text-slate-300 text-sm mt-2">
-            {params.q
-              ? `No encontramos productos para "${params.q}". Prueba con otro término.`
-              : "Pronto habrá nuevos productos disponibles. ¡Estate atento!"}
-          </p>
-          {params.q && (
-            <a
-              href="/products"
-              className="mt-4 text-sm text-ash-50 hover:text-snow underline underline-offset-2 transition-colors"
-            >
-              Ver todos los productos
-            </a>
-          )}
-        </div>
-      )}
+        )}
       </Suspense>
     </div>
   );

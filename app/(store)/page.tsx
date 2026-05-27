@@ -65,7 +65,7 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col">
       {/* ============ HERO ============ */}
-      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <ShaderAnimation />
         </div>
@@ -73,10 +73,10 @@ export default function LandingPage() {
 
         <div className="relative z-10 text-center px-4 max-w-3xl mx-auto flex flex-col items-center gap-8">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/8 border border-white/12 rounded-full text-xs text-slate-300 backdrop-blur-sm">
+          {/* <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/8 border border-white/12 rounded-full text-xs text-slate-300 backdrop-blur-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-mint-signal animate-pulse" aria-hidden="true" />
             Tienda privada · Solo miembros verificados
-          </div>
+          </div> */}
 
           {/* Título */}
           <div className="flex flex-col gap-3">
@@ -93,23 +93,23 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <Link
               href="/products"
-              className="px-8 py-3.5 bg-ash-50 hover:bg-white text-graphite-700 font-semibold text-sm rounded-[8px] transition-colors text-center"
+              className="px-8 py-3.5 bg-ash-50 hover:bg-white text-graphite-700 font-semibold text-md rounded-full transition-colors text-center"
             >
-              Ver la tienda
+              Comprar ahora
             </Link>
             <Link
               href="/pricing"
-              className="px-8 py-3.5 bg-white/8 hover:bg-white/12 border border-white/12 text-snow font-medium text-sm rounded-[8px] transition-all text-center backdrop-blur-sm"
+              className="px-8 py-3.5 bg-white/8 hover:bg-white/12 border-2 border-white/12 text-snow font-medium text-md rounded-full transition-all text-center backdrop-blur-sm"
             >
-              Planes PRO
+              Házte PRO
             </Link>
           </div>
 
           {/* Aviso Telegram */}
-          <p className="text-xs text-slate-300/60 flex items-center gap-1.5">
-            <Lock size={11} className="text-slate-300/60" />
+          {/* <p className="text-xs text-slate-300/60 flex items-center gap-1.5">
+            <Lock size={12} className="text-slate-300/60" />
             Acceso exclusivo para miembros del grupo privado de Telegram
-          </p>
+          </p> */}
         </div>
 
         {/* Scroll indicator */}

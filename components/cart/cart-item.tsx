@@ -101,19 +101,19 @@ export function CartItemRow({ item, proState }: CartItemProps) {
         <div className="flex items-center gap-1.5 min-h-[16px]">
           {usesProPrice && isExempt && (
             <span className="flex items-center gap-1 text-[10px] text-amber-400/80">
-              <Crown size={9} />
+              <Crown size={12} />
               Precio PRO (sin consumir saldo)
             </span>
           )}
           {usesProPrice && !isExempt && (
-            <span className="flex items-center gap-1 text-[10px] text-amber-400/80">
-              <Crown size={9} />
-              Precio PRO · -{((item.price - (item.pricePro ?? item.price)) * item.quantity).toFixed(2)} €
+            <span className="flex items-center gap-1 text-sm text-amber-400/80">
+              <Crown size={12} />
+              Precio PRO: <span className="text-green-300">-{((item.price - (item.pricePro ?? item.price)) * item.quantity).toFixed(2)} €</span>
             </span>
           )}
           {insufficientBalance && (
             <span className="flex items-center gap-1 text-[10px] text-slate-300/60">
-              <AlertCircle size={9} />
+              <AlertCircle size={12} />
               Saldo insuficiente — precio público
             </span>
           )}

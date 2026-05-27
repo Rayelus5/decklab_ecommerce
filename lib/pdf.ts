@@ -119,8 +119,11 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Buffer> {
   doc.setTextColor(...SNOW);
   doc.text(data.paymentMethod, pageW - 14, 58, { align: "right" });
 
-  // ── Tabla de líneas ────────────────────────────────────────────────────────
+  // ── Relleno entre header y tabla (evita franja blanca) ────────────────────
   const tableStartY = 82;
+  // Cubrir el gap entre el bloque de cliente (y=78) y el inicio de la tabla
+  doc.setFillColor(...GRAPHITE);
+  doc.rect(0, 78, pageW, tableStartY - 78, "F");
 
   autoTable(doc, {
     startY: tableStartY,
@@ -178,6 +181,11 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Buffer> {
     totalLines.push(["Envío", "GRATIS"]);
   }
 
+  // Fondo oscuro para el bloque de totales (evita texto blanco sobre fondo blanco)
+  const totalsBlockHeight = totalLines.length * 7 + 22; // líneas + total + padding
+  doc.setFillColor(...GRAPHITE);
+  doc.rect(pageW - 76, finalY - 6, 66, totalsBlockHeight, "F");
+
   let totY = finalY;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
@@ -198,9 +206,9 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Buffer> {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(...MUTED);
-  doc.text("TOTAL", pageW - 70, totY + 4);
+  doc.text("TOTAL", pageW - 70, totY + 5);
   doc.setTextColor(...SNOW);
-  doc.text(`${data.total.toFixed(2).replace(".", ",")} €`, pageW - 14, totY + 4, { align: "right" });
+  doc.text(`${data.total.toFixed(2).replace(".", ",")} €`, pageW - 14, totY + 5, { align: "right" });
 
   // ── Footer ────────────────────────────────────────────────────────────────
   const pageH = doc.internal.pageSize.getHeight();

@@ -6,5 +6,6 @@ if (!process.env.RESEND_API_KEY) {
 
 export const resend = new Resend(process.env.RESEND_API_KEY);
 
+// Formato "Nombre <email>" para que el alias aparezca en el cliente de correo
 export const FROM_EMAIL =
-  process.env.RESEND_FROM_EMAIL ?? "contacto@rayelus.com";
+  process.env.RESEND_FROM_EMAIL ?? "DECKLAB SHOP <contacto@rayelus.com>";

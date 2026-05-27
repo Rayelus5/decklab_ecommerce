@@ -144,7 +144,7 @@ export function PricingCard({
 
       {/* Allowance */}
       <div className="mb-5 bg-graphite-600/50 border border-white/8 rounded-[10px] px-3 py-2.5">
-        <p className="text-xs text-slate-300">Allowance mensual</p>
+        <p className="text-xs text-slate-300">Crédito mensual</p>
         <p className="text-base font-bold text-snow tabular-nums mt-0.5">
           {monthlyAllowance.toFixed(0)} &euro;
         </p>

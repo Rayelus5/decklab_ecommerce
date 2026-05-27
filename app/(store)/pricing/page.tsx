@@ -129,7 +129,7 @@ export default async function PricingPage() {
                     <td className="py-3 px-4 text-slate-300">
                       <span className="flex items-center gap-2">
                         <BarChart2 size={13} className="text-slate-300/60 shrink-0" />
-                        Allowance mensual
+                        Crédito mensual
                       </span>
                     </td>
                     {tiers.map((tier) => (
@@ -205,7 +205,7 @@ export default async function PricingPage() {
                     <td className="py-3 px-4 text-slate-300">
                       <span className="flex items-center gap-2">
                         <BarChart2 size={13} className="text-slate-300/60 shrink-0" />
-                        Allowance extra
+                        Crédito extra
                       </span>
                     </td>
                     {tiers.map((tier) => {

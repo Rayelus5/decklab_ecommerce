@@ -13,7 +13,7 @@ export function ProAllowanceBar({ balance, max }: ProAllowanceBarProps) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex justify-between text-xs">
-        <span className="text-slate-300">Allowance disponible</span>
+        <span className="text-slate-300">Crédito disponible</span>
         <span className="text-snow font-semibold tabular-nums">
           {balance.toFixed(2).replace(".", ",")} / {max.toFixed(0)} &euro;
         </span>
@@ -24,7 +24,7 @@ export function ProAllowanceBar({ balance, max }: ProAllowanceBarProps) {
         aria-valuenow={balance}
         aria-valuemin={0}
         aria-valuemax={max}
-        aria-label={`Allowance PRO: ${balance.toFixed(2)} de ${max.toFixed(0)} euros`}
+        aria-label={`Crédito PRO: ${balance.toFixed(2)} de ${max.toFixed(0)} euros`}
       >
         <motion.div
           className="h-full rounded-full bg-gradient-to-r from-amber-600 to-amber-400"

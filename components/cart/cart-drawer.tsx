@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { X, ShoppingBag, Crown, Wallet } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,10 +17,22 @@ interface CartDrawerProps {
 export function CartDrawer({ isPro = false, proAllowanceBalance = 0 }: CartDrawerProps) {
   const { items, isOpen, closeCart, clearCart, useProPricing, toggleProPricing } = useCart();
 
-  const breakdown = useCart((s) => s.getProBreakdown(isPro, proAllowanceBalance));
+  // Seleccionar valores primitivos estables del store para que useMemo pueda comparar.
+  // No usar getProBreakdown/getSubtotal directamente como selectores: devuelven
+  // objetos nuevos en cada llamada → Zustand nunca detecta igualdad → bucle infinito.
+  const breakdown = useMemo(
+    () => useCart.getState().getProBreakdown(isPro, proAllowanceBalance),
+    // items cambia de referencia solo cuando el contenido cambia (Zustand inmutable)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items, useProPricing, isPro, proAllowanceBalance]
+  );
   const { itemStates, totalAllowanceUsed, remainingAllowance, totalSavings } = breakdown;
 
-  const subtotal = useCart((s) => s.getSubtotal(isPro, proAllowanceBalance));
+  const subtotal = useMemo(
+    () => useCart.getState().getSubtotal(isPro, proAllowanceBalance),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items, useProPricing, isPro, proAllowanceBalance]
+  );
   const totalItems = items.reduce((a, i) => a + i.quantity, 0);
 
   return (

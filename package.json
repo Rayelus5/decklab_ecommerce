@@ -30,6 +30,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^5.4.0",
     "@neondatabase/serverless": "^1.1.0",
+    "@paypal/react-paypal-js": "^9.2.0",
     "@prisma/client": "^6.0.1",
     "@react-email/body": "^0.3.0",
     "@react-email/button": "^0.2.1",

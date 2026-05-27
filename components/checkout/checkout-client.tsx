@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { CheckoutErrorBoundary } from "@/components/error-boundary";
 import { useRouter } from "next/navigation";
@@ -53,7 +53,6 @@ const STEPS = [
   { id: 4, label: "Pago", icon: CreditCard },
 ] as const;
 
-// Detectar región por código de país
 function detectRegion(country: string): "NATIONAL" | "EUROPE" {
   return country.toUpperCase() === "ES" ? "NATIONAL" : "EUROPE";
 }
@@ -67,8 +66,15 @@ export function CheckoutClient({
   shippingRates,
 }: CheckoutClientProps) {
   const router = useRouter();
-  const { items, clearCart, getTotalWeight } = useCart();
-  const subtotal = useCart((s) => s.getSubtotal(isPro, proAllowanceBalance));
+  const { items, clearCart, getTotalWeight, useProPricing } = useCart();
+
+  // useMemo evita el bucle infinito de getSnapshot que ocurre cuando se usa
+  // getSubtotal directamente como selector (devuelve un valor nuevo cada vez).
+  const subtotal = useMemo(
+    () => useCart.getState().getSubtotal(isPro, proAllowanceBalance),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items, useProPricing, isPro, proAllowanceBalance]
+  );
 
   const [step, setStep] = useState(1);
   const [couponCode, setCouponCode] = useState("");
@@ -76,7 +82,7 @@ export function CheckoutClient({
   const [couponLoading, setCouponLoading] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
 
-  const { register, watch, setValue, formState: { errors } } = useForm<CheckoutFormData>({
+  const { register, watch, formState: { errors } } = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
       addressId: addresses.find((a) => a.isDefault)?.id ?? addresses[0]?.id ?? "",
@@ -87,13 +93,11 @@ export function CheckoutClient({
 
   const selectedAddressId = watch("addressId");
   const selectedShippingRateId = watch("shippingRateId");
-  const paymentMethod = watch("paymentMethod");
 
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId);
   const selectedRegion = selectedAddress ? detectRegion(selectedAddress.country) : "NATIONAL";
   const totalWeight = getTotalWeight();
 
-  // Filtrar tarifas de envío aplicables
   const applicableRates = shippingRates.filter((rate) => {
     if (rate.region !== selectedRegion) return false;
     if (rate.minWeight > totalWeight) return false;
@@ -108,7 +112,6 @@ export function CheckoutClient({
   async function applyCoupon() {
     if (!couponCode.trim()) return;
     setCouponLoading(true);
-
     try {
       const res = await fetch("/api/coupons/validate", {
         method: "POST",
@@ -116,13 +119,11 @@ export function CheckoutClient({
         body: JSON.stringify({ code: couponCode.trim().toUpperCase(), subtotal }),
       });
       const data = await res.json();
-
       if (!res.ok) {
         toast.error(data.error ?? "Cupón inválido");
         setCouponDiscount(0);
         return;
       }
-
       setCouponDiscount(data.discount ?? 0);
       toast.success(`Cupón aplicado: -${data.discount.toFixed(2)} €`);
     } catch {
@@ -130,15 +131,6 @@ export function CheckoutClient({
     } finally {
       setCouponLoading(false);
     }
-  }
-
-  function buildCheckoutBody() {
-    return {
-      addressId: selectedAddressId,
-      shippingRateId: selectedShippingRateId,
-      couponCode: couponCode || undefined,
-      items: items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
-    };
   }
 
   async function handleStripeCheckout() {
@@ -151,11 +143,16 @@ export function CheckoutClient({
       const res = await fetch("/api/checkout/stripe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildCheckoutBody()),
+        body: JSON.stringify({
+          addressId: selectedAddressId,
+          shippingRateId: selectedShippingRateId,
+          couponCode: couponCode || undefined,
+          items: items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? "Error al iniciar el pago con Stripe");
+        toast.error(data.error ?? "Error al iniciar el pago");
         return;
       }
       window.location.href = data.url;
@@ -164,48 +161,13 @@ export function CheckoutClient({
     } finally {
       setPaymentLoading(false);
     }
-  }
-
-  async function handlePaypalCheckout() {
-    if (!selectedAddressId || !selectedShippingRateId) {
-      toast.error("Selecciona una dirección y método de envío");
-      return;
-    }
-    setPaymentLoading(true);
-    try {
-      const res = await fetch("/api/checkout/paypal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildCheckoutBody()),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error ?? "Error al iniciar el pago con PayPal");
-        return;
-      }
-      // Redirigir a la página de aprobación de PayPal
-      window.location.href = data.url;
-    } catch {
-      toast.error("Error de conexión. Inténtalo de nuevo.");
-    } finally {
-      setPaymentLoading(false);
-    }
-  }
-
-  function handleConfirmPayment() {
-    if (paymentMethod === "PAYPAL") {
-      return handlePaypalCheckout();
-    }
-    return handleStripeCheckout();
   }
 
   if (items.length === 0) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center flex flex-col items-center gap-5">
         <p className="text-lg text-snow font-medium">Tu carrito está vacío</p>
-        <Link href="/products">
-          <Button>Ir a la tienda</Button>
-        </Link>
+        <Link href="/products"><Button>Ir a la tienda</Button></Link>
       </div>
     );
   }
@@ -231,7 +193,6 @@ export function CheckoutClient({
           const Icon = s.icon;
           const isActive = step === s.id;
           const isCompleted = step > s.id;
-
           return (
             <div key={s.id} className="flex items-center">
               <button
@@ -260,8 +221,8 @@ export function CheckoutClient({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Contenido del step */}
         <div className="lg:col-span-2">
+
           {/* Step 1 — Dirección */}
           {step === 1 && (
             <div className="bg-graphite-700/40 border border-white/8 rounded-[16px] p-5 flex flex-col gap-4">
@@ -269,12 +230,9 @@ export function CheckoutClient({
                 <MapPin size={16} className="text-slate-300" />
                 Dirección de envío
               </h2>
-
               {addresses.length === 0 ? (
                 <div className="text-center py-6">
-                  <p className="text-sm text-slate-300 mb-3">
-                    No tienes direcciones guardadas.
-                  </p>
+                  <p className="text-sm text-slate-300 mb-3">No tienes direcciones guardadas.</p>
                   <Link
                     href="/profile/addresses?redirect=/checkout"
                     className="text-sm text-ash-50 hover:text-snow underline underline-offset-2"
@@ -312,8 +270,7 @@ export function CheckoutClient({
                           )}
                         </div>
                         <p className="text-sm text-snow mt-0.5">
-                          {addr.line1}
-                          {addr.line2 && `, ${addr.line2}`}
+                          {addr.line1}{addr.line2 && `, ${addr.line2}`}
                         </p>
                         <p className="text-xs text-slate-300">
                           {addr.postalCode} {addr.city}
@@ -331,7 +288,6 @@ export function CheckoutClient({
                   </Link>
                 </div>
               )}
-
               <Button
                 onClick={() => selectedAddressId && setStep(2)}
                 disabled={!selectedAddressId}
@@ -352,15 +308,13 @@ export function CheckoutClient({
                 <Truck size={16} className="text-slate-300" />
                 Método de envío
               </h2>
-
               {hasFreeShipping && (
                 <div className="bg-mint-signal/10 border border-mint-signal/20 rounded-[8px] px-3 py-2">
                   <p className="text-xs text-mint-signal font-medium">
-                    ✓ Envío gratuito incluido en tu plan PRO
+                    Envío gratuito incluido en tu plan PRO
                   </p>
                 </div>
               )}
-
               {applicableRates.length === 0 ? (
                 <p className="text-sm text-slate-300 py-4 text-center">
                   No hay métodos de envío disponibles para tu dirección. Contacta con soporte.
@@ -413,7 +367,6 @@ export function CheckoutClient({
                   })}
                 </div>
               )}
-
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep(1)} size="lg" className="flex-1">
                   <ArrowLeft size={15} />
@@ -442,7 +395,6 @@ export function CheckoutClient({
               <p className="text-sm text-slate-300">
                 Si tienes un cupón de descuento, introdúcelo aquí. Es opcional.
               </p>
-
               <div className="flex gap-2">
                 <Input
                   placeholder="CÓDIGO-DESCUENTO"
@@ -460,7 +412,6 @@ export function CheckoutClient({
                   Aplicar
                 </Button>
               </div>
-
               {couponDiscount > 0 && (
                 <div className="flex items-center justify-between bg-mint-signal/10 border border-mint-signal/20 rounded-[8px] px-3 py-2">
                   <span className="text-xs text-mint-signal font-medium">
@@ -471,7 +422,6 @@ export function CheckoutClient({
                   </span>
                 </div>
               )}
-
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setStep(2)} size="lg" className="flex-1">
                   <ArrowLeft size={15} />
@@ -490,40 +440,12 @@ export function CheckoutClient({
             <div className="bg-graphite-700/40 border border-white/8 rounded-[16px] p-5 flex flex-col gap-4">
               <h2 className="text-base font-semibold text-snow flex items-center gap-2">
                 <CreditCard size={16} className="text-slate-300" />
-                Método de pago
+                Pago seguro con Stripe
               </h2>
 
-              {/* Selección de método */}
-              <div className="flex flex-col gap-2">
-                {[
-                  { value: "STRIPE", label: "Tarjeta de crédito / débito", desc: "Visa, Mastercard, American Express. Pago seguro con Stripe." },
-                  { value: "PAYPAL", label: "PayPal", desc: "Paga con tu cuenta PayPal. Redirigirás a PayPal para completar el pago." },
-                ].map((method) => (
-                  <label
-                    key={method.value}
-                    className={clsx(
-                      "flex items-start gap-3 p-4 rounded-[11px] border cursor-pointer transition-all",
-                      paymentMethod === method.value
-                        ? "border-ash-50/40 bg-ash-50/5"
-                        : "border-white/8 hover:border-white/15"
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      value={method.value}
-                      {...register("paymentMethod")}
-                      className="mt-1 accent-ash-50"
-                    />
-                    <div>
-                      <p className="text-sm font-medium text-snow flex items-center gap-2">
-                        <CreditCard size={14} className="text-slate-300" />
-                        {method.label}
-                      </p>
-                      <p className="text-xs text-slate-300 mt-0.5">{method.desc}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
+              <p className="text-sm text-slate-300">
+                Acepta Visa, Mastercard, American Express, Google Pay y Apple Pay.
+              </p>
 
               {/* Aviso de no devoluciones */}
               <div className="bg-ember-red/10 border border-ember-red/20 rounded-[8px] px-3 py-2.5">
@@ -532,7 +454,7 @@ export function CheckoutClient({
                   Sin devoluciones
                 </p>
                 <p className="text-xs text-slate-300 mt-0.5">
-                  Al confirmar la compra, aceptas que no se realizan devoluciones en ningún producto de DECKLAB.
+                  Al confirmar la compra aceptas que no se realizan devoluciones en ningún producto de DECKLAB.
                 </p>
               </div>
 
@@ -542,12 +464,12 @@ export function CheckoutClient({
                   Volver
                 </Button>
                 <Button
-                  onClick={handleConfirmPayment}
+                  onClick={handleStripeCheckout}
                   loading={paymentLoading}
                   size="lg"
                   className="flex-1"
                 >
-                  {paymentMethod === "PAYPAL" ? "Pagar con PayPal" : "Confirmar y pagar"}
+                  Confirmar y pagar
                 </Button>
               </div>
             </div>
@@ -559,7 +481,6 @@ export function CheckoutClient({
           <div className="bg-graphite-700/40 border border-white/8 rounded-[16px] p-5 flex flex-col gap-4">
             <h2 className="text-sm font-semibold text-snow">Resumen del pedido</h2>
 
-            {/* Items */}
             <div className="flex flex-col gap-2 divide-y divide-white/8">
               {items.map((item) => (
                 <div key={item.variantId} className="flex justify-between gap-2 pt-2 first:pt-0 text-xs">
@@ -575,7 +496,6 @@ export function CheckoutClient({
               ))}
             </div>
 
-            {/* Totales */}
             <div className="border-t border-white/8 pt-3 flex flex-col gap-1.5 text-sm">
               <div className="flex justify-between text-slate-300">
                 <span>Subtotal</span>
@@ -605,7 +525,6 @@ export function CheckoutClient({
               )}
             </div>
 
-            {/* PRO balance */}
             {isPro && proAllowanceBalance > 0 && (
               <div className="text-xs text-amber-400/80 text-center">
                 Allowance PRO disponible: {proAllowanceBalance.toFixed(2).replace(".", ",")} €

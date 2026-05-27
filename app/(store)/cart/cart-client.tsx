@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { ShoppingBag, ArrowLeft, Crown } from "lucide-react";
 import { useCart } from "@/lib/hooks/use-cart";
@@ -13,8 +14,17 @@ interface CartClientProps {
 
 export function CartClient({ isPro, proAllowanceBalance }: CartClientProps) {
   const { items, clearCart, useProPricing, toggleProPricing } = useCart();
-  const breakdown = useCart((s) => s.getProBreakdown(isPro, proAllowanceBalance));
-  const subtotal = useCart((s) => s.getSubtotal(isPro, proAllowanceBalance));
+
+  const breakdown = useMemo(
+    () => useCart.getState().getProBreakdown(isPro, proAllowanceBalance),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items, useProPricing, isPro, proAllowanceBalance]
+  );
+  const subtotal = useMemo(
+    () => useCart.getState().getSubtotal(isPro, proAllowanceBalance),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items, useProPricing, isPro, proAllowanceBalance]
+  );
   const totalItems = items.reduce((a, i) => a + i.quantity, 0);
 
   const { itemStates, totalSavings, remainingAllowance } = breakdown;

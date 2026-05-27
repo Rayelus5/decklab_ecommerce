@@ -64,15 +64,25 @@ export async function getPayPalAccessToken(): Promise<string> {
 // -------------------------------------------------------
 // Crear orden de pago
 // -------------------------------------------------------
+/**
+ * Crea una orden de PayPal.
+ *
+ * Flujo JS SDK (recomendado):
+ *   No pases returnUrl/cancelUrl. El SDK gestiona la experiencia internamente.
+ *   Devuelve { orderId } — úsalo en el callback createOrder del componente PayPalButtons.
+ *
+ * Flujo redirect (legacy):
+ *   Pasa returnUrl y cancelUrl. Devuelve también approvalUrl para redirigir al usuario.
+ */
 export async function createPayPalOrder(params: {
-  total: number;           // Total en EUR, ya calculado (con envío y descuento)
-  description: string;     // Descripción breve del pedido
-  returnUrl: string;       // URL a la que PayPal redirige tras el pago
-  cancelUrl: string;       // URL a la que PayPal redirige si el usuario cancela
-}): Promise<{ orderId: string; approvalUrl: string }> {
+  total: number;
+  description: string;
+  returnUrl?: string;
+  cancelUrl?: string;
+}): Promise<{ orderId: string; approvalUrl?: string }> {
   const token = await getPayPalAccessToken();
 
-  const body = {
+  const body: Record<string, unknown> = {
     intent: "CAPTURE",
     purchase_units: [
       {
@@ -83,7 +93,11 @@ export async function createPayPalOrder(params: {
         description: params.description,
       },
     ],
-    payment_source: {
+  };
+
+  // Solo se incluye payment_source en el flujo redirect (no JS SDK)
+  if (params.returnUrl && params.cancelUrl) {
+    body.payment_source = {
       paypal: {
         experience_context: {
           payment_method_preference: "IMMEDIATE_PAYMENT_REQUIRED",
@@ -94,8 +108,8 @@ export async function createPayPalOrder(params: {
           cancel_url: params.cancelUrl,
         },
       },
-    },
-  };
+    };
+  }
 
   const res = await fetch(`${PAYPAL_BASE}/v2/checkout/orders`, {
     method: "POST",
@@ -114,15 +128,9 @@ export async function createPayPalOrder(params: {
 
   const data = await res.json();
 
-  // PayPal devuelve el link de aprobación en data.links
-  const approvalUrl =
-    (data.links as Array<{ rel: string; href: string }>)?.find(
-      (l) => l.rel === "payer-action"
-    )?.href;
-
-  if (!approvalUrl) {
-    throw new Error("PayPal no devolvió approval URL");
-  }
+  const approvalUrl = (data.links as Array<{ rel: string; href: string }>)?.find(
+    (l) => l.rel === "payer-action"
+  )?.href;
 
   return { orderId: data.id as string, approvalUrl };
 }

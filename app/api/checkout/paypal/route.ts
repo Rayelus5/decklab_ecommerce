@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import { validateCoupon, applyCoupon } from "@/lib/coupon";
-import { createPayPalOrder, encodePayload } from "@/lib/paypal";
+import { createPayPalOrder } from "@/lib/paypal";
 
 interface CartItemInput {
   variantId: string;
@@ -173,34 +173,24 @@ export async function POST(req: NextRequest) {
     // 8. Total final
     const total = Math.max(0, productSubtotal + shippingCost - discountAmount);
 
-    // 9. Codificar datos del checkout para pasarlos por la return_url
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-
-    const payload = encodePayload({
-      userId: session.user.id,
-      addressId,
-      shippingRateId,
-      shippingType: shippingRate.type,
-      shippingRegion: shippingRate.region,
-      couponCode: couponCode ?? "",
-      couponId,
-      discountAmount,
-      isPro: session.user.isPro,
-      cartItems: cartMetaItems,
-    });
-
-    // 10. Crear orden en PayPal
+    // 9. Crear orden en PayPal (flujo JS SDK — sin returnUrl ni payload codificado)
     const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
-    const { orderId, approvalUrl } = await createPayPalOrder({
+    const { orderId } = await createPayPalOrder({
       total,
       description: `DECKLAB — ${itemCount} artículo${itemCount !== 1 ? "s" : ""}`,
-      returnUrl: `${appUrl}/api/checkout/paypal/capture?d=${payload}`,
-      cancelUrl: `${appUrl}/checkout?paypal=cancelled`,
     });
 
     console.log(`[PAYPAL] Orden creada: ${orderId} total: ${total.toFixed(2)} EUR`);
 
-    return NextResponse.json({ url: approvalUrl, orderId });
+    // Devolver orderId + metadatos calculados que el cliente pasará al capture
+    return NextResponse.json({
+      orderId,
+      shippingType: shippingRate.type,
+      shippingRegion: shippingRate.region,
+      couponId,
+      discountAmount,
+      cartItems: cartMetaItems,
+    });
   } catch (error) {
     console.error("[CHECKOUT PAYPAL]", error);
     return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });

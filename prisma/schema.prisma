@@ -1,0 +1,446 @@
+// =============================================================
+// DECKLAB SHOP — Prisma Schema v6.0.1
+// PostgreSQL (Neon.tech)
+// =============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================
+// ENUMS
+// =============================================================
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+}
+
+enum ShippingRegion {
+  NATIONAL // España peninsular + Baleares
+  EUROPE   // Resto de Europa
+}
+
+enum OrderStatus {
+  PENDING    // Pedido creado (no pagado aún)
+  PAID       // Pago confirmado por webhook
+  PROCESSING // En preparación por el equipo
+  SHIPPED    // Enviado (con tracking)
+  DELIVERED  // Entregado
+  CANCELLED  // Cancelado
+  REFUNDED   // Reembolsado
+}
+
+// =============================================================
+// USUARIOS Y AUTENTICACIÓN
+// =============================================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   @db.Text // Hashed con bcrypt
+
+  role UserRole @default(CUSTOMER)
+
+  // --- Stripe ---
+  stripeCustomerId String? @unique
+
+  // --- Telegram Gate ---
+  telegramId         String?   @unique // ID numérico de Telegram
+  telegramUsername   String?            // @username (sin @)
+  isTelegramMember   Boolean   @default(false)
+  telegramVerifiedAt DateTime?          // Última verificación de membresía
+
+  // --- Lógica PRO ---
+  isPro               Boolean   @default(false)
+  proSubscriptionId   String?   // Stripe Subscription ID activa
+  proTierId           String?
+  proAllowanceBalance Decimal   @default(0) @db.Decimal(10, 2) // Saldo de compra disponible
+  proSince            DateTime? // Para calcular permanencia mínima (2 ciclos = 4 meses)
+
+  // --- Control de acceso ---
+  isBlocked Boolean @default(false) // Admin puede bloquear el acceso
+
+  // --- Relaciones ---
+  addresses      Address[]
+  orders         Order[]
+  sessions       Session[]
+  accounts       Account[]
+  proTier        ProTier?        @relation(fields: [proTierId], references: [id])
+  adminLogs      AdminActionLog[] @relation("AdminWhoActed")
+  affectedByLogs AdminActionLog[] @relation("LogTargetUser")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([telegramId])
+  @@index([stripeCustomerId])
+  @@index([role])
+}
+
+// NextAuth — Cuentas OAuth (Google, etc.)
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+// NextAuth — Sesiones
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Direcciones de envío/facturación
+model Address {
+  id         String  @id @default(cuid())
+  userId     String
+  label      String? // "Casa", "Trabajo", "Padres"
+  line1      String
+  line2      String?
+  city       String
+  postalCode String
+  province   String?
+  country    String  @default("ES") // ISO 3166-1 alpha-2
+  phone      String
+
+  isDefault Boolean @default(false)
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// =============================================================
+// CATÁLOGO DE PRODUCTOS
+// =============================================================
+
+model Category {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String?
+  image       String?
+  sortOrder   Int     @default(0)
+  parentId    String?
+
+  parent   Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryToCategory")
+  products Product[]
+
+  @@index([slug])
+}
+
+model Product {
+  id          String  @id @default(cuid())
+  title       String
+  slug        String  @unique
+  description String  @db.Text
+  categoryId  String?
+
+  // --- Estado ---
+  isArchived Boolean @default(false)
+  isFeatured Boolean @default(false)
+
+  // --- Acceso PRO / Exclusividad ---
+  // Nivel mínimo de tier para ver el producto anticipadamente (null = todos)
+  earlyAccessTierLevel Int?
+  // Si true, solo usuarios con exclusiveProducts: true en su tier pueden verlo
+  isExclusive Boolean @default(false)
+
+  // --- Probabilidades y Contenido ---
+  // JSON con la tabla de probabilidades: { "Rare": "45%", "Ultra Rare": "5%", ... }
+  probabilityData Json?
+  // Siempre true en DECKLAB (sin devoluciones), visible en la ficha
+  noReturns Boolean @default(true)
+
+  // --- Relaciones ---
+  category Category?       @relation(fields: [categoryId], references: [id])
+  variants ProductVariant[]
+  images   ProductImage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([isFeatured])
+  @@index([isArchived])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String
+  alt       String?
+  position  Int     @default(0) // Para drag & drop en admin
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  sku       String  @unique
+  title     String? // "Rojo / XL", "Standard", etc.
+
+  // --- Precios ---
+  price    Decimal  @db.Decimal(10, 2) // Precio público
+  pricePro Decimal? @db.Decimal(10, 2) // Precio para usuarios PRO
+
+  // --- Reglas PRO específicas ---
+  // Si true, comprar este item a precio PRO NO descuenta del allowance
+  proExempt Boolean @default(false)
+
+  // --- Inventario y Logística ---
+  stock  Int @default(0)
+  weight Int @default(0) // En GRAMOS (crucial para cálculo de envíos)
+
+  // --- Atributos dinámicos ---
+  attributes Json? // { "color": "red", "edition": "Japanese" }
+
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@index([productId])
+  @@index([sku])
+}
+
+// =============================================================
+// REGLAS DE NEGOCIO — PRO TIERS Y ENVÍOS
+// =============================================================
+
+// Niveles de suscripción PRO (gestionados desde el admin, no hardcoded)
+model ProTier {
+  id   String @id @default(cuid())
+  name String @unique // "Nivel 1", "Nivel 2", ..., "Nivel 5"
+
+  priceMonthly     Decimal @db.Decimal(10, 2) // Precio mostrado como €/mes
+  monthlyAllowance Decimal @db.Decimal(10, 2) // Capacidad de compra mensual en €
+
+  // Stripe — el precio real se cobra bimestral (interval_count: 2)
+  stripePriceId String // ID del precio recurrente en Stripe Dashboard
+
+  // Descripción y beneficios configurables por admin
+  description String? @db.Text
+  // JSON de perks:
+  // {
+  //   "earlyAccessHours": 48,      // Horas de acceso anticipado vs tier inferior
+  //   "freeShipping": false,        // Envío gratis
+  //   "exclusiveProducts": false,   // Acceso a productos exclusivos
+  //   "bonusAllowancePercent": 0    // % extra de allowance en cada refill
+  // }
+  benefits Json?
+
+  // Control
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0) // Para ordenar en la página de pricing
+
+  users User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Tarifas de envío dinámicas por peso y región
+model ShippingRate {
+  id   String @id @default(cuid())
+  name String // "Ordinario Nacional < 500g"
+
+  type   String         // "ORDINARIO" | "CERTIFICADO"
+  region ShippingRegion
+
+  minWeight Int     // Peso mínimo en gramos (inclusivo)
+  maxWeight Int     // Peso máximo en gramos (exclusivo, -1 = sin límite)
+  price     Decimal @db.Decimal(10, 2)
+
+  active Boolean @default(true)
+
+  @@index([region, type, active])
+}
+
+// =============================================================
+// CUPONES Y DESCUENTOS
+// =============================================================
+
+model Coupon {
+  id   String @id @default(cuid())
+  code String @unique // Ej: "DECKLAB20"
+
+  type  String  // "PERCENT" | "FIXED"
+  value Decimal @db.Decimal(10, 2) // 20 = 20% o 20€ fijo
+
+  // Restricciones
+  minOrderAmount Decimal? @db.Decimal(10, 2) // Pedido mínimo para aplicar
+  maxUses        Int?                          // Usos globales máximos (null = ilimitado)
+  usesCount      Int      @default(0)
+  maxUsesPerUser Int?                          // Usos por usuario (null = ilimitado)
+
+  expiresAt DateTime?
+  isActive  Boolean   @default(true)
+
+  // Aplicabilidad específica (vacío = aplica a todo)
+  productIds  String[] // IDs de productos específicos
+  categoryIds String[] // IDs de categorías específicas
+
+  // Relaciones
+  orders Order[]
+
+  createdAt DateTime @default(now())
+
+  @@index([code])
+  @@index([isActive])
+}
+
+// =============================================================
+// PEDIDOS
+// =============================================================
+
+model Order {
+  id          String @id @default(cuid())
+  orderNumber Int    @unique @default(autoincrement()) // #1001, #1002...
+  userId      String
+
+  status OrderStatus @default(PENDING)
+  isPaid Boolean     @default(false)
+
+  // --- Totales ---
+  total         Decimal @db.Decimal(10, 2)
+  subtotal      Decimal @db.Decimal(10, 2)
+  taxTotal      Decimal @default(0) @db.Decimal(10, 2)
+  shippingCost  Decimal @db.Decimal(10, 2)
+  discountTotal Decimal @default(0) @db.Decimal(10, 2)
+
+  // --- Snapshot de envío (preservar si cambian las tarifas) ---
+  shippingType   String // "ORDINARIO" | "CERTIFICADO"
+  shippingRegion String // "NATIONAL" | "EUROPE"
+
+  // --- Pago ---
+  stripePaymentIntentId String?  @unique // Stripe
+  paypalOrderId         String?  @unique // PayPal
+  paymentMethod         String   @default("STRIPE") // "STRIPE" | "PAYPAL"
+
+  // --- Cupón ---
+  couponId   String?
+  couponCode String? // Snapshot del código usado
+
+  // --- Facturación ---
+  invoiceUrl String? // URL del PDF de factura generado
+
+  // --- Relaciones ---
+  user      User       @relation(fields: [userId], references: [id])
+  address   Address?   @relation(fields: [addressId], references: [id])
+  addressId String?
+  coupon    Coupon?    @relation(fields: [couponId], references: [id])
+  items     OrderItem[]
+  shipment  Shipment?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([stripePaymentIntentId])
+  @@index([paypalOrderId])
+  @@index([orderNumber])
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  variantId String
+
+  quantity  Int
+  pricePaid Decimal @db.Decimal(10, 2) // Precio unitario final cobrado
+
+  // Flag crítico: ¿este item consumió allowance PRO?
+  wasProPrice Boolean @default(false)
+
+  order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variant ProductVariant @relation(fields: [variantId], references: [id])
+
+  @@index([orderId])
+}
+
+// Envío del pedido (uno a uno con Order)
+model Shipment {
+  id      String @id @default(cuid())
+  orderId String @unique
+
+  carrier        String  @default("CORREOS")
+  trackingNumber String? // Añadido por admin
+  labelUrl       String? // Imagen de la etiqueta de envío (opcional)
+
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// =============================================================
+// AUDITORÍA DE ACCIONES ADMIN
+// =============================================================
+
+model AdminActionLog {
+  id      String @id @default(cuid())
+  adminId String
+
+  // Tipo de acción: "PRODUCT_CREATED", "ORDER_STATUS_CHANGED", "USER_BLOCKED", etc.
+  actionType String
+
+  // Referencia al objeto afectado
+  targetId   String?
+  targetType String? // "Product", "Order", "User", "ProTier", "Coupon", etc.
+
+  // Detalles adicionales en JSON
+  details Json?
+
+  admin      User  @relation("AdminWhoActed", fields: [adminId], references: [id])
+  targetUser User? @relation("LogTargetUser", fields: [targetId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+  @@index([actionType])
+  @@index([targetId])
+  @@index([createdAt])
+}

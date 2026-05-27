@@ -1,0 +1,192 @@
+@import "tailwindcss";
+
+/* ============================================================
+   DECKLAB SHOP — Design Tokens (Raycast-inspired Dark Theme)
+   ============================================================ */
+
+@theme {
+  /* --- Colores principales --- */
+  --color-void-black: #040506;
+  --color-deep-charcoal: #07080a;
+  --color-graphite-700: #111214;
+  --color-graphite-600: #1b1c1e;
+  --color-graphite-500: #363739;
+  --color-graphite-400: #454647;
+  --color-slate-300: #6a6b6c;
+  --color-slate-200: #9c9c9d;
+  --color-ash-50: #e6e6e6;
+  --color-snow: #ffffff;
+  --color-ember-red: #ff6363;
+  --color-ember-dark: #452324;
+  --color-mint-signal: #59d499;
+  --color-sky-signal-from: #56c2ff;
+  --color-sky-signal-to: #138af2;
+
+  /* --- Alias semánticos --- */
+  --color-background: var(--color-void-black);
+  --color-surface: var(--color-deep-charcoal);
+  --color-surface-raised: var(--color-graphite-700);
+  --color-surface-overlay: var(--color-graphite-600);
+  --color-border: var(--color-graphite-500);
+  --color-border-subtle: var(--color-graphite-400);
+  --color-text-primary: var(--color-snow);
+  --color-text-secondary: var(--color-slate-200);
+  --color-text-muted: var(--color-slate-300);
+  --color-cta: var(--color-ash-50);
+  --color-accent: var(--color-ember-red);
+  --color-success: var(--color-mint-signal);
+
+  /* --- Tipografía --- */
+  --font-sans: "Inter", "Inter Fallback", system-ui, sans-serif;
+  --font-mono: "GeistMono", "JetBrains Mono", "IBM Plex Mono", monospace;
+
+  /* --- Escala tipográfica --- */
+  --text-caption: 0.6875rem;   /* 11px */
+  --text-xs: 0.75rem;           /* 12px */
+  --text-sm: 0.8125rem;         /* 13px */
+  --text-base: 1rem;            /* 16px */
+  --text-lg: 1.125rem;          /* 18px */
+  --text-xl: 1.25rem;           /* 20px */
+  --text-2xl: 1.5rem;           /* 24px */
+  --text-3xl: 2rem;             /* 32px */
+  --text-4xl: 3.5rem;           /* 56px */
+  --text-5xl: 4rem;             /* 64px */
+
+  /* --- Bordes redondeados --- */
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-md: 11px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-pill: 86px;
+  --radius-full: 9999px;
+
+  /* --- Espaciado personalizado --- */
+  --spacing-section: 80px;
+  --spacing-card: 24px;
+  --spacing-gap: 15px;
+  --max-width-page: 1200px;
+}
+
+/* --- CSS custom properties para uso en estilos --- */
+:root {
+  --shadow-subtle: rgba(0, 0, 0, 0.4) 0px 1.5px 0.5px 2.5px,
+    rgb(0, 0, 0) 0px 0px 0.5px 1px,
+    rgba(0, 0, 0, 0.25) 0px 2px 1px 1px inset,
+    rgba(255, 255, 255, 0.2) 0px 1px 1px 1px inset;
+  --shadow-subtle-2: rgb(27, 28, 30) 0px 0px 0px 1px,
+    rgb(7, 8, 10) 0px 0px 0px 2px;
+  --shadow-subtle-3: rgba(255, 255, 255, 0.05) 0px 1px 0px 0px inset,
+    rgba(255, 255, 255, 0.1) 0px 0px 0px 1px;
+  --shadow-subtle-5: rgba(255, 255, 255, 0.1) 0px 1px 0px 0px inset;
+  --shadow-subtle-6: rgba(255, 255, 255, 0.15) 0px 1px 1px 0px inset;
+  --shadow-sm: rgba(0, 0, 0, 0.25) 0px 4px 4px 0px;
+  --shadow-lg: rgba(215, 201, 175, 0.05) 0px 0px 20px 5px,
+    rgba(215, 201, 175, 0.03) 0px 0px 50px 20px;
+  --shadow-xl: rgba(0, 0, 0, 0.4) 0px 4px 40px 8px,
+    rgba(0, 0, 0, 0.8) 0px 0px 0px 1px;
+  --shadow-xl-2: rgba(255, 255, 255, 0.03) 0px 0px 40px 20px,
+    rgba(255, 255, 255, 0.06) 0px 0px 0px 1px inset;
+  --shadow-card: rgba(0, 0, 0, 0.28) 0px 1.189px 2.377px 0px;
+  --shadow-outlined: rgba(255, 255, 255, 0.05) 0px 1px 0px 0px inset,
+    rgba(255, 255, 255, 0.25) 0px 0px 0px 1px,
+    rgba(0, 0, 0, 0.2) 0px -1px 0px 0px inset;
+
+  /* Gradientes de atmósfera */
+  --gradient-nebula: radial-gradient(
+    84.6% 73.49% at 50% 26.51%,
+    rgba(4, 63, 150, 0.7),
+    rgba(6, 18, 37, 0.25)
+  );
+  --gradient-violet: radial-gradient(
+    86.88% 75.47% at 50% 24.53%,
+    rgba(82, 48, 145, 0.7),
+    rgba(26, 11, 51, 0.14)
+  );
+  --gradient-sky: linear-gradient(135deg, #56c2ff 0%, #138af2 100%);
+}
+
+/* --- Estilos globales base --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-color: #040506;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-feature-settings: "calt", "kern", "liga", "ss03";
+}
+
+/* --- Scroll bar personalizada --- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #07080a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #363739;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #454647;
+}
+
+/* --- Selección de texto --- */
+::selection {
+  background-color: rgba(86, 194, 255, 0.2);
+  color: #ffffff;
+}
+
+/* --- Clases utilitarias personalizadas --- */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(36px);
+  -webkit-backdrop-filter: blur(36px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+.outlined-card {
+  background: transparent;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: var(--shadow-outlined);
+}
+
+.nebula-bg {
+  background: var(--gradient-nebula);
+}
+
+.violet-bg {
+  background: var(--gradient-violet);
+}
+
+.text-gradient-sky {
+  background: var(--gradient-sky);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* --- Focus visible accesible --- */
+:focus-visible {
+  outline: 2px solid rgba(86, 194, 255, 0.6);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

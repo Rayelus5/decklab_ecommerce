@@ -13,6 +13,11 @@ import { loginSchema } from "@/lib/validations";
 export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
 
+  // Necesario en Vercel / detrás de un proxy inverso.
+  // Sin esto, NextAuth no puede determinar el host correcto
+  // para validar CSRF → error MissingCSRF en Google OAuth.
+  trustHost: true,
+
   session: {
     strategy: "jwt",
   },

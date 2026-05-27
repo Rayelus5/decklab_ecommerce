@@ -76,37 +76,47 @@ export function verifyTelegramWidgetData(data: TelegramAuthData): boolean {
 export async function checkGroupMembership(
   telegramUserId: number
 ): Promise<boolean> {
+  // En desarrollo, si se define SKIP_TELEGRAM_MEMBERSHIP_CHECK=true
+  // se omite la verificación para facilitar las pruebas.
+  if (process.env.SKIP_TELEGRAM_MEMBERSHIP_CHECK === "true") {
+    console.log("[Telegram] Comprobación de membresía omitida (modo dev)");
+    return true;
+  }
+
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const groupId = process.env.TELEGRAM_GROUP_ID;
 
-  if (!botToken || !groupId) {
-    console.error("TELEGRAM_BOT_TOKEN o TELEGRAM_GROUP_ID no definidos");
+  if (!botToken) {
+    console.error("[Telegram] TELEGRAM_BOT_TOKEN no definida");
     return false;
   }
 
+  if (!groupId) {
+    console.error("[Telegram] TELEGRAM_GROUP_ID no definida — debe ser el ID numérico negativo del grupo, ej: -1001234567890");
+    return false;
+  }
+
+  const url = `https://api.telegram.org/bot${botToken}/getChatMember?chat_id=${groupId}&user_id=${telegramUserId}`;
+  console.log(`[Telegram] getChatMember → chat_id=${groupId} user_id=${telegramUserId}`);
+
   try {
-    const res = await fetch(
-      `https://api.telegram.org/bot${botToken}/getChatMember?chat_id=${groupId}&user_id=${telegramUserId}`,
-      { method: "GET" }
-    );
-
-    if (!res.ok) {
-      console.error("Error al llamar a getChatMember:", res.status);
-      return false;
-    }
-
+    const res = await fetch(url, { method: "GET" });
     const data = await res.json();
 
-    if (!data.ok) {
-      console.error("getChatMember devolvió error:", data.description);
+    // Log completo para depuración en Vercel
+    console.log("[Telegram] getChatMember response:", JSON.stringify(data));
+
+    if (!res.ok || !data.ok) {
+      console.error(`[Telegram] getChatMember falló: ${data.description ?? res.status}`);
       return false;
     }
 
     const status: string = data.result?.status;
-    // Los estados válidos de membresía
-    return ["member", "administrator", "creator"].includes(status);
+    const isAllowed = ["member", "administrator", "creator"].includes(status);
+    console.log(`[Telegram] user ${telegramUserId} status="${status}" allowed=${isAllowed}`);
+    return isAllowed;
   } catch (error) {
-    console.error("Error verificando membresía de Telegram:", error);
+    console.error("[Telegram] Error de red al verificar membresía:", error);
     return false;
   }
 }

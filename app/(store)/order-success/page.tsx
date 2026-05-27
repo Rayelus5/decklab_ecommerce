@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { CheckCircle2, Mail, Package, Truck, MessageCircle } from "lucide-react";
+import { CheckCircle2, Mail, Package, Truck, MessageCircle, AlertTriangle } from "lucide-react";
+import { ClearCartOnSuccess } from "./clear-cart";
 
 export const metadata: Metadata = {
   title: "Pedido confirmado — DECKLAB",
@@ -25,10 +26,31 @@ const NEXT_STEPS = [
   },
 ];
 
-export default function OrderSuccessPage() {
+export default async function OrderSuccessPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ db_error?: string }>;
+}) {
+  const sp = await searchParams;
+  const hasDbError = sp.db_error === "1";
+
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4">
+      <ClearCartOnSuccess />
       <div className="max-w-md w-full text-center flex flex-col items-center gap-8">
+      {hasDbError && (
+        <div className="w-full bg-amber-500/10 border border-amber-500/25 rounded-[12px] p-4 text-left">
+          <p className="text-sm font-semibold text-amber-300 flex items-center gap-2 mb-1">
+            <AlertTriangle size={14} />
+            Tu pago fue procesado correctamente
+          </p>
+          <p className="text-xs text-amber-200/80 leading-relaxed">
+            Sin embargo, hubo un problema al registrar el pedido en nuestro sistema.
+            Guarda el ID de tu transacción PayPal y contáctanos por Telegram —
+            lo resolveremos de inmediato.
+          </p>
+        </div>
+      )}
         {/* Icono */}
         <div className="w-20 h-20 rounded-full bg-mint-signal/15 border border-mint-signal/25 flex items-center justify-center">
           <CheckCircle2 size={40} className="text-mint-signal" />

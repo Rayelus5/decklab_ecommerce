@@ -132,43 +132,71 @@ export function CheckoutClient({
     }
   }
 
+  function buildCheckoutBody() {
+    return {
+      addressId: selectedAddressId,
+      shippingRateId: selectedShippingRateId,
+      couponCode: couponCode || undefined,
+      items: items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
+    };
+  }
+
   async function handleStripeCheckout() {
     if (!selectedAddressId || !selectedShippingRateId) {
       toast.error("Selecciona una dirección y método de envío");
       return;
     }
-
     setPaymentLoading(true);
-
     try {
       const res = await fetch("/api/checkout/stripe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          addressId: selectedAddressId,
-          shippingRateId: selectedShippingRateId,
-          couponCode: couponCode || undefined,
-          items: items.map((i) => ({
-            variantId: i.variantId,
-            quantity: i.quantity,
-          })),
-        }),
+        body: JSON.stringify(buildCheckoutBody()),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
-        toast.error(data.error ?? "Error al iniciar el pago");
+        toast.error(data.error ?? "Error al iniciar el pago con Stripe");
         return;
       }
-
-      // Redirigir a Stripe Checkout
       window.location.href = data.url;
     } catch {
       toast.error("Error de conexión. Inténtalo de nuevo.");
     } finally {
       setPaymentLoading(false);
     }
+  }
+
+  async function handlePaypalCheckout() {
+    if (!selectedAddressId || !selectedShippingRateId) {
+      toast.error("Selecciona una dirección y método de envío");
+      return;
+    }
+    setPaymentLoading(true);
+    try {
+      const res = await fetch("/api/checkout/paypal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildCheckoutBody()),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Error al iniciar el pago con PayPal");
+        return;
+      }
+      // Redirigir a la página de aprobación de PayPal
+      window.location.href = data.url;
+    } catch {
+      toast.error("Error de conexión. Inténtalo de nuevo.");
+    } finally {
+      setPaymentLoading(false);
+    }
+  }
+
+  function handleConfirmPayment() {
+    if (paymentMethod === "PAYPAL") {
+      return handlePaypalCheckout();
+    }
+    return handleStripeCheckout();
   }
 
   if (items.length === 0) {
@@ -514,12 +542,12 @@ export function CheckoutClient({
                   Volver
                 </Button>
                 <Button
-                  onClick={handleStripeCheckout}
+                  onClick={handleConfirmPayment}
                   loading={paymentLoading}
                   size="lg"
                   className="flex-1"
                 >
-                  Confirmar y pagar
+                  {paymentMethod === "PAYPAL" ? "Pagar con PayPal" : "Confirmar y pagar"}
                 </Button>
               </div>
             </div>

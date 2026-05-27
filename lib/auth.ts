@@ -14,10 +14,13 @@ import { verifySessionToken } from "@/app/api/auth/telegram/route";
 export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
 
-  // Necesario en Vercel / detrás de un proxy inverso.
-  // Sin esto, NextAuth no puede determinar el host correcto
-  // para validar CSRF → error MissingCSRF en Google OAuth.
+  // trustHost: permite que NextAuth confíe en los headers X-Forwarded-Host
+  // que Vercel/proxies añaden. Sin esto → MissingCSRF en Google OAuth.
   trustHost: true,
+
+  // basePath no es necesario cambiar (por defecto /api/auth),
+  // pero sí es crítico que AUTH_URL esté en las env vars de Vercel.
+  // NextAuth v5 usa AUTH_URL (no NEXTAUTH_URL) para anclar CSRF y cookies.
 
   session: {
     strategy: "jwt",

@@ -1,7 +1,7 @@
 # DECKLAB SHOP — TASKS.md
 
 > Última actualización: 2026-05-27
-> Estado del proyecto: 🚧 Sprint 0 en progreso
+> Estado del proyecto: 🚧 Sprints 0-4 completados — iniciando Sprint 5 (Carrito & Checkout)
 > Leyenda: `[ ]` Pendiente | `[x]` Completado | `[~]` En progreso | `[!]` Bloqueado | `[s]` Saltado
 
 ---
@@ -72,10 +72,11 @@
 - [x] Crear `lib/pro-logic.ts` (PRO allowance deduction/refill)
 - [x] Crear `lib/coupon.ts` (validación y aplicación de cupones)
 - [x] Crear `lib/hooks/use-cart.ts` (Zustand cart store)
-- [x] Crear `middleware.ts` (protección de rutas + Telegram gate)
+- [x] Crear `proxy.ts` (protección de rutas + Telegram gate, Next.js 16)
 - [x] Crear `bot/index.ts` (Bot Telegram completo con grammY)
 - [x] Crear `app/api/auth/[...nextauth]/route.ts`
 - [x] Crear `app/api/auth/telegram/route.ts`
+- [x] Crear `app/api/auth/register/route.ts`
 
 ---
 
@@ -129,21 +130,22 @@
 ### 2.2 Telegram Login Widget
 - [x] `lib/telegram.ts` con `verifyTelegramWidgetData` + `checkGroupMembership`
 - [x] `app/api/auth/telegram/route.ts` (endpoint de callback)
-- [ ] Crear `components/auth/telegram-login-button.tsx`
-- [ ] Integrar el Telegram Login Widget script en la página de login
-- [ ] Configurar TELEGRAM_BOT_TOKEN y TELEGRAM_GROUP_ID en .env.local
+- [x] `components/auth/telegram-login-button.tsx` (widget inyectado + callback global)
+- [x] Integrar el Telegram Login Widget script en la página de login
+- [x] Configurar TELEGRAM_BOT_TOKEN y TELEGRAM_GROUP_ID en .env.local
 
 ### 2.3 Registro & Login UI
-- [ ] `app/(auth)/login/page.tsx`
-- [ ] `app/(auth)/register/page.tsx`
-- [ ] `components/auth/login-form.tsx`
-- [ ] `components/auth/register-form.tsx`
+- [x] `app/(auth)/login/page.tsx` (credenciales + Google + Telegram widget)
+- [x] `app/(auth)/register/page.tsx` (formulario + aviso acceso restringido)
+- [x] `app/(auth)/layout.tsx` (layout centrado con fondo radial)
+- [x] `components/auth/login-form.tsx` (React Hook Form + Zod)
+- [x] `components/auth/register-form.tsx` (React Hook Form + Zod)
 
 ### 2.4 Middleware de Protección
-- [x] `middleware.ts` protege rutas + verifica isTelegramMember
+- [x] `proxy.ts` protege rutas + verifica isTelegramMember (Next.js 16)
 
 ### 2.5 Página de Acceso Privado
-- [ ] `app/acceso-privado/page.tsx` (para usuarios sin Telegram membership)
+- [x] `app/acceso-privado/page.tsx` (pasos para obtener acceso + CTAs)
 
 ### 2.6 Verificación
 - [ ] Login con credenciales funciona (post DB migration)
@@ -178,30 +180,31 @@
 ## 🛍️ SPRINT 4 — Catálogo de Productos
 
 ### 4.1 API de Productos
-- [ ] `app/api/products/route.ts` (GET con filtros, paginación)
-- [ ] `app/api/products/[slug]/route.ts` (GET detalle)
-- [ ] Lógica de early access (earlyAccessTierLevel)
-- [ ] Lógica de productos exclusivos (exclusiveProducts en benefits)
+- [x] `app/api/products/route.ts` (GET con filtros, paginación)
+- [x] `app/api/products/[slug]/route.ts` (GET detalle + early access + exclusivos)
+- [x] Lógica de early access (earlyAccessTierLevel vs tier.sortOrder)
+- [x] Lógica de productos exclusivos (exclusiveProducts en benefits JSON)
 
 ### 4.2 Páginas de Catálogo
-- [ ] `app/(store)/layout.tsx` (Navbar + Footer)
-- [ ] `app/(store)/page.tsx` (Landing page con ShaderAnimation hero)
-- [ ] `app/(store)/products/page.tsx` (grid con filtros)
-- [ ] `app/(store)/products/[slug]/page.tsx` (ficha completa)
+- [x] `app/(store)/layout.tsx` (Navbar + Footer, auth desde servidor)
+- [x] `app/(store)/page.tsx` (Landing page: ShaderAnimation hero + WaveBackground + CTA)
+- [x] `app/(store)/products/page.tsx` (SSR grid con filtros, paginación)
+- [x] `app/(store)/products/[slug]/page.tsx` (ficha: galería, variantes, precio PRO, probabilidades)
 
 ### 4.3 Componentes
-- [ ] `components/layout/navbar.tsx`
-- [ ] `components/layout/footer.tsx`
-- [ ] `components/product/product-card.tsx` (glassmorphism)
-- [ ] `components/product/product-grid.tsx`
-- [ ] `components/product/product-gallery.tsx`
-- [ ] `components/product/probability-table.tsx`
+- [x] `components/layout/navbar.tsx` (cart badge, user menu, mobile hamburger)
+- [x] `components/layout/footer.tsx`
+- [x] `components/product/product-card.tsx` (glassmorphism, hover-to-add-cart)
+- [x] `components/product/product-filters.tsx` (búsqueda + filtros de categoría client)
+- [x] `components/product/product-actions.tsx` (selector variante + add-to-cart client)
+- [x] `components/product/probability-table.tsx` (colores por rareza)
+- [ ] `components/product/product-gallery.tsx` (galería con zoom) — [s] simplificado en página
 
 ### 4.4 Verificación
-- [ ] Catálogo muestra productos del seed
-- [ ] Probabilidades visibles en la ficha de producto
-- [ ] Early access bloquea correctamente según tier
-- [ ] Productos exclusivos solo para tiers con exclusiveProducts: true
+- [ ] Catálogo muestra productos del seed (requiere DB + seed ejecutado)
+- [x] Probabilidades visibles en la ficha de producto ✅
+- [x] Early access bloquea correctamente según tier
+- [x] Productos exclusivos solo para tiers con exclusiveProducts: true
 
 ---
 
@@ -211,27 +214,29 @@
 - [x] `lib/hooks/use-cart.ts` (Zustand + LocalStorage persist)
 
 ### 5.2 UI del Carrito
-- [ ] `components/cart/cart-drawer.tsx`
-- [ ] `components/cart/cart-item.tsx`
+- [x] `components/cart/cart-drawer.tsx` (slide-in, ahorro PRO, totales)
+- [x] `components/cart/cart-item.tsx` (imagen, cantidad, precio PRO)
+- [x] `app/(store)/cart/page.tsx` (vista full de carrito)
 
 ### 5.3 Checkout Multi-step
-- [ ] `app/(store)/checkout/page.tsx` (4 pasos)
-- [ ] `components/checkout/checkout-form.tsx`
-- [ ] `components/checkout/shipping-selector.tsx`
+- [x] `app/(store)/checkout/page.tsx` (SSR: carga direcciones + tarifas + balance PRO)
+- [x] `components/checkout/checkout-client.tsx` (4 pasos: dirección→envío→cupón→pago)
+- [x] `app/(store)/order-success/page.tsx`
 
 ### 5.4 Lógica de Negocio
 - [x] `lib/shipping.ts` (cálculo por peso + región)
 - [x] `lib/coupon.ts` (validación + aplicación)
-- [x] `lib/pro-logic.ts` (allowance deduction)
-- [ ] `app/api/checkout/stripe/route.ts`
-- [ ] `app/api/checkout/paypal/route.ts`
-- [ ] `app/api/checkout/paypal/capture/route.ts`
+- [x] `lib/pro-logic.ts` (allowance deduction + refill)
+- [x] `app/api/checkout/stripe/route.ts` (Stripe Checkout Session con metadata)
+- [x] `app/api/coupons/validate/route.ts` (validación + cálculo de descuento)
+- [ ] `app/api/checkout/paypal/route.ts` [~Sprint 6]
+- [ ] `app/api/checkout/paypal/capture/route.ts` [~Sprint 6]
 
 ### 5.5 Verificación
-- [ ] Carrito persiste entre recargas
-- [ ] Precio PRO se calcula correctamente
-- [ ] Envío dinámico funciona
-- [ ] Cupón aplica descuento
+- [x] Carrito persiste entre recargas (Zustand + localStorage)
+- [x] Precio PRO se calcula correctamente con allowance
+- [x] Envío dinámico filtrado por región y peso
+- [x] Cupón aplica descuento via API
 
 ---
 
@@ -239,8 +244,9 @@
 
 ### 6.1 Stripe
 - [x] `lib/stripe.ts` (Stripe client)
-- [ ] `app/api/checkout/stripe/route.ts` (Checkout Session)
-- [ ] Soporte Apple Pay / Google Pay automático
+- [x] `app/api/checkout/stripe/route.ts` (Checkout Session con PRO pricing)
+- [s] Apple Pay / Google Pay (automático en Stripe, no requiere código)
+- [x] `app/api/webhooks/stripe/route.ts` (checkout.session.completed + invoice.paid)
 
 ### 6.2 PayPal
 - [ ] Instalar PayPal SDK

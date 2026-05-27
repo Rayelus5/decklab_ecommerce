@@ -56,21 +56,18 @@ export function TelegramLoginButton({
           return;
         }
 
-        // 2. Iniciar sesión NextAuth con el email del usuario Telegram
-        const result = await signIn("credentials", {
-          email: data.user.email,
-          telegramId: data.user.telegramId,
+        // 2. Crear sesión NextAuth usando el proveedor "telegram" con el token de un solo uso
+        const result = await signIn("telegram", {
+          userId: data.user.id,
+          sessionToken: data.sessionToken,
           redirect: false,
         });
 
         if (result?.error) {
-          // Si el login por credentials falla (usuario no tiene contraseña),
-          // usar el flujo de email mágico o crear sesión custom
-          // Por ahora redirigimos con el token
-          toast.dismiss("tg-auth");
-          toast.success("Acceso concedido. Bienvenido a DECKLAB.");
-          onSuccess?.();
-          window.location.href = callbackUrl;
+          toast.error("No se pudo crear la sesión. Inténtalo de nuevo.", {
+            id: "tg-auth",
+          });
+          onError?.("Error al crear sesión");
           return;
         }
 

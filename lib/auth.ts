@@ -6,6 +6,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations";
+import { verifySessionToken } from "@/app/api/auth/telegram/route";
 
 // -------------------------------------------------------
 // Configuración NextAuth v5
@@ -71,6 +72,44 @@ export const authConfig: NextAuthConfig = {
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+
+    // --- Telegram (token de un solo uso generado por /api/auth/telegram) ---
+    Credentials({
+      id: "telegram",
+      name: "Telegram",
+      credentials: {
+        userId: { type: "text" },
+        sessionToken: { type: "text" },
+      },
+      async authorize(credentials) {
+        const userId = credentials?.userId as string | undefined;
+        const token = credentials?.sessionToken as string | undefined;
+
+        if (!userId || !token) return null;
+
+        // Verificar que el token HMAC es válido y no ha expirado
+        if (!verifySessionToken(userId, token)) return null;
+
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          include: { proTier: true },
+        });
+
+        if (!user || user.isBlocked || !user.isTelegramMember) return null;
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+          role: user.role,
+          isPro: user.isPro,
+          proTierId: user.proTierId,
+          isTelegramMember: user.isTelegramMember,
+          telegramId: user.telegramId,
+        };
+      },
     }),
   ],
 

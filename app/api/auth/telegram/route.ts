@@ -1,8 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
+import * as crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { verifyTelegramWidgetData, checkGroupMembership } from "@/lib/telegram";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import type { TelegramAuthData } from "@/lib/telegram";
+
+/**
+ * Genera un token HMAC de corta duración (2 minutos) vinculado al userId.
+ * Lo firmamos con AUTH_SECRET / NEXTAUTH_SECRET para que no sea falsificable.
+ * Formato: "<timestamp>:<hmac_hex>"
+ */
+function generateSessionToken(userId: string): string {
+  const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? "";
+  const timestamp = Date.now().toString();
+  const hmac = crypto
+    .createHmac("sha256", secret)
+    .update(`${userId}:${timestamp}`)
+    .digest("hex");
+  return `${timestamp}:${hmac}`;
+}
+
+export function verifySessionToken(userId: string, token: string): boolean {
+  const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? "";
+  const parts = token.split(":");
+  if (parts.length !== 2) return false;
+  const [timestampStr, receivedHmac] = parts;
+  const timestamp = parseInt(timestampStr, 10);
+  if (isNaN(timestamp)) return false;
+
+  // Token válido por 2 minutos
+  if (Date.now() - timestamp > 2 * 60 * 1000) return false;
+
+  const expectedHmac = crypto
+    .createHmac("sha256", secret)
+    .update(`${userId}:${timestampStr}`)
+    .digest("hex");
+
+  return crypto.timingSafeEqual(
+    Buffer.from(expectedHmac, "hex"),
+    Buffer.from(receivedHmac, "hex")
+  );
+}
 
 /**
  * POST /api/auth/telegram
@@ -88,9 +126,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 4. Devolver datos del usuario para que el cliente inicie sesión
+    // 4. Generar token de sesión de corta duración (2 min) para el proveedor "telegram"
+    const sessionToken = generateSessionToken(user.id);
+
     return NextResponse.json({
       success: true,
+      sessionToken,
       user: {
         id: user.id,
         email: user.email,

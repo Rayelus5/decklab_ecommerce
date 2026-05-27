@@ -76,7 +76,7 @@ export default function AccesoPrivadoPage() {
         {/* CTAs */}
         <div className="flex flex-col gap-3 w-full">
           <Link
-            href="/login"
+            href="/"
             className="w-full flex items-center justify-center gap-2 bg-ash-50 text-graphite-700 hover:bg-white font-medium text-sm px-4 py-3 rounded-[8px] transition-colors"
           >
             Ir al login

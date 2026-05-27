@@ -10,6 +10,8 @@ import { generateInvoicePDF } from "@/lib/pdf";
 import { OrderConfirmation } from "@/emails/order-confirmation";
 import { ShipmentTracking } from "@/emails/shipment-tracking";
 import { SubscriptionRenewal } from "@/emails/subscription-renewal";
+import { OrderCancellation } from "@/emails/order-cancellation";
+import { AbandonedCartEmail } from "@/emails/abandoned-cart";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Email de confirmación de pedido (con PDF de factura adjunto)
@@ -217,6 +219,99 @@ export async function sendSubscriptionRenewalEmail(userId: string): Promise<void
     from: FROM_EMAIL,
     to: user.email,
     subject: `Suscripción PRO ${user.proTier.name} renovada — DECKLAB SHOP`,
+    html,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Email de cancelación / reembolso de pedido
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function sendOrderCancellationEmail(orderId: string, isRefund = false): Promise<void> {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { user: { select: { name: true, email: true } } },
+  });
+
+  if (!order || !order.user.email) return;
+
+  const html = await render(
+    OrderCancellation({
+      orderNumber: order.orderNumber,
+      customerName: order.user.name ?? "Cliente",
+      total: Number(order.total),
+      isRefund,
+    })
+  );
+
+  const subject = isRefund
+    ? `Reembolso procesado para el pedido #${order.orderNumber} — DECKLAB SHOP`
+    : `Tu pedido #${order.orderNumber} ha sido cancelado — DECKLAB SHOP`;
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: order.user.email,
+    subject,
+    html,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Email de recuperación de carrito abandonado
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function sendAbandonedCartEmail(
+  userId: string,
+  cartItems: unknown,
+  subtotal: number
+): Promise<void> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true, email: true },
+  });
+
+  if (!user?.email) return;
+
+  // Resolver los titles de cada item desde la BD
+  const rawItems = cartItems as Array<{
+    variantId: string;
+    quantity: number;
+    pricePaid: number;
+    wasProPrice?: boolean;
+  }>;
+
+  const variantIds = rawItems.map((i) => i.variantId);
+  const variants = await prisma.productVariant.findMany({
+    where: { id: { in: variantIds } },
+    select: {
+      id: true,
+      title: true,
+      product: { select: { title: true } },
+    },
+  });
+
+  const items = rawItems.map((raw) => {
+    const variant = variants.find((v) => v.id === raw.variantId);
+    return {
+      title: variant?.product.title ?? "Producto",
+      variantTitle: variant?.title ?? null,
+      quantity: raw.quantity,
+      price: raw.pricePaid,
+    };
+  });
+
+  const html = await render(
+    AbandonedCartEmail({
+      customerName: user.name ?? "Cliente",
+      items,
+      subtotal,
+    })
+  );
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: user.email,
+    subject: "¿Olvidaste algo en DECKLAB? Tu carrito te espera",
     html,
   });
 }

@@ -51,7 +51,7 @@ export const checkoutSchema = z.object({
   addressId: z.string().min(1, "Selecciona una dirección de envío"),
   shippingRateId: z.string().min(1, "Selecciona un método de envío"),
   couponCode: z.string().optional(),
-  paymentMethod: z.enum(["STRIPE", "PAYPAL"]),
+  paymentMethod: z.enum(["STRIPE"]),
 });
 
 export type CheckoutFormData = z.infer<typeof checkoutSchema>;

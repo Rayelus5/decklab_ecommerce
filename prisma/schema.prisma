@@ -76,6 +76,7 @@ model User {
   accounts       Account[]
   proTier        ProTier?        @relation(fields: [proTierId], references: [id])
   adminLogs      AdminActionLog[] @relation("AdminWhoActed")
+  abandonedCarts AbandonedCart[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -228,8 +229,9 @@ model ProductVariant {
   proExempt Boolean @default(false)
 
   // --- Inventario y Logística ---
-  stock  Int @default(0)
-  weight Int @default(0) // En GRAMOS (crucial para cálculo de envíos)
+  stock         Int @default(0)
+  reservedStock Int @default(0) // Stock reservado en sesiones de checkout activas
+  weight        Int @default(0) // En GRAMOS (crucial para cálculo de envíos)
 
   // --- Atributos dinámicos ---
   attributes Json? // { "color": "red", "edition": "Japanese" }
@@ -443,4 +445,31 @@ model AdminActionLog {
   @@index([actionType])
   @@index([targetId])
   @@index([createdAt])
+}
+
+// =============================================================
+// CARRITOS ABANDONADOS — Recuperación de ventas perdidas
+// =============================================================
+
+model AbandonedCart {
+  id              String @id @default(cuid())
+  userId          String
+  stripeSessionId String @unique // ID de la sesión de Stripe Checkout
+
+  // Snapshot del carrito en el momento de iniciar el checkout
+  cartItems Json    // Array de CartItem serializado
+  subtotal  Decimal @db.Decimal(10, 2)
+
+  // Estado de recuperación
+  recoveryEmailSentAt DateTime? // null = email aún no enviado
+  convertedAt         DateTime? // null = no convirtió; fecha = se completó el pago
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([convertedAt])
+  @@index([recoveryEmailSentAt])
 }

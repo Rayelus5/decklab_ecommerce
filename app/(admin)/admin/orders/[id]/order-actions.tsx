@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Save } from "lucide-react";
+import { Loader2, Save, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const STATUS_OPTIONS = [
@@ -21,6 +21,7 @@ interface OrderActionsProps {
   currentStatus: string;
   currentTracking: string | null;
   currentCarrier: string;
+  stripePaymentIntentId?: string | null;
 }
 
 export function OrderActions({
@@ -28,12 +29,41 @@ export function OrderActions({
   currentStatus,
   currentTracking,
   currentCarrier,
+  stripePaymentIntentId,
 }: OrderActionsProps) {
   const router = useRouter();
   const [status, setStatus] = useState(currentStatus);
   const [tracking, setTracking] = useState(currentTracking ?? "");
   const [carrier, setCarrier] = useState(currentCarrier);
   const [loading, setLoading] = useState(false);
+  const [refundLoading, setRefundLoading] = useState(false);
+
+  const canRefund =
+    (currentStatus === "PAID" || currentStatus === "PROCESSING") &&
+    !!stripePaymentIntentId;
+
+  async function handleRefund() {
+    const confirmed = window.confirm(
+      "¿Emitir reembolso completo para este pedido?\n\nSe procesará en Stripe y el cliente recibirá el importe en 5–10 días hábiles. Esta acción no se puede deshacer."
+    );
+    if (!confirmed) return;
+
+    setRefundLoading(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}/refund`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Error al procesar el reembolso");
+        return;
+      }
+      toast.success("Reembolso procesado correctamente");
+      router.refresh();
+    } catch {
+      toast.error("Error de conexión");
+    } finally {
+      setRefundLoading(false);
+    }
+  }
 
   async function handleSave() {
     setLoading(true);
@@ -107,6 +137,33 @@ export function OrderActions({
         <Save size={14} />
         Guardar cambios
       </Button>
+
+      {canRefund && (
+        <>
+          <hr className="border-white/8" />
+          <div>
+            <p className="text-xs text-slate-300 mb-2">
+              Reembolso completo vía Stripe. Restaura el stock y el saldo PRO si aplica.
+            </p>
+            <button
+              onClick={handleRefund}
+              disabled={refundLoading}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-[8px] text-sm font-medium
+                bg-ember-red/10 border border-ember-red/25 text-ember-red
+                hover:bg-ember-red/15 hover:border-ember-red/40
+                disabled:opacity-50 disabled:cursor-not-allowed
+                transition-colors cursor-pointer"
+            >
+              {refundLoading ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <RotateCcw size={14} />
+              )}
+              {refundLoading ? "Procesando..." : "Emitir reembolso"}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

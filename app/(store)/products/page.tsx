@@ -1,3 +1,5 @@
+export const revalidate = 60;
+
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { auth } from "@/lib/auth";
@@ -58,15 +60,16 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           category: { select: { id: true, name: true } },
           images: { orderBy: { position: "asc" }, take: 1 },
           variants: {
-            where: { stock: { gt: 0 } },
+            where: { stock: { gt: 0 } }, // Pre-filter; availableStock = stock - reservedStock se evalúa post-fetch
             orderBy: { price: "asc" },
-            take: 1,
+            take: 3, // Tomar más por si los primeros tienen toda la reserva ocupada
             select: {
               id: true,
               title: true,
               price: true,
               pricePro: true,
               stock: true,
+              reservedStock: true,
               proExempt: true,
             },
           },
@@ -114,10 +117,16 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       }>
         {products.length > 0 ? (
           <>
-            <div className="grid grid-cols- sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
               {products.map((product) => {
-                const firstVariant = product.variants[0];
                 const productImage = product.images[0];
+
+                // Seleccionar la primera variante con stock disponible real
+                const firstAvailableVariant = product.variants.find(
+                  (v) => v.stock - v.reservedStock > 0
+                );
+                // Fallback: primera variante (para mostrar precio aunque esté agotada)
+                const displayVariant = firstAvailableVariant ?? product.variants[0];
 
                 return (
                   <ProductCard
@@ -127,17 +136,16 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                     title={product.title}
                     imageUrl={productImage?.url}
                     imageAlt={productImage?.alt ?? product.title}
-                    variant={firstVariant ? {
-                      id: firstVariant.id,
-                      title: firstVariant.title ?? undefined,
-                      price: Number(firstVariant.price),
-                      pricePro: firstVariant.pricePro != null ? Number(firstVariant.pricePro) : null,
-                      stock: firstVariant.stock,
-                      proExempt: firstVariant.proExempt,
+                    variant={displayVariant ? {
+                      id: displayVariant.id,
+                      title: displayVariant.title ?? undefined,
+                      price: Number(displayVariant.price),
+                      pricePro: displayVariant.pricePro != null ? Number(displayVariant.pricePro) : null,
+                      stock: Math.max(0, displayVariant.stock - displayVariant.reservedStock),
+                      proExempt: displayVariant.proExempt,
                     } : undefined}
                     isExclusive={product.isExclusive}
                     earlyAccessTierLevel={product.earlyAccessTierLevel}
-                    noReturns={product.noReturns}
                     isPro={isPro}
                     hasAccess={
                       isAdmin ||

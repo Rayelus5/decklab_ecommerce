@@ -187,6 +187,7 @@ export default async function AdminOrderDetailPage({
             currentStatus={order.status}
             currentTracking={order.shipment?.trackingNumber ?? null}
             currentCarrier={order.shipment?.carrier ?? "CORREOS"}
+            stripePaymentIntentId={order.stripePaymentIntentId}
           />
 
           {/* User */}

@@ -1,3 +1,5 @@
+export const revalidate = 3600;
+
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -41,7 +43,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         images: { orderBy: { position: "asc" } },
         variants: {
           orderBy: { price: "asc" },
-          select: { id: true, sku: true, title: true, price: true, pricePro: true, proExempt: true, stock: true, weight: true, attributes: true },
+          select: { id: true, sku: true, title: true, price: true, pricePro: true, proExempt: true, stock: true, reservedStock: true, weight: true, attributes: true },
         },
       },
     }),
@@ -90,7 +92,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   const mainImage = product.images[0];
-  const availableVariants = product.variants.filter((v) => v.stock > 0);
+  const availableVariants = product.variants.filter((v) => v.stock - v.reservedStock > 0);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
@@ -190,7 +192,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 price: Number(v.price),
                 pricePro: v.pricePro != null ? Number(v.pricePro) : null,
                 proExempt: v.proExempt,
-                stock: v.stock,
+                stock: Math.max(0, v.stock - v.reservedStock), // Stock disponible real
                 weight: v.weight,
                 attributes: v.attributes,
               })),

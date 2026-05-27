@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAdmin, isErrorResponse } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -14,8 +14,8 @@ const updateSchema = z.object({
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    const sessionOrError = await requireAdmin();
+    if (isErrorResponse(sessionOrError)) return sessionOrError;
     const { id } = await params;
     const body = await req.json();
     const parsed = updateSchema.safeParse(body);
@@ -30,8 +30,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    const sessionOrError = await requireAdmin();
+    if (isErrorResponse(sessionOrError)) return sessionOrError;
     const { id } = await params;
     const count = await prisma.product.count({ where: { categoryId: id } });
     if (count > 0) return NextResponse.json({ error: "Hay productos en esta categoría" }, { status: 400 });

@@ -5,7 +5,11 @@ import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { refillProAllowance } from "@/lib/pro-logic";
 import { notifyPurchase } from "@/lib/telegram";
-import { sendOrderConfirmationEmail, sendSubscriptionRenewalEmail } from "@/lib/email";
+import {
+  sendOrderConfirmationEmail,
+  sendSubscriptionRenewalEmail,
+  sendAbandonedCartEmail,
+} from "@/lib/email";
 
 // Deshabilitar el body parser de Next.js para verificar la firma de Stripe
 export const config = {
@@ -118,11 +122,14 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       include: { items: true },
     });
 
-    // 2. Decrementar stock
+    // 2. Decrementar stock Y liberar reserva (confirmar la reserva)
     for (const item of parsedItems) {
       await tx.productVariant.update({
         where: { id: item.variantId },
-        data: { stock: { decrement: item.quantity } },
+        data: {
+          stock: { decrement: item.quantity },
+          reservedStock: { decrement: item.quantity },
+        },
       });
     }
 
@@ -157,10 +164,16 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       data: { orderId: newOrder.id },
     });
 
+    // 6. Marcar AbandonedCart como convertido
+    await tx.abandonedCart.updateMany({
+      where: { stripeSessionId: session.id },
+      data: { convertedAt: new Date() },
+    });
+
     return newOrder;
   });
 
-  // 6. Notificar bot de Telegram
+  // 7. Notificar bot de Telegram
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -185,7 +198,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     console.error("[WEBHOOK] Error notifying Telegram:", err);
   }
 
-  // 7. Enviar email de confirmación con factura PDF
+  // 8. Enviar email de confirmación con factura PDF
   try {
     await sendOrderConfirmationEmail(order.id);
   } catch (err) {
@@ -195,9 +208,66 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   console.log(`[WEBHOOK] Order #${order.orderNumber} created for user ${userId}, total: ${total}€`);
 }
 
+async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session) {
+  // Buscar el AbandonedCart por stripeSessionId para obtener los items
+  const abandonedCart = await prisma.abandonedCart.findUnique({
+    where: { stripeSessionId: session.id },
+  });
+
+  if (!abandonedCart) {
+    console.log("[WEBHOOK] No AbandonedCart found for expired session:", session.id);
+    return;
+  }
+
+  // Si ya convirtió (pago completado antes de expirar — edge case), no hacer nada
+  if (abandonedCart.convertedAt) {
+    console.log("[WEBHOOK] Session already converted, skipping expired handler:", session.id);
+    return;
+  }
+
+  const cartItems = abandonedCart.cartItems as Array<{
+    variantId: string;
+    quantity: number;
+    pricePaid: number;
+    wasProPrice: boolean;
+  }>;
+
+  // 1. Liberar reservas de stock
+  try {
+    await prisma.$transaction(
+      cartItems.map((item) =>
+        prisma.productVariant.update({
+          where: { id: item.variantId },
+          data: { reservedStock: { decrement: item.quantity } },
+        })
+      )
+    );
+    console.log(`[WEBHOOK] Stock reservations released for expired session: ${session.id}`);
+  } catch (err) {
+    console.error("[WEBHOOK] Error releasing stock reservations:", err);
+  }
+
+  // 2. Enviar email de recuperación (si no se envió ya)
+  if (!abandonedCart.recoveryEmailSentAt) {
+    try {
+      await sendAbandonedCartEmail(
+        abandonedCart.userId,
+        abandonedCart.cartItems,
+        Number(abandonedCart.subtotal)
+      );
+      await prisma.abandonedCart.update({
+        where: { id: abandonedCart.id },
+        data: { recoveryEmailSentAt: new Date() },
+      });
+      console.log(`[WEBHOOK] Recovery email sent for abandoned cart: ${abandonedCart.id}`);
+    } catch (err) {
+      console.error("[WEBHOOK] Error sending abandoned cart email:", err);
+    }
+  }
+}
+
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
   // Refill de allowance PRO en renovación de suscripción
-  // En Stripe SDK v12+, subscription es parte del invoice
   const subscriptionId = (invoice as unknown as Record<string, unknown>).subscription as string | null;
 
   if (!subscriptionId || typeof subscriptionId !== "string") return;
@@ -250,6 +320,9 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed":
         await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+        break;
+      case "checkout.session.expired":
+        await handleCheckoutSessionExpired(event.data.object as Stripe.Checkout.Session);
         break;
       case "invoice.paid":
         await handleInvoicePaid(event.data.object as Stripe.Invoice);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { requireAdmin, isErrorResponse } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -14,10 +14,8 @@ const categorySchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-    }
+    const sessionOrError = await requireAdmin();
+    if (isErrorResponse(sessionOrError)) return sessionOrError;
     const body = await req.json();
     const parsed = categorySchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Datos inválidos" }, { status: 400 });

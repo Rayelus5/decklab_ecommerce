@@ -25,7 +25,6 @@ interface ProductCardProps {
   variant?: ProductVariantPreview;
   isExclusive?: boolean;
   earlyAccessTierLevel?: number | null;
-  noReturns?: boolean;
   isPro?: boolean;
   hasAccess?: boolean;
   categoryName?: string;
@@ -40,7 +39,6 @@ export function ProductCard({
   variant,
   isExclusive = false,
   earlyAccessTierLevel,
-  noReturns = true,
   isPro = false,
   hasAccess = true,
   categoryName,
@@ -82,7 +80,7 @@ export function ProductCard({
         "transition-all duration-300 ease-out",
         hasAccess
           ? [
-            "bg-graphite-700/50 border border-white/8",
+            "bg-graphite-700/50 border-2 border-white/8",
             "hover:border-white/18 hover:-translate-y-1",
             "hover:shadow-[0_20px_60px_-12px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.08)]",
           ]
@@ -226,12 +224,6 @@ export function ProductCard({
           <p className="text-sm text-slate-300/60 mt-1">Sin precio</p>
         )}
 
-        {/* Sin devoluciones */}
-        {/* {noReturns && (
-          <p className="text-[9px] text-slate-300/35 mt-0.5 tracking-wide">
-            SIN DEVOLUCIONES
-          </p>
-        )} */}
       </div>
     </Link>
   );

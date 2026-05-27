@@ -13,6 +13,7 @@ import {
   ExternalLink,
   ImageOff,
 } from "lucide-react";
+import { CancelOrderButton } from "@/components/profile/cancel-order-button";
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
@@ -258,6 +259,18 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           })}
         </div>
       </div>
+
+      {/* Cancel order */}
+      {(order.status === "PENDING" || order.status === "PAID") && (
+        <div className="bg-graphite-700/40 border border-white/8 rounded-[16px] p-5 flex flex-col gap-3">
+          <h2 className="text-sm font-semibold text-snow">Cancelar pedido</h2>
+          <p className="text-xs text-slate-300 leading-relaxed">
+            Solo puedes cancelar mientras el pedido no haya pasado a estado Preparando.
+            {order.status === "PAID" && " Al cancelar se emitirá un reembolso automático."}
+          </p>
+          <CancelOrderButton orderId={order.id} orderNumber={order.orderNumber} />
+        </div>
+      )}
 
       {/* Summary & Address */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Método de envío no válido" }, { status: 400 });
     }
 
-    // 3. Verificar y cargar variantes (incluir productId y categoryId para validar cupones)
+    // 3. Verificar y cargar variantes
     const variantIds = items.map((i) => i.variantId);
     const variants = await prisma.productVariant.findMany({
       where: { id: { in: variantIds } },
@@ -75,15 +75,48 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Algunas variantes no están disponibles" }, { status: 400 });
     }
 
-    // 4. Verificar stock
+    // 4. Verificar stock disponible (pre-flight) y reservar atómicamente
+    // Pre-flight: evitar crear sesiones condenadas antes de llamar a Stripe
     for (const item of items) {
       const variant = variants.find((v) => v.id === item.variantId);
-      if (!variant || variant.stock < item.quantity || variant.product.isArchived) {
+      if (!variant || variant.product.isArchived) {
         return NextResponse.json(
-          { error: `Stock insuficiente para ${variant?.product.title ?? "un producto"}` },
+          { error: `Producto no disponible: ${variant?.product.title ?? "desconocido"}` },
           { status: 400 }
         );
       }
+      const availableStock = variant.stock - variant.reservedStock;
+      if (availableStock < item.quantity) {
+        return NextResponse.json(
+          { error: `Stock insuficiente para "${variant.product.title}". Disponible: ${Math.max(0, availableStock)}.` },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Reservar stock atómicamente — si algún item falla (race condition), rollback completo
+    try {
+      await prisma.$transaction(async (tx) => {
+        for (const item of items) {
+          const updated = await tx.$executeRaw`
+            UPDATE "ProductVariant"
+            SET "reservedStock" = "reservedStock" + ${item.quantity}
+            WHERE id = ${item.variantId}
+              AND ("stock" - "reservedStock") >= ${item.quantity}
+          `;
+          if (updated === 0) {
+            throw new Error("INSUFFICIENT_STOCK");
+          }
+        }
+      });
+    } catch (err) {
+      if (err instanceof Error && err.message === "INSUFFICIENT_STOCK") {
+        return NextResponse.json(
+          { error: "Uno o más productos se agotaron mientras procesabas el pedido. Actualiza tu carrito." },
+          { status: 409 }
+        );
+      }
+      throw err; // Relanzar errores inesperados
     }
 
     // 5. Determinar precios (PRO vs normal)
@@ -207,6 +240,8 @@ export async function POST(req: NextRequest) {
       );
 
       if (!validation.valid || !validation.coupon) {
+        // Liberar reservas si el cupón falla
+        await releaseStockReservations(items);
         return NextResponse.json(
           { error: validation.error ?? "Cupón no válido" },
           { status: 400 }
@@ -222,8 +257,6 @@ export async function POST(req: NextRequest) {
       discountAmount = applied.discount;
       couponId = validation.coupon.id;
 
-      // Stripe Checkout no acepta unit_amount negativo.
-      // La forma correcta es crear un Coupon de Stripe y pasarlo en `discounts`.
       if (discountAmount > 0) {
         const label = validation.coupon.type === "PERCENT"
           ? `${validation.coupon.value}% — ${validation.coupon.code}`
@@ -231,9 +264,9 @@ export async function POST(req: NextRequest) {
 
         const stripeCoupon = await stripe.coupons.create({
           name: `Descuento ${label}`,
-          amount_off: Math.round(discountAmount * 100), // centavos, siempre positivo
+          amount_off: Math.round(discountAmount * 100),
           currency: "eur",
-          duration: "once", // Un solo uso
+          duration: "once",
         });
 
         stripeCouponId = stripeCoupon.id;
@@ -247,7 +280,6 @@ export async function POST(req: NextRequest) {
       mode: "payment",
       payment_method_types: ["card"],
       line_items: lineItems,
-      // Aplicar cupón de descuento si existe
       ...(stripeCouponId ? { discounts: [{ coupon: stripeCouponId }] } : {}),
       success_url: `${appUrl}/order-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/checkout`,
@@ -267,6 +299,23 @@ export async function POST(req: NextRequest) {
       locale: "es",
     });
 
+    // 10. Guardar carrito abandonado en BD (se marca como convertido en el webhook al pagar)
+    try {
+      await prisma.abandonedCart.upsert({
+        where: { stripeSessionId: stripeSession.id },
+        create: {
+          userId: session.user.id,
+          stripeSessionId: stripeSession.id,
+          cartItems: cartMetaItems as never,
+          subtotal: productSubtotal,
+        },
+        update: {},
+      });
+    } catch (err) {
+      // No bloquear el checkout si falla el registro del carrito abandonado
+      console.error("[CHECKOUT] Error creating AbandonedCart:", err);
+    }
+
     return NextResponse.json({ url: stripeSession.url });
   } catch (error) {
     console.error("[CHECKOUT STRIPE]", error);
@@ -274,5 +323,23 @@ export async function POST(req: NextRequest) {
       { error: "Error interno del servidor" },
       { status: 500 }
     );
+  }
+}
+
+// -------------------------------------------------------
+// Helper — Liberar reservas de stock
+// -------------------------------------------------------
+async function releaseStockReservations(items: CartItemInput[]) {
+  try {
+    await prisma.$transaction(
+      items.map((item) =>
+        prisma.productVariant.update({
+          where: { id: item.variantId },
+          data: { reservedStock: { decrement: item.quantity } },
+        })
+      )
+    );
+  } catch (err) {
+    console.error("[CHECKOUT] Error releasing stock reservations:", err);
   }
 }

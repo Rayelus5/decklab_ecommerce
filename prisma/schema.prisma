@@ -76,7 +76,6 @@ model User {
   accounts       Account[]
   proTier        ProTier?        @relation(fields: [proTierId], references: [id])
   adminLogs      AdminActionLog[] @relation("AdminWhoActed")
-  affectedByLogs AdminActionLog[] @relation("LogTargetUser")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -434,8 +433,9 @@ model AdminActionLog {
   // Detalles adicionales en JSON
   details Json?
 
-  admin      User  @relation("AdminWhoActed", fields: [adminId], references: [id])
-  targetUser User? @relation("LogTargetUser", fields: [targetId], references: [id])
+  // targetId es un ID libre (puede apuntar a Product, Order, User, etc.)
+  // No tiene FK porque referencia modelos distintos según targetType.
+  admin User @relation("AdminWhoActed", fields: [adminId], references: [id])
 
   createdAt DateTime @default(now())
 

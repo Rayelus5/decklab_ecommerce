@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { registerSchema } from "@/lib/validations";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
+
+// Schema del lado servidor: sin confirmPassword (ya validado en cliente)
+const serverRegisterSchema = z.object({
+  name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
+  email: z.string().email("Email inválido"),
+  password: z
+    .string()
+    .min(8, "La contraseña debe tener al menos 8 caracteres")
+    .regex(/[A-Z]/, "Debe contener al menos una mayúscula")
+    .regex(/[0-9]/, "Debe contener al menos un número"),
+});
 
 export async function POST(req: NextRequest) {
   // Rate limit: 5 registros por IP por minuto
@@ -19,7 +30,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     // Validar datos
-    const result = registerSchema.safeParse(body);
+    const result = serverRegisterSchema.safeParse(body);
     if (!result.success) {
       const firstError = result.error.issues[0]?.message ?? "Datos inválidos";
       return NextResponse.json({ error: firstError }, { status: 400 });

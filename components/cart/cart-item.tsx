@@ -2,20 +2,23 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, Trash2, ImageOff } from "lucide-react";
-import { useCart, type CartItem } from "@/lib/hooks/use-cart";
+import { Minus, Plus, Trash2, ImageOff, Crown, AlertCircle } from "lucide-react";
+import { useCart, type CartItem, type CartItemProState } from "@/lib/hooks/use-cart";
 
 interface CartItemProps {
   item: CartItem;
-  isPro?: boolean;
+  proState?: CartItemProState;
 }
 
-export function CartItemRow({ item, isPro = false }: CartItemProps) {
+export function CartItemRow({ item, proState }: CartItemProps) {
   const { updateQuantity, removeItem } = useCart();
 
-  const hasProPrice = isPro && item.pricePro && item.pricePro > 0;
-  const displayPrice = hasProPrice ? item.pricePro! : item.price;
-  const lineTotal = displayPrice * item.quantity;
+  const usesProPrice = proState?.usesProPrice ?? false;
+  const insufficientBalance = proState?.insufficientBalance ?? false;
+  const isExempt = proState?.isExempt ?? false;
+
+  const unitPrice = usesProPrice ? (item.pricePro ?? item.price) : item.price;
+  const lineTotal = unitPrice * item.quantity;
 
   return (
     <div className="flex gap-3 py-3 first:pt-0 last:pb-0">
@@ -84,11 +87,11 @@ export function CartItemRow({ item, isPro = false }: CartItemProps) {
             </button>
           </div>
 
-          <div className="flex flex-col items-end">
-            <span className={`text-sm font-semibold tabular-nums ${hasProPrice ? "text-amber-400" : "text-snow"}`}>
+          <div className="flex flex-col items-end gap-0.5">
+            <span className={`text-sm font-semibold tabular-nums ${usesProPrice ? "text-amber-400" : "text-snow"}`}>
               {lineTotal.toFixed(2).replace(".", ",")} €
             </span>
-            {hasProPrice && (
+            {usesProPrice && (
               <span className="text-[10px] text-slate-300 line-through tabular-nums">
                 {(item.price * item.quantity).toFixed(2).replace(".", ",")} €
               </span>
@@ -96,13 +99,25 @@ export function CartItemRow({ item, isPro = false }: CartItemProps) {
           </div>
         </div>
 
-        {/* PRO badges */}
-        <div className="flex gap-1">
-          {hasProPrice && !item.proExempt && (
-            <span className="text-[10px] text-amber-400/80">Precio PRO</span>
+        {/* Estado PRO del ítem */}
+        <div className="flex items-center gap-1.5 min-h-[16px]">
+          {usesProPrice && isExempt && (
+            <span className="flex items-center gap-1 text-[10px] text-amber-400/80">
+              <Crown size={9} />
+              Precio PRO (sin consumir saldo)
+            </span>
           )}
-          {hasProPrice && item.proExempt && (
-            <span className="text-[10px] text-amber-400/80">PRO sin allowance</span>
+          {usesProPrice && !isExempt && (
+            <span className="flex items-center gap-1 text-[10px] text-amber-400/80">
+              <Crown size={9} />
+              Precio PRO · -{((item.price - (item.pricePro ?? item.price)) * item.quantity).toFixed(2)} €
+            </span>
+          )}
+          {insufficientBalance && (
+            <span className="flex items-center gap-1 text-[10px] text-slate-300/60">
+              <AlertCircle size={9} />
+              Saldo insuficiente — precio público
+            </span>
           )}
         </div>
       </div>

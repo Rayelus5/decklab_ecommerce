@@ -210,3 +210,125 @@ body {
 .animate-pro-pulse {
   animation: pro-pulse 1.8s ease-in-out infinite;
 }
+
+/* ============================================================
+   LEGAL PAGES — prose styles
+   ============================================================ */
+
+.prose-legal {
+  color: var(--color-ash-50);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+}
+
+.prose-legal h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.5rem;
+  line-height: 1.2;
+}
+
+.prose-legal .lead {
+  color: var(--color-slate-300);
+  font-size: 0.875rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding-bottom: 1.5rem;
+}
+
+.prose-legal h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: white;
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose-legal p {
+  color: rgba(230, 230, 230, 0.8);
+  margin-bottom: 1rem;
+}
+
+.prose-legal ul,
+.prose-legal ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+  color: rgba(230, 230, 230, 0.8);
+}
+
+.prose-legal li {
+  margin-bottom: 0.4rem;
+}
+
+.prose-legal a {
+  color: var(--color-ash-50);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s;
+}
+
+.prose-legal a:hover {
+  color: white;
+}
+
+.prose-legal strong {
+  color: white;
+  font-weight: 600;
+}
+
+.prose-legal .notice {
+  border-left: 3px solid;
+  padding: 1rem 1.25rem;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.prose-legal .notice-warning {
+  border-color: rgba(251, 191, 36, 0.5);
+  background: rgba(251, 191, 36, 0.06);
+  color: rgba(253, 230, 138, 0.9);
+}
+
+.prose-legal .notice-info {
+  border-color: rgba(86, 194, 255, 0.4);
+  background: rgba(86, 194, 255, 0.05);
+  color: rgba(186, 230, 253, 0.9);
+}
+
+.prose-legal .table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.prose-legal table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.prose-legal th {
+  background: rgba(255,255,255,0.05);
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.prose-legal td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(255,255,255,0.06);
+  color: rgba(230,230,230,0.8);
+}
+
+.prose-legal .legal-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.8125rem;
+}

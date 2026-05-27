@@ -201,9 +201,12 @@ export async function refillProAllowance(userId: string): Promise<void> {
   const benefits = user.proTier.benefits as Partial<ProBenefits> | null;
   const bonusPercent = benefits?.bonusAllowancePercent ?? 0;
 
-  // Allowance del tier + bonus porcentual configurado por admin
+  // La suscripción es bimestral (2 meses), así que en cada renovación
+  // se acreditan 2 meses de allowance de una vez.
+  // Fórmula: (allowance_tier + bonus_tier) × 2
   const bonus = tierAllowance.mul(bonusPercent / 100);
-  const newAllowance = tierAllowance.plus(bonus);
+  const perMonth = tierAllowance.plus(bonus);
+  const newAllowance = perMonth.times(2);
 
   // El saldo no gastado se ACUMULA (no se resetea)
   await prisma.user.update({

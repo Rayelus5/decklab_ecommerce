@@ -203,6 +203,53 @@ bot.command("pedido", async (ctx: Context) => {
   });
 });
 
+// /groupid — Devuelve el ID del chat actual (solo admins del grupo o en DM)
+// Útil para configurar TELEGRAM_GROUP_ID en las variables de entorno.
+bot.command("groupid", async (ctx: Context) => {
+  const from = ctx.from;
+  if (!from) return;
+
+  const chat = ctx.chat;
+  const isGroup = chat?.type === "group" || chat?.type === "supergroup";
+
+  // En grupos: verificar que quien lo ejecuta es admin del grupo
+  if (isGroup) {
+    try {
+      const member = await ctx.getChatMember(from.id);
+      const isAdmin = ["administrator", "creator"].includes(member.status);
+      if (!isAdmin) {
+        await ctx.reply("Este comando solo puede usarlo un administrador del grupo.");
+        return;
+      }
+    } catch {
+      await ctx.reply("No pude verificar tus permisos en este grupo.");
+      return;
+    }
+  }
+
+  const chatId = chat?.id;
+  const userId = from.id;
+
+  const lines: string[] = [];
+
+  if (isGroup) {
+    lines.push(`*Chat ID del grupo:* \`${chatId}\``);
+    lines.push(`*Tipo:* ${chat?.type}`);
+    lines.push(`*Nombre:* ${chat?.title ?? "—"}`);
+    lines.push("");
+    lines.push(`*Tu Telegram ID:* \`${userId}\``);
+    lines.push("");
+    lines.push("Copia el *Chat ID* y ponlo como `TELEGRAM_GROUP_ID` en tus variables de entorno de Vercel.");
+  } else {
+    // DM: solo muestra el ID del usuario
+    lines.push(`*Tu Telegram ID:* \`${userId}\``);
+    lines.push("");
+    lines.push("Para obtener el ID de un grupo, usa este comando dentro del grupo.");
+  }
+
+  await ctx.reply(lines.join("\n"), { parse_mode: "Markdown" });
+});
+
 // /mispedidos — Últimos 3 pedidos
 bot.command("mispedidos", async (ctx: Context) => {
   const telegramId = ctx.from?.id;
@@ -284,6 +331,7 @@ async function startBot() {
       { command: "pedido", description: "Ver estado de un pedido (#ID)" },
       { command: "mispedidos", description: "Ver tus últimos 3 pedidos" },
       { command: "ayuda", description: "Lista de comandos" },
+      { command: "groupid", description: "Obtener el ID de este grupo (solo admins)" },
     ]);
     console.log("✅ Comandos configurados en Telegram");
 

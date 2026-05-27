@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { ImageOff } from "lucide-react";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductFilters } from "@/components/product/product-filters";
 
@@ -158,7 +159,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         </>
       ) : (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <span className="text-5xl mb-4" role="img" aria-hidden="true">🎴</span>
+          <div className="w-16 h-16 mb-4 rounded-[14px] bg-graphite-700/60 border border-white/8 flex items-center justify-center" aria-hidden="true">
+            <ImageOff size={24} className="text-white/20" />
+          </div>
           <h2 className="text-lg font-medium text-snow">
             {params.q ? "Sin resultados" : "No hay productos disponibles"}
           </h2>

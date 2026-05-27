@@ -22,7 +22,7 @@ if (!process.env.TELEGRAM_BOT_TOKEN) {
 
 const prisma = new PrismaClient();
 const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN);
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://decklab.shop";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://decklab.rayelus.com";
 
 // =============================================================
 // Utilidades

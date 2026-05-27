@@ -1,10 +1,29 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Mail, Package, Truck, MessageCircle } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Pedido confirmado — DECKLAB",
 };
+
+const NEXT_STEPS = [
+  {
+    Icon: Mail,
+    text: "Recibirás un email de confirmación con la factura en PDF.",
+  },
+  {
+    Icon: Package,
+    text: "Prepararemos tu pedido en el menor tiempo posible.",
+  },
+  {
+    Icon: Truck,
+    text: "Al enviarlo, recibirás el número de tracking de Correos.",
+  },
+  {
+    Icon: MessageCircle,
+    text: "Seguimiento también disponible vía Telegram (@decklab_bot).",
+  },
+];
 
 export default function OrderSuccessPage() {
   return (
@@ -15,32 +34,26 @@ export default function OrderSuccessPage() {
           <CheckCircle2 size={40} className="text-mint-signal" />
         </div>
 
-        {/* Mensaje */}
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold text-snow">
-            ¡Pedido confirmado! 🎴
-          </h1>
+          <h1 className="text-2xl font-semibold text-snow">Pedido confirmado</h1>
           <p className="text-slate-300 leading-relaxed">
             Tu pago ha sido procesado correctamente. Recibirás un email de confirmación con los detalles de tu pedido.
           </p>
         </div>
 
-        {/* Info adicional */}
-        <div className="w-full bg-graphite-700/40 border border-white/8 rounded-[16px] p-5 flex flex-col gap-3 text-left">
-          <p className="text-sm font-medium text-snow">¿Qué pasa ahora?</p>
-          <ol className="flex flex-col gap-2.5">
-            {[
-              { emoji: "📧", text: "Recibirás un email de confirmación con la factura en PDF." },
-              { emoji: "📦", text: "Prepararemos tu pedido en el menor tiempo posible." },
-              { emoji: "🚚", text: "Al enviarlo, recibirás el número de tracking de Correos." },
-              { emoji: "📬", text: "Seguimiento por email y Telegram (@decklab_bot)." },
-            ].map((item, i) => (
-              <li key={i} className="flex gap-3 text-sm text-slate-300">
-                <span role="img" aria-hidden="true" className="shrink-0">{item.emoji}</span>
-                {item.text}
+        {/* Pasos */}
+        <div className="w-full bg-graphite-700/40 border border-white/8 rounded-[16px] p-5 flex flex-col gap-4 text-left">
+          <p className="text-sm font-medium text-snow">Qué pasa ahora</p>
+          <ul className="flex flex-col gap-3">
+            {NEXT_STEPS.map(({ Icon, text }, i) => (
+              <li key={i} className="flex gap-3 items-start">
+                <div className="w-7 h-7 rounded-[6px] bg-graphite-500 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Icon size={13} className="text-slate-300" />
+                </div>
+                <p className="text-sm text-slate-300 leading-relaxed">{text}</p>
               </li>
             ))}
-          </ol>
+          </ul>
         </div>
 
         {/* CTAs */}

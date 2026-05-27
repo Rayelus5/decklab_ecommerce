@@ -1,7 +1,8 @@
+import { Dices } from "lucide-react";
+
 interface ProbabilityEntry {
   rarity: string;
   probability: string;
-  color?: string;
 }
 
 interface ProbabilityTableProps {
@@ -9,22 +10,20 @@ interface ProbabilityTableProps {
   title?: string;
 }
 
-// Colores por rareza (heurísticos)
 function getRarityColor(rarity: string): string {
   const r = rarity.toLowerCase();
   if (r.includes("shiny") || r.includes("especial")) return "text-yellow-400";
-  if (r.includes("ex") || r.includes("gx") || r.includes("v-max") || r.includes("vmax"))
+  if (r.includes("ex") || r.includes("gx") || r.includes("vmax") || r.includes("v-max"))
     return "text-purple-400";
-  if (r.includes("rara") || r.includes("rare")) return "text-blue-400";
-  if (r.includes("holográfica") || r.includes("holo")) return "text-cyan-400";
   if (r.includes("ultra")) return "text-amber-400";
-  if (r.includes("común") || r.includes("common")) return "text-slate-400";
+  if (r.includes("holográfica") || r.includes("holo")) return "text-cyan-400";
+  if (r.includes("rara") || r.includes("rare")) return "text-blue-400";
   if (r.includes("poco") || r.includes("uncommon")) return "text-green-400";
+  if (r.includes("común") || r.includes("common")) return "text-slate-400";
   return "text-slate-300";
 }
 
 export function ProbabilityTable({ data, title = "Probabilidades" }: ProbabilityTableProps) {
-  // Normalizar los datos a array
   const entries: ProbabilityEntry[] = Array.isArray(data)
     ? data
     : Object.entries(data).map(([rarity, probability]) => ({ rarity, probability }));
@@ -34,7 +33,7 @@ export function ProbabilityTable({ data, title = "Probabilidades" }: Probability
   return (
     <div className="bg-graphite-700/40 border border-white/8 rounded-[11px] overflow-hidden">
       <div className="px-4 py-3 border-b border-white/8 flex items-center gap-2">
-        <span className="text-base" role="img" aria-hidden="true">🎲</span>
+        <Dices size={15} className="text-slate-300" />
         <h3 className="text-sm font-semibold text-snow">{title}</h3>
       </div>
 
@@ -59,7 +58,7 @@ export function ProbabilityTable({ data, title = "Probabilidades" }: Probability
 
       <div className="px-4 py-2.5 bg-graphite-600/30 border-t border-white/8">
         <p className="text-[10px] text-slate-300/60 text-center">
-          Probabilidades certificadas · Randomización verificada y sin manipulación
+          Probabilidades certificadas &middot; Randomización verificada y sin manipulación
         </p>
       </div>
     </div>

@@ -60,7 +60,7 @@ export function RegisterForm() {
         return;
       }
 
-      toast.success("¡Cuenta creada! Bienvenido a DECKLAB 🎴");
+      toast.success("Cuenta creada. Bienvenido a DECKLAB.");
       router.push("/products");
       router.refresh();
     } catch {

@@ -1,5 +1,16 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import {
+  Shuffle,
+  PackageCheck,
+  Users,
+  Zap,
+  Truck,
+  Lock,
+  BarChart2,
+  ArrowRight,
+  Layers,
+} from "lucide-react";
 import { ShaderAnimation } from "@/components/ui/shader-animation";
 import { Waves } from "@/components/ui/wave-background";
 
@@ -9,72 +20,61 @@ export const metadata: Metadata = {
     "La tienda privada de Pokémon TCG personalizado. Acceso exclusivo para miembros de nuestra comunidad en Telegram.",
 };
 
-// Datos de beneficios PRO
-const PRO_BENEFITS = [
-  {
-    icon: "🎯",
-    title: "Allowance mensual",
-    desc: "Crédito mensual para comprar al precio PRO exclusivo de cada nivel.",
-  },
-  {
-    icon: "⚡",
-    title: "Acceso anticipado",
-    desc: "Disfruta de early access a nuevos productos horas antes que el resto.",
-  },
-  {
-    icon: "🚚",
-    title: "Envío gratuito",
-    desc: "Envío sin coste en tiers superiores. Sin sorpresas en el checkout.",
-  },
-  {
-    icon: "🔒",
-    title: "Productos exclusivos",
-    desc: "Acceso a colecciones y ediciones limitadas solo para miembros PRO.",
-  },
-];
-
-// Datos de características
 const FEATURES = [
   {
-    icon: "🎲",
+    Icon: Shuffle,
     title: "Aleatoriedad verificada",
-    desc: "Todas las probabilidades están publicadas. Randomización justa y transparente.",
+    desc: "Todas las probabilidades están publicadas. Randomización justa y sin manipulación.",
   },
   {
-    icon: "📦",
+    Icon: PackageCheck,
     title: "Envío seguro",
     desc: "Embalaje profesional. Correos Certificado disponible para mayor seguridad.",
   },
   {
-    icon: "🤝",
+    Icon: Users,
     title: "Comunidad privada",
     desc: "Solo miembros del grupo de Telegram. Una comunidad real de coleccionistas.",
+  },
+];
+
+const PRO_BENEFITS = [
+  {
+    Icon: BarChart2,
+    title: "Allowance mensual",
+    desc: "Crédito mensual para comprar al precio PRO exclusivo de cada nivel.",
+  },
+  {
+    Icon: Zap,
+    title: "Acceso anticipado",
+    desc: "Disfruta de early access a nuevos productos horas antes que el resto.",
+  },
+  {
+    Icon: Truck,
+    title: "Envío gratuito",
+    desc: "Envío sin coste en tiers superiores. Sin sorpresas en el checkout.",
+  },
+  {
+    Icon: Lock,
+    title: "Productos exclusivos",
+    desc: "Acceso a colecciones y ediciones limitadas solo para miembros PRO.",
   },
 ];
 
 export default function LandingPage() {
   return (
     <div className="flex flex-col">
-      {/* ============================================
-          HERO — ShaderAnimation de fondo
-      ============================================ */}
+      {/* ============ HERO ============ */}
       <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
-        {/* Shader animation (fondo) */}
         <div className="absolute inset-0">
           <ShaderAnimation />
         </div>
+        <div className="absolute inset-0 bg-void-black/60" aria-hidden="true" />
 
-        {/* Overlay oscuro */}
-        <div
-          className="absolute inset-0 bg-void-black/60"
-          aria-hidden="true"
-        />
-
-        {/* Contenido del hero */}
         <div className="relative z-10 text-center px-4 max-w-3xl mx-auto flex flex-col items-center gap-8">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/8 border border-white/12 rounded-full text-xs text-slate-300 backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-mint-signal animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-mint-signal animate-pulse" aria-hidden="true" />
             Tienda privada · Solo miembros verificados
           </div>
 
@@ -107,32 +107,21 @@ export default function LandingPage() {
 
           {/* Aviso Telegram */}
           <p className="text-xs text-slate-300/60 flex items-center gap-1.5">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="text-[#29B6F6]"
-              aria-hidden="true"
-            >
-              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-            </svg>
+            <Lock size={11} className="text-slate-300/60" />
             Acceso exclusivo para miembros del grupo privado de Telegram
           </p>
         </div>
 
-        {/* Flecha de scroll */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2" aria-hidden="true">
           <div className="w-5 h-8 border-2 border-white/20 rounded-full flex items-start justify-center pt-1.5">
             <div className="w-1 h-2 bg-white/40 rounded-full animate-bounce" />
           </div>
         </div>
       </section>
 
-      {/* ============================================
-          CARACTERÍSTICAS
-      ============================================ */}
-      <section className="py-20 px-4 relative">
+      {/* ============ CARACTERÍSTICAS ============ */}
+      <section className="py-20 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-2xl sm:text-3xl font-semibold text-snow">
@@ -143,33 +132,34 @@ export default function LandingPage() {
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {FEATURES.map((f) => (
+            {FEATURES.map(({ Icon, title, desc }) => (
               <div
-                key={f.title}
-                className="bg-graphite-700/40 border border-white/8 rounded-[16px] p-6 flex flex-col gap-3"
+                key={title}
+                className="bg-graphite-700/40 border border-white/8 rounded-[16px] p-6 flex flex-col gap-4"
               >
-                <span className="text-3xl" role="img" aria-hidden="true">{f.icon}</span>
-                <h3 className="text-base font-semibold text-snow">{f.title}</h3>
-                <p className="text-sm text-slate-300 leading-relaxed">{f.desc}</p>
+                <div className="w-10 h-10 rounded-[10px] bg-graphite-600 border border-white/10 flex items-center justify-center">
+                  <Icon size={18} className="text-ash-50" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-snow">{title}</h3>
+                  <p className="text-sm text-slate-300 leading-relaxed mt-1">{desc}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ============================================
-          BENEFICIOS PRO — con WaveBackground
-      ============================================ */}
+      {/* ============ BENEFICIOS PRO ============ */}
       <section className="py-20 px-4 relative overflow-hidden bg-graphite-700/20">
-        {/* Wave background */}
-        <div className="absolute inset-0 opacity-30">
+        <div className="absolute inset-0 opacity-25" aria-hidden="true">
           <Waves />
         </div>
 
         <div className="max-w-5xl mx-auto relative z-10">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-xs text-amber-400 mb-4">
-              <span>👑</span>
+              <Lock size={11} />
               Suscripción PRO
             </div>
             <h2 className="text-2xl sm:text-3xl font-semibold text-snow">
@@ -177,20 +167,21 @@ export default function LandingPage() {
             </h2>
             <p className="text-slate-300 mt-2 max-w-md mx-auto">
               5 niveles de suscripción con allowance mensual y perks exclusivos.
-              Sin devoluciones, con toda la transparencia.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-            {PRO_BENEFITS.map((b) => (
+            {PRO_BENEFITS.map(({ Icon, title, desc }) => (
               <div
-                key={b.title}
+                key={title}
                 className="flex gap-4 items-start bg-graphite-600/40 border border-white/8 rounded-[11px] p-4"
               >
-                <span className="text-2xl shrink-0" role="img" aria-hidden="true">{b.icon}</span>
+                <div className="w-9 h-9 rounded-[8px] bg-graphite-500 border border-white/10 flex items-center justify-center shrink-0">
+                  <Icon size={16} className="text-amber-400" />
+                </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-snow">{b.title}</h3>
-                  <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">{b.desc}</p>
+                  <h3 className="text-sm font-semibold text-snow">{title}</h3>
+                  <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">{desc}</p>
                 </div>
               </div>
             ))}
@@ -202,6 +193,7 @@ export default function LandingPage() {
               className="inline-flex items-center gap-2 px-8 py-3.5 bg-ash-50 hover:bg-white text-graphite-700 font-semibold text-sm rounded-[8px] transition-colors"
             >
               Ver planes y precios
+              <ArrowRight size={15} />
             </Link>
             <p className="text-xs text-slate-300/60 mt-3">
               Permanencia mínima de 2 meses · Facturación bimestral
@@ -210,18 +202,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============================================
-          CTA FINAL
-      ============================================ */}
+      {/* ============ CTA FINAL ============ */}
       <section className="py-20 px-4 text-center">
         <div className="max-w-lg mx-auto flex flex-col items-center gap-6">
-          <div className="w-16 h-16 rounded-[16px] bg-graphite-600 border border-white/10 flex items-center justify-center text-3xl">
-            🎴
+          <div className="w-14 h-14 rounded-[14px] bg-graphite-600 border border-white/10 flex items-center justify-center">
+            <Layers size={24} className="text-ash-50" />
           </div>
           <div>
-            <h2 className="text-2xl font-semibold text-snow">
-              ¿Listo para unirte?
-            </h2>
+            <h2 className="text-2xl font-semibold text-snow">Listo para unirte?</h2>
             <p className="text-slate-300 mt-2 leading-relaxed">
               Únete al grupo de Telegram y verifica tu membresía para acceder a la tienda.
             </p>
@@ -237,9 +225,10 @@ export default function LandingPage() {
               href="https://t.me/decklab_bot"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-snow font-medium text-sm rounded-[8px] transition-all text-center"
+              className="flex-1 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-snow font-medium text-sm rounded-[8px] transition-all text-center flex items-center justify-center gap-2"
             >
-              Unirse al grupo →
+              Unirse al grupo
+              <ArrowRight size={14} />
             </a>
           </div>
         </div>

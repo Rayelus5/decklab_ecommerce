@@ -144,7 +144,7 @@ export async function notifyNewProduct(params: {
   price: string;
 }): Promise<void> {
   const groupId = process.env.TELEGRAM_GROUP_ID;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://decklab.shop";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://decklab.rayelus.com";
   if (!groupId) return;
 
   try {

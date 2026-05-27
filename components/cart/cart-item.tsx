@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, ImageOff } from "lucide-react";
 import { useCart, type CartItem } from "@/lib/hooks/use-cart";
 
 interface CartItemProps {
@@ -34,8 +34,8 @@ export function CartItemRow({ item, isPro = false }: CartItemProps) {
             sizes="64px"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-xl opacity-30">
-            🎴
+          <div className="absolute inset-0 flex items-center justify-center">
+            <ImageOff size={18} className="text-white/15" />
           </div>
         )}
       </Link>

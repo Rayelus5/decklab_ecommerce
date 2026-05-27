@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ShoppingCart, Lock } from "lucide-react";
+import { ShoppingCart, Lock, CheckCircle2, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { clsx } from "clsx";
 import { useCart } from "@/lib/hooks/use-cart";
@@ -40,8 +40,9 @@ export function ProductActions({ product, isPro, accessDenied }: ProductActionsP
   );
 
   const selectedVariant = product.variants.find((v) => v.id === selectedVariantId);
-  const hasProPrice = isPro && selectedVariant?.pricePro && selectedVariant.pricePro > 0;
-  const displayPrice = hasProPrice
+  const hasPriceProDefined = !!(selectedVariant?.pricePro && selectedVariant.pricePro > 0);
+  const isPayingProPrice = isPro && hasPriceProDefined;
+  const displayPrice = isPayingProPrice
     ? selectedVariant!.pricePro!
     : selectedVariant?.price ?? 0;
   const originalPrice = selectedVariant?.price ?? 0;
@@ -116,22 +117,45 @@ export function ProductActions({ product, isPro, accessDenied }: ProductActionsP
       )}
 
       {/* Precio */}
-      <div className="flex items-baseline gap-3">
-        <span
-          className={clsx(
-            "text-3xl font-bold",
-            hasProPrice ? "text-amber-400" : "text-snow"
-          )}
-        >
-          {displayPrice.toFixed(2).replace(".", ",")} €
-        </span>
-        {hasProPrice && (
-          <>
-            <span className="text-lg text-slate-300 line-through">
-              {originalPrice.toFixed(2).replace(".", ",")} €
+      <div className="flex flex-col gap-3">
+        {/* Precio principal */}
+        <div className="flex items-end gap-3">
+          <span
+            className={clsx(
+              "text-[3rem] leading-none font-black tabular-nums tracking-tight",
+              isPayingProPrice ? "text-amber-400" : "text-snow"
+            )}
+          >
+            {displayPrice.toFixed(2).replace(".", ",")}
+            <span className="text-2xl ml-1">&euro;</span>
+          </span>
+
+          {/* Precio original tachado — solo visible cuando el usuario PRO ve el precio PRO */}
+          {isPayingProPrice && (
+            <span className="text-xl text-slate-300/50 line-through tabular-nums mb-1">
+              {originalPrice.toFixed(2).replace(".", ",")} &euro;
             </span>
-            <span className="text-sm text-amber-400 font-medium">Precio PRO</span>
-          </>
+          )}
+        </div>
+
+        {/* Pill PRO palpitante — visible para TODOS cuando hay precio PRO definido */}
+        {hasPriceProDefined && (
+          <span
+            className={clsx(
+              "animate-pro-pulse",
+              "inline-flex items-center gap-2 self-start",
+              "pl-2.5 pr-4 py-1.5 rounded-full",
+              "bg-red-950/70 border border-red-500/50",
+              "text-[12px] font-bold text-red-400 tracking-wide",
+              "whitespace-nowrap select-none"
+            )}
+          >
+            <Crown size={11} className="shrink-0 text-red-500" />
+            PRECIO PRO&nbsp;
+            <span className="text-red-300 font-black tabular-nums">
+              {selectedVariant!.pricePro!.toFixed(2).replace(".", ",")} &euro;
+            </span>
+          </span>
         )}
       </div>
 
@@ -166,10 +190,11 @@ export function ProductActions({ product, isPro, accessDenied }: ProductActionsP
         {isOutOfStock ? "Agotado" : "Añadir al carrito"}
       </Button>
 
-      {/* proExempt info */}
+      {/* proExempt — solo visible para usuarios PRO */}
       {selectedVariant?.proExempt && isPro && (
-        <p className="text-xs text-amber-400/80 text-center">
-          ✓ Precio PRO sin consumir allowance mensual
+        <p className="text-xs text-amber-400/80 text-center flex items-center justify-center gap-1.5">
+          <CheckCircle2 size={11} />
+          Precio PRO sin consumir allowance mensual
         </p>
       )}
     </div>

@@ -4,7 +4,17 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { ShoppingCart, User, LogOut, Settings, Package, Crown, Menu, X } from "lucide-react";
+import {
+  ShoppingCart,
+  User,
+  LogOut,
+  Settings,
+  Package,
+  Crown,
+  Menu,
+  X,
+  Layers,
+} from "lucide-react";
 import { clsx } from "clsx";
 import { useCart } from "@/lib/hooks/use-cart";
 
@@ -37,10 +47,12 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
           href="/products"
           className="flex items-center gap-2 font-semibold text-snow hover:text-ash-50 transition-colors shrink-0"
         >
-          <span className="text-lg" role="img" aria-label="DECKLAB">🎴</span>
+          <div className="w-7 h-7 bg-graphite-500 border border-white/15 rounded-[6px] flex items-center justify-center">
+            <Layers size={14} className="text-ash-50" />
+          </div>
           <span className="text-sm tracking-wide">DECKLAB</span>
           {isPro && (
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-[4px] bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/30 text-amber-400">
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-[4px] bg-amber-500/15 border border-amber-500/25 text-amber-400">
               PRO
             </span>
           )}
@@ -109,7 +121,6 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
               )}
             </button>
 
-            {/* Dropdown */}
             {userMenuOpen && (
               <>
                 <div

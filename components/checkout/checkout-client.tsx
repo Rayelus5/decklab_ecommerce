@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, MapPin, Truck, Tag, CreditCard, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin, Truck, Tag, CreditCard, Check, AlertTriangle } from "lucide-react";
 import { clsx } from "clsx";
 import { useCart } from "@/lib/hooks/use-cart";
 import { Button } from "@/components/ui/button";
@@ -466,8 +466,8 @@ export function CheckoutClient({
               {/* Selección de método */}
               <div className="flex flex-col gap-2">
                 {[
-                  { value: "STRIPE", label: "Tarjeta de crédito / débito", icon: "💳", desc: "Visa, Mastercard, American Express. Pago seguro con Stripe." },
-                  { value: "PAYPAL", label: "PayPal", icon: "🅿️", desc: "Paga con tu cuenta PayPal. Redirigirás a PayPal para completar el pago." },
+                  { value: "STRIPE", label: "Tarjeta de crédito / débito", desc: "Visa, Mastercard, American Express. Pago seguro con Stripe." },
+                  { value: "PAYPAL", label: "PayPal", desc: "Paga con tu cuenta PayPal. Redirigirás a PayPal para completar el pago." },
                 ].map((method) => (
                   <label
                     key={method.value}
@@ -486,7 +486,7 @@ export function CheckoutClient({
                     />
                     <div>
                       <p className="text-sm font-medium text-snow flex items-center gap-2">
-                        <span role="img" aria-hidden="true">{method.icon}</span>
+                        <CreditCard size={14} className="text-slate-300" />
                         {method.label}
                       </p>
                       <p className="text-xs text-slate-300 mt-0.5">{method.desc}</p>
@@ -497,8 +497,9 @@ export function CheckoutClient({
 
               {/* Aviso de no devoluciones */}
               <div className="bg-ember-red/10 border border-ember-red/20 rounded-[8px] px-3 py-2.5">
-                <p className="text-xs text-ember-red font-medium">
-                  ⚠️ Sin devoluciones
+                <p className="text-xs text-ember-red font-medium flex items-center gap-1.5">
+                  <AlertTriangle size={12} />
+                  Sin devoluciones
                 </p>
                 <p className="text-xs text-slate-300 mt-0.5">
                   Al confirmar la compra, aceptas que no se realizan devoluciones en ningún producto de DECKLAB.

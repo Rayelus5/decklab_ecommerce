@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   description:
     "DECKLAB es una tienda privada de productos de Pokémon TCG personalizados. Acceso exclusivo para miembros de nuestra comunidad.",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ?? "https://decklab.shop"
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://decklab.rayelus.com"
   ),
   openGraph: {
     type: "website",

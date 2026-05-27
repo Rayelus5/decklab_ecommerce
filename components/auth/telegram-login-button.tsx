@@ -68,13 +68,13 @@ export function TelegramLoginButton({
           // usar el flujo de email mágico o crear sesión custom
           // Por ahora redirigimos con el token
           toast.dismiss("tg-auth");
-          toast.success("¡Acceso concedido! Bienvenido a DECKLAB 🎴");
+          toast.success("Acceso concedido. Bienvenido a DECKLAB.");
           onSuccess?.();
           window.location.href = callbackUrl;
           return;
         }
 
-        toast.success("¡Acceso concedido! Bienvenido a DECKLAB 🎴", {
+        toast.success("Acceso concedido. Bienvenido a DECKLAB.", {
           id: "tg-auth",
         });
         onSuccess?.();
@@ -115,7 +115,7 @@ export function TelegramLoginButton({
   if (!botUsername) {
     return (
       <div className="text-sm text-ember-red text-center">
-        ⚠️ NEXT_PUBLIC_TELEGRAM_BOT_USERNAME no configurado
+        NEXT_PUBLIC_TELEGRAM_BOT_USERNAME no configurado
       </div>
     );
   }

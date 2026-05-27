@@ -1,15 +1,33 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Lock, MessageCircle, UserPlus, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "DECKLAB — Acceso Restringido",
   description: "Esta tienda es exclusiva para miembros del grupo privado de Telegram.",
 };
 
+const STEPS = [
+  {
+    icon: MessageCircle,
+    title: "Únete al grupo",
+    desc: "Solicita acceso al grupo privado de Telegram de DECKLAB.",
+  },
+  {
+    icon: UserPlus,
+    title: "Crea tu cuenta",
+    desc: "Regístrate en DECKLAB con tu email.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Verifica con Telegram",
+    desc: "Inicia sesión con el botón de Telegram en la página de login.",
+  },
+];
+
 export default function AccesoPrivadoPage() {
   return (
     <div className="min-h-screen bg-void-black flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Fondo */}
       <div
         className="absolute inset-0 pointer-events-none"
         aria-hidden="true"
@@ -23,7 +41,7 @@ export default function AccesoPrivadoPage() {
         {/* Icono */}
         <div className="flex flex-col items-center gap-4">
           <div className="w-20 h-20 rounded-full bg-ember-red/10 border border-ember-red/20 flex items-center justify-center">
-            <span className="text-4xl" role="img" aria-label="Acceso restringido">🔒</span>
+            <Lock size={36} className="text-ember-red" />
           </div>
           <div>
             <h1 className="text-2xl font-semibold text-snow">Acceso Privado</h1>
@@ -34,37 +52,24 @@ export default function AccesoPrivadoPage() {
           </div>
         </div>
 
-        {/* Card de pasos */}
+        {/* Pasos */}
         <div className="w-full bg-graphite-700/60 backdrop-blur-sm border border-white/8 rounded-[16px] p-6 text-left flex flex-col gap-4">
-          <p className="text-sm font-medium text-slate-200">¿Cómo obtener acceso?</p>
+          <p className="text-sm font-medium text-slate-200">Cómo obtener acceso</p>
           <ol className="flex flex-col gap-3">
-            {[
-              {
-                step: "1",
-                title: "Únete al grupo",
-                desc: "Solicita acceso al grupo privado de Telegram de DECKLAB.",
-              },
-              {
-                step: "2",
-                title: "Crea tu cuenta",
-                desc: "Regístrate en DECKLAB con tu email.",
-              },
-              {
-                step: "3",
-                title: "Verifica con Telegram",
-                desc: 'Inicia sesión con el botón de Telegram en la página de login.',
-              },
-            ].map((item) => (
-              <li key={item.step} className="flex gap-3 items-start">
-                <div className="w-6 h-6 rounded-full bg-ember-red/20 border border-ember-red/30 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-xs font-semibold text-ember-red">{item.step}</span>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-snow">{item.title}</p>
-                  <p className="text-xs text-slate-300 mt-0.5">{item.desc}</p>
-                </div>
-              </li>
-            ))}
+            {STEPS.map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <li key={i} className="flex gap-3 items-start">
+                  <div className="w-7 h-7 rounded-[6px] bg-graphite-500 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <Icon size={14} className="text-slate-300" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-snow">{item.title}</p>
+                    <p className="text-xs text-slate-300 mt-0.5">{item.desc}</p>
+                  </div>
+                </li>
+              );
+            })}
           </ol>
         </div>
 
@@ -82,16 +87,7 @@ export default function AccesoPrivadoPage() {
             rel="noopener noreferrer"
             className="w-full flex items-center justify-center gap-2 bg-transparent text-snow border border-white/10 hover:border-white/20 hover:bg-white/5 font-medium text-sm px-4 py-3 rounded-[8px] transition-all"
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="text-[#29B6F6]"
-              aria-hidden="true"
-            >
-              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-            </svg>
+            <MessageCircle size={16} className="text-sky-400" />
             Contactar por Telegram
           </a>
         </div>

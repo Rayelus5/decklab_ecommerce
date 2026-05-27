@@ -9,7 +9,7 @@ async function main() {
   // =============================================================
   // 1. ADMIN USER
   // =============================================================
-  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@decklab.shop";
+  const adminEmail = process.env.ADMIN_EMAIL ?? "admin@decklab.rayelus.com";
   const adminPassword = await bcrypt.hash(
     process.env.ADMIN_PASSWORD ?? "DeckLab2024!",
     12

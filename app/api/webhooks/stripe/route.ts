@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { refillProAllowance } from "@/lib/pro-logic";
 import { notifyPurchase } from "@/lib/telegram";
+import { sendOrderConfirmationEmail, sendSubscriptionRenewalEmail } from "@/lib/email";
 
 // Deshabilitar el body parser de Next.js para verificar la firma de Stripe
 export const config = {
@@ -169,7 +170,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     console.error("[WEBHOOK] Error notifying Telegram:", err);
   }
 
-  // 7. Enviar email de confirmación (Sprint 10)
+  // 7. Enviar email de confirmación con factura PDF
+  try {
+    await sendOrderConfirmationEmail(order.id);
+  } catch (err) {
+    console.error("[WEBHOOK] Error sending confirmation email:", err);
+  }
+
   console.log(`[WEBHOOK] Order #${order.orderNumber} created for user ${userId}, total: ${total}€`);
 }
 
@@ -191,6 +198,14 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   }
 
   await refillProAllowance(user.id);
+
+  // Enviar email de renovación de suscripción
+  try {
+    await sendSubscriptionRenewalEmail(user.id);
+  } catch (err) {
+    console.error("[WEBHOOK] Error sending renewal email:", err);
+  }
+
   console.log(`[WEBHOOK] PRO allowance refilled for user ${user.id}`);
 }
 

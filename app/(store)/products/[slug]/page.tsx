@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Package, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Package, ShieldAlert, ImageOff, Crown, Zap } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ProbabilityTable } from "@/components/product/probability-table";
@@ -140,7 +140,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-8xl opacity-20" role="img" aria-hidden="true">🎴</span>
+                <ImageOff size={40} className="text-white/10" />
               </div>
             )}
           </div>
@@ -186,13 +186,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
           {/* Badges */}
           <div className="flex flex-wrap gap-2">
             {product.isExclusive && (
-              <span className="text-xs font-semibold px-2.5 py-1 bg-amber-500/15 border border-amber-500/25 text-amber-400 rounded-full">
-                👑 EXCLUSIVO PRO
+              <span className="text-xs font-semibold px-2.5 py-1 bg-amber-500/15 border border-amber-500/25 text-amber-400 rounded-full flex items-center gap-1.5">
+                <Crown size={11} />
+                EXCLUSIVO PRO
               </span>
             )}
             {product.earlyAccessTierLevel && (
-              <span className="text-xs font-semibold px-2.5 py-1 bg-sky-500/15 border border-sky-500/25 text-sky-400 rounded-full">
-                ⚡ EARLY ACCESS — Nivel {product.earlyAccessTierLevel}+
+              <span className="text-xs font-semibold px-2.5 py-1 bg-sky-500/15 border border-sky-500/25 text-sky-400 rounded-full flex items-center gap-1.5">
+                <Zap size={11} />
+                EARLY ACCESS — Nivel {product.earlyAccessTierLevel}+
               </span>
             )}
             {product.noReturns && (

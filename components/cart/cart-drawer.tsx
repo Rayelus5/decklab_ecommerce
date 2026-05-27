@@ -72,7 +72,7 @@ export function CartDrawer({ isPro = false, proAllowanceBalance = 0 }: CartDrawe
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {items.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center gap-4 text-center">
-              <span className="text-5xl opacity-30" role="img" aria-hidden="true">🛒</span>
+              <ShoppingBag size={40} className="text-white/15" />
               <div>
                 <p className="text-base font-medium text-snow">Tu carrito está vacío</p>
                 <p className="text-sm text-slate-300 mt-1">

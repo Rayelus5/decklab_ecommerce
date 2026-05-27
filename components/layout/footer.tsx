@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Layers } from "lucide-react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -9,7 +10,9 @@ export function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <span className="text-lg" role="img" aria-label="DECKLAB">🎴</span>
+            <div className="w-6 h-6 bg-graphite-500 border border-white/15 rounded-[5px] flex items-center justify-center">
+              <Layers size={12} className="text-ash-50" />
+            </div>
             <span className="text-sm font-semibold text-snow">DECKLAB</span>
             <span className="text-xs text-slate-300">— Pokémon TCG Premium</span>
           </div>
@@ -28,7 +31,7 @@ export function Footer() {
             >
               PRO
             </Link>
-            <span className="text-xs text-slate-300/40">·</span>
+            <span className="text-xs text-slate-300/40" aria-hidden="true">·</span>
             <span className="text-xs text-slate-300/60">
               Sin devoluciones · Aleatoriedad verificada
             </span>
@@ -36,7 +39,7 @@ export function Footer() {
 
           {/* Copyright */}
           <p className="text-xs text-slate-300/40">
-            © {currentYear} DECKLAB. Todos los derechos reservados.
+            &copy; {currentYear} DECKLAB. Todos los derechos reservados.
           </p>
         </div>
       </div>

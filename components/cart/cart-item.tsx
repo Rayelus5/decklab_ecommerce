@@ -29,12 +29,10 @@ export function CartItemRow({ item, proState }: CartItemProps) {
         aria-label={`Ver ${item.productTitle}`}
       >
         {item.imageUrl ? (
-          <Image
+          <img
             src={item.imageUrl}
             alt={item.productTitle}
-            fill
-            className="object-cover"
-            sizes="64px"
+            className="object-cover w-full h-full"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">

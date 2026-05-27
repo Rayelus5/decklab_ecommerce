@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Package, ShieldAlert, ImageOff, Crown, Zap } from "lucide-react";
+import { ArrowLeft, Package, ShieldAlert, Crown, Zap } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/safe-query";
 import { ProbabilityTable } from "@/components/product/probability-table";
 import { ProductActions } from "@/components/product/product-actions";
+import { ProductGallery } from "@/components/product/product-gallery";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -121,45 +121,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         {/* Galería */}
-        <div className="flex flex-col gap-3">
-          {/* Imagen principal */}
-          <div className="relative aspect-square bg-graphite-700/40 border border-white/8 rounded-[16px] overflow-hidden">
-            {mainImage ? (
-              <Image
-                src={mainImage.url}
-                alt={mainImage.alt ?? product.title}
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                priority
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <ImageOff size={40} className="text-white/10" />
-              </div>
-            )}
-          </div>
-
-          {/* Miniaturas */}
-          {product.images.length > 1 && (
-            <div className="grid grid-cols-5 gap-2">
-              {product.images.map((img) => (
-                <div
-                  key={img.id}
-                  className="relative aspect-square bg-graphite-700/40 border border-white/8 rounded-[8px] overflow-hidden cursor-pointer hover:border-white/20 transition-colors"
-                >
-                  <Image
-                    src={img.url}
-                    alt={img.alt ?? product.title}
-                    fill
-                    className="object-cover"
-                    sizes="80px"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <ProductGallery
+          images={product.images.map((img) => ({
+            id: img.id,
+            url: img.url,
+            alt: img.alt ?? null,
+          }))}
+          productTitle={product.title}
+        />
 
         {/* Info del producto */}
         <div className="flex flex-col gap-6">

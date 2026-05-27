@@ -63,6 +63,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             take: 1,
             select: {
               id: true,
+              title: true,
               price: true,
               pricePro: true,
               stock: true,
@@ -128,6 +129,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                   imageAlt={productImage?.alt ?? product.title}
                   variant={firstVariant ? {
                     id: firstVariant.id,
+                    title: firstVariant.title ?? undefined,
                     price: Number(firstVariant.price),
                     pricePro: firstVariant.pricePro != null ? Number(firstVariant.pricePro) : null,
                     stock: firstVariant.stock,

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+// import Image from "next/image";
 import { ShoppingCart, Lock, Zap, ImageOff, Crown } from "lucide-react";
 import { clsx } from "clsx";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { useCart } from "@/lib/hooks/use-cart";
 
 interface ProductVariantPreview {
   id: string;
+  title?: string;
   price: number;
   pricePro?: number | null;
   stock: number;
@@ -61,6 +62,7 @@ export function ProductCard({
       variantId: variant.id,
       productId: id,
       productTitle: title,
+      variantTitle: variant.title,
       slug,
       imageUrl,
       price: variant.price,
@@ -80,21 +82,20 @@ export function ProductCard({
         "transition-all duration-300 ease-out",
         hasAccess
           ? [
-              "bg-graphite-700/50 border border-white/8",
-              "hover:border-white/18 hover:-translate-y-1",
-              "hover:shadow-[0_20px_60px_-12px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.08)]",
-            ]
+            "bg-graphite-700/50 border border-white/8",
+            "hover:border-white/18 hover:-translate-y-1",
+            "hover:shadow-[0_20px_60px_-12px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.08)]",
+          ]
           : "bg-graphite-700/30 border border-white/4 opacity-55 cursor-not-allowed"
       )}
     >
       {/* ── Imagen ─────────────────────────────────────────── */}
       <div className="relative aspect-[4/3] bg-graphite-600/60 overflow-hidden">
         {imageUrl ? (
-          <Image
+          <img
             src={imageUrl}
             alt={imageAlt ?? title}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.07]"
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.07] w-full h-full"
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           />
         ) : (
@@ -151,7 +152,7 @@ export function ProductCard({
               "shadow-lg",
               "opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0",
               "transition-all duration-200 ease-out",
-              "hover:bg-ash-50 active:scale-95"
+              "hover:bg-ash-50 active:scale-95 cursor-pointer"
             )}
             aria-label={`Añadir ${title} al carrito`}
           >

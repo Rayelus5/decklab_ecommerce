@@ -14,7 +14,7 @@ import { prisma } from "@/lib/prisma";
 import { calculateCartPricing } from "@/lib/pro-logic";
 import type { CartItemPricing } from "@/lib/pro-logic";
 
-const mockPrismaUser = prisma.user as {
+const mockPrismaUser = prisma.user as unknown as {
   findUnique: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
 };

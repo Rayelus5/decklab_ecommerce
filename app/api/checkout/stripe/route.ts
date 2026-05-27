@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { rateLimit } from "@/lib/rate-limit";
+import { validateCoupon, applyCoupon } from "@/lib/coupon";
 
 interface CartItemInput {
   variantId: string;
@@ -53,11 +54,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Método de envío no válido" }, { status: 400 });
     }
 
-    // 3. Verificar y cargar variantes
+    // 3. Verificar y cargar variantes (incluir productId y categoryId para validar cupones)
     const variantIds = items.map((i) => i.variantId);
     const variants = await prisma.productVariant.findMany({
       where: { id: { in: variantIds } },
-      include: { product: { select: { title: true, slug: true, isArchived: true } } },
+      include: {
+        product: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            isArchived: true,
+            categoryId: true,
+          },
+        },
+      },
     });
 
     if (variants.length !== variantIds.length) {
@@ -102,6 +113,8 @@ export async function POST(req: NextRequest) {
       wasProPrice: boolean;
     }> = [];
 
+    let productSubtotal = 0;
+
     for (const item of items) {
       const variant = variants.find((v) => v.id === item.variantId)!;
       const hasProPrice =
@@ -123,6 +136,8 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      productSubtotal += pricePaid * item.quantity;
+
       cartMetaItems.push({
         variantId: variant.id,
         quantity: item.quantity,
@@ -135,9 +150,9 @@ export async function POST(req: NextRequest) {
           currency: "eur",
           product_data: {
             name: `${variant.product.title}${variant.title ? ` — ${variant.title}` : ""}`,
-            description: variant.sku,
+            description: variant.sku ?? undefined,
           },
-          unit_amount: Math.round(pricePaid * 100), // centavos
+          unit_amount: Math.round(pricePaid * 100),
         },
         quantity: item.quantity,
       });
@@ -154,7 +169,11 @@ export async function POST(req: NextRequest) {
     const benefits = proTier?.benefits as Record<string, unknown> | null;
     const freeShipping = benefits?.freeShipping === true;
 
-    if (!freeShipping && Number(shippingRate.price) > 0) {
+    const shippingCost = (!freeShipping && Number(shippingRate.price) > 0)
+      ? Number(shippingRate.price)
+      : 0;
+
+    if (shippingCost > 0) {
       lineItems.push({
         price_data: {
           currency: "eur",
@@ -162,19 +181,74 @@ export async function POST(req: NextRequest) {
             name: `Envío — ${shippingRate.name}`,
             description: shippingRate.type,
           },
-          unit_amount: Math.round(Number(shippingRate.price) * 100),
+          unit_amount: Math.round(shippingCost * 100),
         },
         quantity: 1,
       });
     }
 
-    // 8. Crear sesión de Stripe
+    // 8. Validar cupón y crear cupón temporal en Stripe (si hay)
+    let couponId: string | null = null;
+    let discountAmount = 0;
+    let stripeCouponId: string | undefined;
+
+    if (couponCode?.trim()) {
+      const cartProductIds = variants.map((v) => v.product.id);
+      const cartCategoryIds = variants
+        .map((v) => v.product.categoryId)
+        .filter((id): id is string => Boolean(id));
+
+      const validation = await validateCoupon(
+        couponCode,
+        session.user.id,
+        productSubtotal,
+        cartProductIds,
+        cartCategoryIds
+      );
+
+      if (!validation.valid || !validation.coupon) {
+        return NextResponse.json(
+          { error: validation.error ?? "Cupón no válido" },
+          { status: 400 }
+        );
+      }
+
+      const applied = applyCoupon(
+        productSubtotal,
+        validation.coupon.type,
+        validation.coupon.value
+      );
+
+      discountAmount = applied.discount;
+      couponId = validation.coupon.id;
+
+      // Stripe Checkout no acepta unit_amount negativo.
+      // La forma correcta es crear un Coupon de Stripe y pasarlo en `discounts`.
+      if (discountAmount > 0) {
+        const label = validation.coupon.type === "PERCENT"
+          ? `${validation.coupon.value}% — ${validation.coupon.code}`
+          : `${discountAmount.toFixed(2)}€ — ${validation.coupon.code}`;
+
+        const stripeCoupon = await stripe.coupons.create({
+          name: `Descuento ${label}`,
+          amount_off: Math.round(discountAmount * 100), // centavos, siempre positivo
+          currency: "eur",
+          duration: "once", // Un solo uso
+        });
+
+        stripeCouponId = stripeCoupon.id;
+      }
+    }
+
+    // 9. Crear sesión de Stripe
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
     const stripeSession = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
       line_items: lineItems,
+      // Aplicar cupón de descuento si existe
+      ...(stripeCouponId ? { discounts: [{ coupon: stripeCouponId }] } : {}),
       success_url: `${appUrl}/order-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/checkout`,
       customer_email: session.user.email,
@@ -185,6 +259,8 @@ export async function POST(req: NextRequest) {
         shippingType: shippingRate.type,
         shippingRegion: shippingRate.region,
         couponCode: couponCode ?? "",
+        couponId: couponId ?? "",
+        discountAmount: discountAmount.toFixed(2),
         cartItems: JSON.stringify(cartMetaItems),
         isPro: session.user.isPro ? "true" : "false",
       },

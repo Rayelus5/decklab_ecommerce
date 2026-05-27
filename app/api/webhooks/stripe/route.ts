@@ -15,8 +15,11 @@ export const config = {
 };
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-  const { userId, addressId, shippingRateId, shippingType, shippingRegion, couponCode, cartItems, isPro } =
-    session.metadata ?? {};
+  const {
+    userId, addressId, shippingRateId, shippingType, shippingRegion,
+    couponCode, couponId: metaCouponId, discountAmount: metaDiscountAmount,
+    cartItems, isPro,
+  } = session.metadata ?? {};
 
   if (!userId || !addressId || !shippingRateId || !cartItems) {
     console.error("[WEBHOOK] Missing metadata in session", session.id);
@@ -59,15 +62,26 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     select: { id: true, stock: true, proExempt: true },
   });
 
-  // Calcular total
+  // Calcular totales
   const subtotal = parsedItems.reduce((sum, item) => sum + item.pricePaid * item.quantity, 0);
   const shippingCost = Number(shippingRate?.price ?? 0);
-  const total = subtotal + shippingCost;
+  const discountTotal = Number(metaDiscountAmount ?? 0);
+  // Usar el total real cobrado por Stripe (evita discrepancias por redondeo)
+  const total = session.amount_total != null
+    ? session.amount_total / 100
+    : Math.max(0, subtotal + shippingCost - discountTotal);
 
-  // Obtener cupón si se usó
-  let coupon = null;
-  if (couponCode) {
-    coupon = await prisma.coupon.findUnique({ where: { code: couponCode } });
+  // Cupón: usar couponId del metadata (ya validado en checkout) para evitar otra query
+  let coupon: { id: string; code: string } | null = null;
+  if (metaCouponId && couponCode) {
+    coupon = { id: metaCouponId, code: couponCode };
+  } else if (couponCode && !metaCouponId) {
+    // Fallback: buscar por código (compatibilidad con sesiones antiguas)
+    const found = await prisma.coupon.findUnique({
+      where: { code: couponCode },
+      select: { id: true, code: true },
+    });
+    coupon = found;
   }
 
   // Transacción atómica
@@ -85,6 +99,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         shippingRegion: shippingRegion ?? "NATIONAL",
         shippingCost,
         subtotal,
+        discountTotal: discountTotal > 0 ? discountTotal : 0,
         total,
         couponId: coupon?.id ?? null,
         couponCode: coupon ? couponCode : null,

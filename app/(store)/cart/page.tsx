@@ -96,7 +96,7 @@ export default function CartPage() {
 
               <Link href="/checkout">
                 <Button fullWidth size="lg">
-                  Proceder al checkout
+                  Comprar ahora
                 </Button>
               </Link>
 

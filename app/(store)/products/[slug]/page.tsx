@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Package, ShieldAlert, ImageOff, Crown, Zap } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-query";
 import { ProbabilityTable } from "@/components/product/probability-table";
 import { ProductActions } from "@/components/product/product-actions";
 
@@ -14,13 +15,12 @@ interface ProductPageProps {
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = await prisma.product.findUnique({
-    where: { slug },
-    select: { title: true, description: true },
-  });
-
+  const product = await safeQuery(
+    () => prisma.product.findUnique({ where: { slug }, select: { title: true, description: true } }),
+    null,
+    "generateMetadata product"
+  );
   if (!product) return {};
-
   return {
     title: `${product.title} — DECKLAB`,
     description: product.description ?? undefined,
@@ -33,27 +33,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const isPro = session?.user?.isPro ?? false;
   const isAdmin = session?.user?.role === "ADMIN";
 
-  const product = await prisma.product.findUnique({
-    where: { slug },
-    include: {
-      category: { select: { id: true, name: true, slug: true } },
-      images: { orderBy: { position: "asc" } },
-      variants: {
-        orderBy: { price: "asc" },
-        select: {
-          id: true,
-          sku: true,
-          title: true,
-          price: true,
-          pricePro: true,
-          proExempt: true,
-          stock: true,
-          weight: true,
-          attributes: true,
+  const product = await safeQuery(
+    () => prisma.product.findUnique({
+      where: { slug },
+      include: {
+        category: { select: { id: true, name: true, slug: true } },
+        images: { orderBy: { position: "asc" } },
+        variants: {
+          orderBy: { price: "asc" },
+          select: { id: true, sku: true, title: true, price: true, pricePro: true, proExempt: true, stock: true, weight: true, attributes: true },
         },
       },
-    },
-  });
+    }),
+    null,
+    "product.findUnique"
+  );
 
   if (!product || (product.isArchived && !isAdmin)) {
     notFound();
@@ -69,11 +63,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
         accessDenied = true;
         accessMessage = "Este producto requiere suscripción PRO";
       } else {
-        // Verificar nivel suficiente
-        const userTier = await prisma.proTier.findUnique({
-          where: { id: session?.user?.proTierId ?? "" },
-          select: { sortOrder: true },
-        });
+        const userTier = await safeQuery(
+          () => prisma.proTier.findUnique({ where: { id: session?.user?.proTierId ?? "" }, select: { sortOrder: true } }),
+          null,
+          "proTier.findUnique (earlyAccess)"
+        );
         if (!userTier || userTier.sortOrder < product.earlyAccessTierLevel) {
           accessDenied = true;
           accessMessage = `Este producto requiere Nivel ${product.earlyAccessTierLevel} o superior`;
@@ -82,10 +76,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
     }
 
     if (!accessDenied && product.isExclusive && isPro) {
-      const userTier = await prisma.proTier.findUnique({
-        where: { id: session?.user?.proTierId ?? "" },
-        select: { benefits: true },
-      });
+      const userTier = await safeQuery(
+        () => prisma.proTier.findUnique({ where: { id: session?.user?.proTierId ?? "" }, select: { benefits: true } }),
+        null,
+        "proTier.findUnique (exclusive)"
+      );
       const benefits = userTier?.benefits as Record<string, unknown> | null;
       if (!benefits?.exclusiveProducts) {
         accessDenied = true;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
+import { rateLimit } from "@/lib/rate-limit";
 
 interface CartItemInput {
   variantId: string;
@@ -9,12 +10,21 @@ interface CartItemInput {
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
-    }
+  // Rate limit: 5 intentos de checkout por usuario por minuto
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  }
 
+  const rl = rateLimit(`checkout:${session.user.id}`, 5, 60_000);
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: "Demasiados intentos. Espera un momento." },
+      { status: 429 }
+    );
+  }
+
+  try {
     const body = await req.json();
     const { addressId, shippingRateId, couponCode, items } = body as {
       addressId: string;

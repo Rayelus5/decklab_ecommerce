@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-query";
 import { CouponsManager } from "./coupons-manager";
 
 export const metadata: Metadata = { title: "Cupones — DECKLAB Admin" };
 
 export default async function AdminCouponsPage() {
-  const coupons = await prisma.coupon.findMany({
+  const coupons = await safeQuery(() => prisma.coupon.findMany({
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
@@ -22,7 +23,7 @@ export default async function AdminCouponsPage() {
       categoryIds: true,
       createdAt: true,
     },
-  });
+  }), [], "coupons.findMany");
 
   const serialized = coupons.map((c) => ({
     ...c,

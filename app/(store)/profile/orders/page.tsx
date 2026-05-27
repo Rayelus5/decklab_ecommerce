@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-query";
 import { Package, ChevronRight, ArrowLeft } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -33,23 +34,21 @@ export default async function OrdersPage() {
   const session = await auth();
   if (!session?.user) redirect("/login?callbackUrl=/profile/orders");
 
-  const orders = await prisma.order.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      orderNumber: true,
-      status: true,
-      total: true,
-      subtotal: true,
-      shippingCost: true,
-      discountTotal: true,
-      paymentMethod: true,
-      createdAt: true,
-      _count: { select: { items: true } },
-      shipment: { select: { trackingNumber: true, shippedAt: true } },
-    },
-  });
+  const orders = await safeQuery(
+    () => prisma.order.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true, orderNumber: true, status: true, total: true,
+        subtotal: true, shippingCost: true, discountTotal: true,
+        paymentMethod: true, createdAt: true,
+        _count: { select: { items: true } },
+        shipment: { select: { trackingNumber: true, shippedAt: true } },
+      },
+    }),
+    [],
+    "orders.findMany"
+  );
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">

@@ -4,6 +4,7 @@ import { Layers } from "lucide-react";
 
 import { LoginForm } from "@/components/auth/login-form";
 import { TelegramLoginButton } from "@/components/auth/telegram-login-button";
+import { AuthErrorBoundary } from "@/components/error-boundary";
 
 function GoogleLoginButton() {
   return (
@@ -49,6 +50,7 @@ export default function LoginPage() {
       </div>
 
       {/* Card principal */}
+      <AuthErrorBoundary>
       <div className="bg-graphite-700/60 backdrop-blur-sm border border-white/8 rounded-[16px] p-6 flex flex-col gap-5">
         {/* Telegram */}
         <div className="flex flex-col gap-2">
@@ -70,6 +72,7 @@ export default function LoginPage() {
 
         <LoginForm callbackUrl="/products" />
       </div>
+      </AuthErrorBoundary>
 
       <p className="text-center text-sm text-slate-300">
         No tienes cuenta?{" "}

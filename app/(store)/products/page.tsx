@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-query";
 import { ImageOff } from "lucide-react";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductFilters } from "@/components/product/product-filters";
+import { ProductCardSkeleton } from "@/components/ui/loader";
 
 export const metadata: Metadata = {
   title: "Tienda — DECKLAB",
@@ -47,36 +50,40 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     ];
   }
 
-  const [products, total, categories] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      include: {
-        category: { select: { id: true, name: true } },
-        images: { orderBy: { position: "asc" }, take: 1 },
-        variants: {
-          where: { stock: { gt: 0 } },
-          orderBy: { price: "asc" },
-          take: 1,
-          select: {
-            id: true,
-            price: true,
-            pricePro: true,
-            stock: true,
-            proExempt: true,
+  const [products, total, categories] = await safeQuery(
+    () => Promise.all([
+      prisma.product.findMany({
+        where,
+        include: {
+          category: { select: { id: true, name: true } },
+          images: { orderBy: { position: "asc" }, take: 1 },
+          variants: {
+            where: { stock: { gt: 0 } },
+            orderBy: { price: "asc" },
+            take: 1,
+            select: {
+              id: true,
+              price: true,
+              pricePro: true,
+              stock: true,
+              proExempt: true,
+            },
           },
         },
-      },
-      orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
-      skip,
-      take: limit,
-    }),
-    prisma.product.count({ where }),
-    prisma.category.findMany({
-      where: { parentId: null },
-      select: { id: true, name: true, slug: true },
-      orderBy: { name: "asc" },
-    }),
-  ]);
+        orderBy: [{ isFeatured: "desc" }, { createdAt: "desc" }],
+        skip,
+        take: limit,
+      }),
+      prisma.product.count({ where }),
+      prisma.category.findMany({
+        where: { parentId: null },
+        select: { id: true, name: true, slug: true },
+        orderBy: { name: "asc" },
+      }),
+    ]),
+    [[], 0, []] as const,
+    "products.page"
+  );
 
   const totalPages = Math.ceil(total / limit);
 
@@ -99,6 +106,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       />
 
       {/* Grid de productos */}
+      <Suspense fallback={
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
+          {Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+        </div>
+      }>
       {products.length > 0 ? (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
@@ -180,6 +192,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           )}
         </div>
       )}
+      </Suspense>
     </div>
   );
 }

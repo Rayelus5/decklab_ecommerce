@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-query";
 import { ShippingManager } from "./shipping-manager";
 
 export const metadata: Metadata = { title: "Envíos — DECKLAB Admin" };
 
 export default async function AdminShippingPage() {
-  const rates = await prisma.shippingRate.findMany({
-    orderBy: [{ region: "asc" }, { type: "asc" }, { minWeight: "asc" }],
-  });
+  const rates = await safeQuery(
+    () => prisma.shippingRate.findMany({ orderBy: [{ region: "asc" }, { type: "asc" }, { minWeight: "asc" }] }),
+    [],
+    "shippingRates.findMany"
+  );
 
   const serialized = rates.map((r) => ({ ...r, price: Number(r.price) }));
 

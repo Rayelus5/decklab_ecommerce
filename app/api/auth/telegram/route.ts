@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyTelegramWidgetData, checkGroupMembership } from "@/lib/telegram";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import type { TelegramAuthData } from "@/lib/telegram";
 
 /**
@@ -14,6 +15,13 @@ import type { TelegramAuthData } from "@/lib/telegram";
  * via callback o AJAX.
  */
 export async function POST(request: NextRequest) {
+  // Rate limit: 10 intentos por IP por minuto
+  const ip = getClientIp(request);
+  const rl = rateLimit(`telegram-auth:${ip}`, 10, 60_000);
+  if (!rl.success) {
+    return NextResponse.json({ error: "Demasiados intentos. Espera un momento." }, { status: 429 });
+  }
+
   try {
     const body = await request.json();
     const telegramData = body as TelegramAuthData;

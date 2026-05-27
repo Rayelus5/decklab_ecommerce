@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-query";
 import { CheckoutClient } from "@/components/checkout/checkout-client";
 
 export const metadata: Metadata = {
@@ -16,32 +17,45 @@ export default async function CheckoutPage() {
   }
 
   // Cargar datos necesarios para el checkout
-  const [addresses, shippingRates, proTier] = await Promise.all([
-    prisma.address.findMany({
-      where: { userId: session.user.id },
-      orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
-    }),
-    prisma.shippingRate.findMany({
-      where: { active: true },
-      orderBy: [{ region: "asc" }, { type: "asc" }, { minWeight: "asc" }],
-    }),
-    session.user.isPro && session.user.proTierId
-      ? prisma.proTier.findUnique({
-          where: { id: session.user.proTierId },
-          select: {
-            id: true,
-            name: true,
-            benefits: true,
-          },
-        })
-      : null,
+  const [addresses, shippingRates] = await Promise.all([
+    safeQuery(
+      () => prisma.address.findMany({
+        where: { userId: session.user.id },
+        orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+      }),
+      [],
+      "checkout.addresses"
+    ),
+    safeQuery(
+      () => prisma.shippingRate.findMany({
+        where: { active: true },
+        orderBy: [{ region: "asc" }, { type: "asc" }, { minWeight: "asc" }],
+      }),
+      [],
+      "checkout.shippingRates"
+    ),
   ]);
 
+  const proTier = session.user.isPro && session.user.proTierId
+    ? await safeQuery(
+        () => prisma.proTier.findUnique({
+          where: { id: session.user.proTierId! },
+          select: { id: true, name: true, benefits: true },
+        }),
+        null,
+        "checkout.proTier"
+      )
+    : null;
+
   const userBalance = session.user.isPro
-    ? await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { proAllowanceBalance: true },
-      })
+    ? await safeQuery(
+        () => prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { proAllowanceBalance: true },
+        }),
+        null,
+        "checkout.userBalance"
+      )
     : null;
 
   const benefits = proTier?.benefits as Record<string, unknown> | null;

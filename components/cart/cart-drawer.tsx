@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { X, ShoppingBag } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/lib/hooks/use-cart";
 import { CartItemRow } from "./cart-item";
 import { Button } from "@/components/ui/button";
+import { CartErrorBoundary } from "@/components/error-boundary";
 
 interface CartDrawerProps {
   isPro?: boolean;
@@ -18,19 +20,28 @@ export function CartDrawer({ isPro = false, proAllowanceBalance = 0 }: CartDrawe
   const regularSubtotal = items.reduce((acc, i) => acc + i.price * i.quantity, 0);
   const saving = regularSubtotal - subtotal;
 
-  if (!isOpen) return null;
-
   return (
+    <CartErrorBoundary>
+    <AnimatePresence>
+    {isOpen && (
     <>
       {/* Overlay */}
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
         onClick={closeCart}
         aria-hidden="true"
       />
 
       {/* Drawer */}
-      <div
+      <motion.div
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
         role="dialog"
         aria-label="Carrito de compra"
         aria-modal="true"
@@ -135,7 +146,10 @@ export function CartDrawer({ isPro = false, proAllowanceBalance = 0 }: CartDrawe
             </Link>
           </div>
         )}
-      </div>
+      </motion.div>
     </>
+    )}
+    </AnimatePresence>
+    </CartErrorBoundary>
   );
 }

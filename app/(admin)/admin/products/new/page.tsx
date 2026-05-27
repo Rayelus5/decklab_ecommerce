@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-query";
 import { ProductForm } from "@/components/admin/product-form";
 
 export const metadata: Metadata = { title: "Nuevo producto — DECKLAB Admin" };
 
 export default async function AdminNewProductPage() {
-  const categories = await prisma.category.findMany({
-    orderBy: { sortOrder: "asc" },
-    select: { id: true, name: true },
-  });
+  const categories = await safeQuery(
+    () => prisma.category.findMany({ orderBy: { sortOrder: "asc" }, select: { id: true, name: true } }),
+    [],
+    "categories.findMany"
+  );
 
   return (
     <div className="p-6 max-w-3xl">

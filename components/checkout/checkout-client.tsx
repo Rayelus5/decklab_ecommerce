@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { CheckoutErrorBoundary } from "@/components/error-boundary";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -182,6 +183,7 @@ export function CheckoutClient({
   }
 
   return (
+    <CheckoutErrorBoundary>
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
@@ -585,5 +587,6 @@ export function CheckoutClient({
         </div>
       </div>
     </div>
+    </CheckoutErrorBoundary>
   );
 }

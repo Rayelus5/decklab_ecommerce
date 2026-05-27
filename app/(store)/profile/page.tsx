@@ -3,58 +3,32 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-query";
 import { Package, MapPin, Settings, Crown, BarChart2, ChevronRight, AlertTriangle } from "lucide-react";
+import { ProAllowanceBar } from "@/components/profile/pro-allowance-bar";
 
 export const metadata: Metadata = {
   title: "Mi perfil — DECKLAB",
 };
 
-function ProAllowanceBar({ balance, max }: { balance: number; max: number }) {
-  const pct = max > 0 ? Math.min(100, (balance / max) * 100) : 0;
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex justify-between text-xs">
-        <span className="text-slate-300">Allowance disponible</span>
-        <span className="text-snow font-semibold tabular-nums">
-          {balance.toFixed(2).replace(".", ",")} / {max.toFixed(0)} &euro;
-        </span>
-      </div>
-      <div className="h-2 bg-graphite-500 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-amber-400 rounded-full transition-all duration-700"
-          style={{ width: `${pct}%` }}
-          role="progressbar"
-          aria-valuenow={balance}
-          aria-valuemin={0}
-          aria-valuemax={max}
-        />
-      </div>
-    </div>
-  );
-}
 
 export default async function ProfilePage() {
   const session = await auth();
   if (!session?.user) redirect("/login?callbackUrl=/profile");
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      name: true,
-      email: true,
-      isPro: true,
-      proAllowanceBalance: true,
-      proSince: true,
-      isTelegramMember: true,
-      telegramUsername: true,
-      proTier: {
-        select: { name: true, monthlyAllowance: true },
+  const user = await safeQuery(
+    () => prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        name: true, email: true, isPro: true, proAllowanceBalance: true,
+        proSince: true, isTelegramMember: true, telegramUsername: true,
+        proTier: { select: { name: true, monthlyAllowance: true } },
+        _count: { select: { orders: true, addresses: true } },
       },
-      _count: {
-        select: { orders: true, addresses: true },
-      },
-    },
-  });
+    }),
+    null,
+    "user.findUnique (profile)"
+  );
 
   if (!user) redirect("/login");
 
@@ -62,18 +36,16 @@ export default async function ProfilePage() {
   const maxAllowance = Number(user.proTier?.monthlyAllowance ?? 0);
 
   // Últimos 3 pedidos para el resumen
-  const recentOrders = await prisma.order.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-    take: 3,
-    select: {
-      id: true,
-      orderNumber: true,
-      status: true,
-      total: true,
-      createdAt: true,
-    },
-  });
+  const recentOrders = await safeQuery(
+    () => prisma.order.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      take: 3,
+      select: { id: true, orderNumber: true, status: true, total: true, createdAt: true },
+    }),
+    [],
+    "recentOrders.findMany"
+  );
 
   const STATUS_LABELS: Record<string, string> = {
     PENDING: "Pendiente",

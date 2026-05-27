@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { PageTransition } from "@/components/ui/page-transition";
 
 export default async function StoreLayout({
   children,
@@ -17,7 +18,9 @@ export default async function StoreLayout({
         isPro={user?.isPro ?? false}
         isAdmin={user?.role === "ADMIN"}
       />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">
+        <PageTransition>{children}</PageTransition>
+      </main>
       <Footer />
     </div>
   );

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-query";
 import { StatsCard } from "@/components/admin/stats-card";
 import { ShoppingBag, Users, Crown, AlertTriangle, ChevronRight, TrendingUp } from "lucide-react";
 
@@ -40,39 +41,33 @@ export default async function AdminDashboardPage() {
     totalUsers,
     lowStockVariants,
     recentOrders,
-  ] = await Promise.all([
-    prisma.order.count({ where: { createdAt: { gte: startOfToday }, isPaid: true } }),
-    prisma.order.aggregate({
-      where: { createdAt: { gte: startOfToday }, isPaid: true },
-      _sum: { total: true },
-    }),
-    prisma.order.aggregate({
-      where: { createdAt: { gte: startOfMonth }, isPaid: true },
-      _sum: { total: true },
-    }),
-    prisma.order.count({ where: { status: { in: ["PAID", "PROCESSING"] } } }),
-    prisma.user.count({ where: { isPro: true } }),
-    prisma.user.count(),
-    prisma.productVariant.findMany({
-      where: { stock: { gt: 0, lte: 5 } },
-      select: { sku: true, stock: true, product: { select: { title: true } } },
-      take: 5,
-      orderBy: { stock: "asc" },
-    }),
-    prisma.order.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 8,
-      select: {
-        id: true,
-        orderNumber: true,
-        status: true,
-        total: true,
-        createdAt: true,
-        user: { select: { name: true, email: true } },
-        _count: { select: { items: true } },
-      },
-    }),
-  ]);
+  ] = await safeQuery(
+    () => Promise.all([
+      prisma.order.count({ where: { createdAt: { gte: startOfToday }, isPaid: true } }),
+      prisma.order.aggregate({ where: { createdAt: { gte: startOfToday }, isPaid: true }, _sum: { total: true } }),
+      prisma.order.aggregate({ where: { createdAt: { gte: startOfMonth }, isPaid: true }, _sum: { total: true } }),
+      prisma.order.count({ where: { status: { in: ["PAID", "PROCESSING"] } } }),
+      prisma.user.count({ where: { isPro: true } }),
+      prisma.user.count(),
+      prisma.productVariant.findMany({
+        where: { stock: { gt: 0, lte: 5 } },
+        select: { sku: true, stock: true, product: { select: { title: true } } },
+        take: 5,
+        orderBy: { stock: "asc" },
+      }),
+      prisma.order.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 8,
+        select: {
+          id: true, orderNumber: true, status: true, total: true, createdAt: true,
+          user: { select: { name: true, email: true } },
+          _count: { select: { items: true } },
+        },
+      }),
+    ]),
+    [0, { _sum: { total: null } }, { _sum: { total: null } }, 0, 0, 0, [], []] as const,
+    "admin dashboard"
+  );
 
   const todaySales = Number(salesToday._sum.total ?? 0);
   const monthSales = Number(salesMonth._sum.total ?? 0);

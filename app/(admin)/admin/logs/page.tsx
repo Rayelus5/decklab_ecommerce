@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-query";
 
 export const metadata: Metadata = { title: "Actividad — DECKLAB Admin" };
 
@@ -26,26 +27,28 @@ export default async function AdminLogsPage({
 
   const where = typeFilter ? { actionType: typeFilter } : {};
 
-  const [logs, total] = await Promise.all([
-    prisma.adminActionLog.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      include: {
-        admin: { select: { name: true, email: true } },
-      },
-    }),
-    prisma.adminActionLog.count({ where }),
-  ]);
+  const [logs, total] = await safeQuery(
+    () => Promise.all([
+      prisma.adminActionLog.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+        include: { admin: { select: { name: true, email: true } } },
+      }),
+      prisma.adminActionLog.count({ where }),
+    ]),
+    [[], 0] as const,
+    "admin logs"
+  );
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
-  // Get unique action types for filter
-  const actionTypes = await prisma.adminActionLog.groupBy({
-    by: ["actionType"],
-    orderBy: { actionType: "asc" },
-  });
+  const actionTypes = await safeQuery(
+    () => prisma.adminActionLog.groupBy({ by: ["actionType"], orderBy: { actionType: "asc" } }),
+    [],
+    "actionTypes.groupBy"
+  );
 
   return (
     <div className="p-6 flex flex-col gap-6 max-w-5xl">

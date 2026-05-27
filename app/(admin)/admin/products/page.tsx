@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-query";
 import { Plus, ChevronRight, ImageOff, Archive } from "lucide-react";
 
 export const metadata: Metadata = { title: "Productos — DECKLAB Admin" };
@@ -26,28 +27,27 @@ export default async function AdminProductsPage({
     } : {}),
   };
 
-  const [products, total] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        isArchived: true,
-        isFeatured: true,
-        isExclusive: true,
-        earlyAccessTierLevel: true,
-        category: { select: { name: true } },
-        images: { select: { url: true }, orderBy: { position: "asc" }, take: 1 },
-        variants: { select: { stock: true, price: true } },
-        createdAt: true,
-      },
-    }),
-    prisma.product.count({ where }),
-  ]);
+  const [products, total] = await safeQuery(
+    () => Promise.all([
+      prisma.product.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+        select: {
+          id: true, title: true, slug: true, isArchived: true, isFeatured: true,
+          isExclusive: true, earlyAccessTierLevel: true,
+          category: { select: { name: true } },
+          images: { select: { url: true }, orderBy: { position: "asc" }, take: 1 },
+          variants: { select: { stock: true, price: true } },
+          createdAt: true,
+        },
+      }),
+      prisma.product.count({ where }),
+    ]),
+    [[], 0] as const,
+    "admin products list"
+  );
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 

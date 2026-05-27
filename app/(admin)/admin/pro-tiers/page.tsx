@@ -1,25 +1,24 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { safeQuery } from "@/lib/safe-query";
 import { ProTiersManager } from "./pro-tiers-manager";
 
 export const metadata: Metadata = { title: "PRO Tiers — DECKLAB Admin" };
 
 export default async function AdminProTiersPage() {
-  const tiers = await prisma.proTier.findMany({
-    orderBy: { sortOrder: "asc" },
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      priceMonthly: true,
-      monthlyAllowance: true,
-      stripePriceId: true,
-      benefits: true,
-      isActive: true,
-      sortOrder: true,
-      _count: { select: { users: true } },
-    },
-  });
+  const tiers = await safeQuery(
+    () => prisma.proTier.findMany({
+      orderBy: { sortOrder: "asc" },
+      select: {
+        id: true, name: true, description: true, priceMonthly: true,
+        monthlyAllowance: true, stripePriceId: true, benefits: true,
+        isActive: true, sortOrder: true,
+        _count: { select: { users: true } },
+      },
+    }),
+    [],
+    "proTiers.findMany"
+  );
 
   const serialized = tiers.map((t) => ({
     ...t,

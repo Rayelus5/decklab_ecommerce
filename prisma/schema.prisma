@@ -321,12 +321,51 @@ model Coupon {
   categoryIds String[] // IDs de categorías específicas
 
   // Relaciones
-  orders Order[]
+  orders             Order[]
+  reservationPeriods ReservationPeriod[]
 
   createdAt DateTime @default(now())
 
   @@index([code])
   @@index([isActive])
+}
+
+// =============================================================
+// RESERVAS ANTICIPADAS
+// =============================================================
+
+model ReservationPeriod {
+  id          String  @id @default(cuid())
+  name        String                      // "Reserva Enero 2026"
+  description String? @db.Text           // Texto del popup/banner
+
+  // Timing
+  opensAt      DateTime  // Cuando abre la reserva (puede ser en el pasado = ya abierta)
+  closesAt     DateTime  // Cuando cierra (countdown target)
+  deliveryDate DateTime? // Fecha estimada de entrega/envío al cliente
+
+  // Descuento — cupón ya existente en el sistema
+  couponId String?
+  coupon   Coupon? @relation(fields: [couponId], references: [id])
+
+  // Productos asociados (misma convención que Coupon.productIds)
+  productIds String[]
+
+  // Visual / Marketing
+  badgeText    String  @default("RESERVA") // Texto del badge en la card
+  popupEnabled Boolean @default(true)       // Mostrar popup en /products
+
+  // Plazas limitadas (null = sin límite visible)
+  // spotsRemaining se calcula en runtime: maxUnits - coupon.usesCount
+  maxUnits Int?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, closesAt])
+  @@index([opensAt])
 }
 
 // =============================================================

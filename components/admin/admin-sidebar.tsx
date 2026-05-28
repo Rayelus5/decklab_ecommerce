@@ -18,6 +18,7 @@ import {
   LogOut,
   ChevronRight,
   ShoppingCart,
+  Clock,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -29,6 +30,7 @@ const NAV_ITEMS = [
   { href: "/admin/users", icon: Users, label: "Usuarios" },
   { href: "/admin/pro-tiers", icon: Crown, label: "PRO Tiers" },
   { href: "/admin/shipping", icon: Truck, label: "Envíos" },
+  { href: "/admin/reservations", icon: Clock, label: "Reservas" },
   { href: "/admin/coupons", icon: Ticket, label: "Cupones" },
   { href: "/admin/logs", icon: ScrollText, label: "Actividad" },
 ];

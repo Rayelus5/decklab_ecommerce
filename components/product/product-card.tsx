@@ -6,6 +6,7 @@ import { ShoppingCart, Lock, Zap, ImageOff, Crown } from "lucide-react";
 import { clsx } from "clsx";
 import { toast } from "sonner";
 import { useCart } from "@/lib/hooks/use-cart";
+import { ReservationProductBadge } from "@/components/reservations/reservation-product-badge";
 
 interface ProductVariantPreview {
   id: string;
@@ -14,6 +15,11 @@ interface ProductVariantPreview {
   pricePro?: number | null;
   stock: number;
   proExempt: boolean;
+}
+
+interface ReservationBadgeProps {
+  badgeText: string;
+  closesAt: string;
 }
 
 interface ProductCardProps {
@@ -28,6 +34,7 @@ interface ProductCardProps {
   isPro?: boolean;
   hasAccess?: boolean;
   categoryName?: string;
+  reservation?: ReservationBadgeProps;
 }
 
 export function ProductCard({
@@ -42,6 +49,7 @@ export function ProductCard({
   isPro = false,
   hasAccess = true,
   categoryName,
+  reservation,
 }: ProductCardProps) {
   const addItem = useCart((s) => s.addItem);
 
@@ -130,6 +138,12 @@ export function ProductCard({
               <Zap size={9} />
               EARLY ACCESS
             </span>
+          )}
+          {reservation && (
+            <ReservationProductBadge
+              badgeText={reservation.badgeText}
+              closesAt={reservation.closesAt}
+            />
           )}
           {isOutOfStock && (
             <span className="text-[10px] font-bold px-2.5 py-1 bg-graphite-500/80 border border-white/10 text-slate-400 rounded-full backdrop-blur-sm">

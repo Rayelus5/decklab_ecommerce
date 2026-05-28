@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Check, ArrowRight, Loader2 } from "lucide-react";
+import { Check, ArrowRight, ExternalLink } from "lucide-react";
 import { clsx } from "clsx";
 import { Button } from "@/components/ui/button";
 
@@ -75,17 +75,25 @@ export function PricingCard({
         body: JSON.stringify({ tierId: id }),
       });
 
-      const data = await res.json();
+      let data: { url?: string; error?: string } = {};
+      try {
+        data = await res.json() as typeof data;
+      } catch { /* empty body */ }
 
       if (!res.ok) {
         toast.error(data.error ?? "Error al cambiar el plan");
         return;
       }
 
-      toast.success("Plan actualizado correctamente");
-      router.refresh();
+      if (!data.url) {
+        toast.error("No se pudo iniciar el proceso de cambio de plan");
+        return;
+      }
+
+      // Redirigir a Stripe Checkout para confirmar el pago del nuevo plan
+      window.location.href = data.url;
     } catch {
-      toast.error("Error de conexión.");
+      toast.error("Error de conexión. Inténtalo de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -176,7 +184,7 @@ export function PricingCard({
             loading={loading}
           >
             Cambiar a este plan
-            <ArrowRight size={14} />
+            <ExternalLink size={14} />
           </Button>
         ) : (
           <Button

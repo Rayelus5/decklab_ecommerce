@@ -19,7 +19,7 @@ export const config = {
 };
 
 async function handleSubscriptionCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const { userId, tierId } = session.metadata ?? {};
+  const { userId, tierId, oldSubscriptionId } = session.metadata ?? {};
 
   if (!userId || !tierId) {
     console.error("[WEBHOOK] Missing subscription metadata in session:", session.id);
@@ -38,28 +38,48 @@ async function handleSubscriptionCheckoutCompleted(session: Stripe.Checkout.Sess
   // Idempotencia: si el usuario ya tiene este proSubscriptionId, saltar
   const existing = await prisma.user.findUnique({
     where: { id: userId },
-    select: { proSubscriptionId: true },
+    select: { proSubscriptionId: true, proSince: true },
   });
   if (existing?.proSubscriptionId === subscriptionId) {
     console.log("[WEBHOOK] Subscription already activated:", subscriptionId);
     return;
   }
 
+  const isPlanChange = !!(oldSubscriptionId && oldSubscriptionId !== subscriptionId);
+
   // Activar PRO en la BD
+  // proSince: se preserva si es un cambio de plan (ya era PRO antes)
   await prisma.user.update({
     where: { id: userId },
     data: {
       isPro: true,
       proTierId: tierId,
       proSubscriptionId: subscriptionId,
-      proSince: new Date(),
+      proSince: existing?.proSince ?? new Date(),
     },
   });
 
-  // Allowance inicial (invoice.paid para subscription_create se saltará para no duplicar)
+  // Cancelar suscripción anterior si es un cambio de plan
+  if (isPlanChange) {
+    try {
+      await stripe.subscriptions.cancel(oldSubscriptionId!);
+      console.log(`[WEBHOOK] Old subscription cancelled: ${oldSubscriptionId}`);
+    } catch (err) {
+      // No bloquear si ya estaba cancelada o no existe
+      console.error("[WEBHOOK] Could not cancel old subscription:", oldSubscriptionId, err);
+    }
+  }
+
+  // Allowance inicial
+  // Para cambios de plan: refill con el nuevo tier (el ciclo anterior ya no aplica)
+  // Para subscription_create: invoice.paid lo saltará (billing_reason check) así que lo hacemos aquí
   await refillProAllowance(userId);
 
-  console.log(`[WEBHOOK] PRO activated for user ${userId}, tier ${tierId}, sub ${subscriptionId}`);
+  console.log(
+    isPlanChange
+      ? `[WEBHOOK] PRO plan changed for user ${userId}: ${oldSubscriptionId} → ${subscriptionId} (tier ${tierId})`
+      : `[WEBHOOK] PRO activated for user ${userId}, tier ${tierId}, sub ${subscriptionId}`
+  );
 }
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {

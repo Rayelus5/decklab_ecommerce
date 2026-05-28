@@ -9,6 +9,8 @@ import { ImageOff } from "lucide-react";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductFilters } from "@/components/product/product-filters";
 import { ProductCardSkeleton } from "@/components/ui/loader";
+import { ReservationBanner } from "@/components/reservations/reservation-banner";
+import { ReservationPopup } from "@/components/reservations/reservation-popup";
 
 export const metadata: Metadata = {
   title: "Tienda — DECKLAB",
@@ -20,6 +22,7 @@ interface ProductsPageProps {
     q?: string;
     categoryId?: string;
     page?: string;
+    reservation?: string;
   }>;
 }
 
@@ -33,6 +36,36 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
   const isPro = session?.user?.isPro ?? false;
   const isAdmin = session?.user?.role === "ADMIN";
+  const filterByReservation = params.reservation === "true";
+
+  // Fetch reserva activa en paralelo con los productos
+  const now = new Date();
+  const activeReservation = await safeQuery(
+    () => prisma.reservationPeriod.findFirst({
+      where: {
+        isActive: true,
+        opensAt: { lte: now },
+        closesAt: { gt: now },
+      },
+      orderBy: { closesAt: "asc" },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        closesAt: true,
+        deliveryDate: true,
+        productIds: true,
+        badgeText: true,
+        popupEnabled: true,
+        maxUnits: true,
+        coupon: {
+          select: { code: true, usesCount: true, type: true, value: true },
+        },
+      },
+    }),
+    null,
+    "reservationPeriod.active"
+  );
 
   // Construir filtros
   const where: Record<string, unknown> = { isArchived: false };
@@ -52,6 +85,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     ];
   }
 
+  // Filtrar por productos en reserva si se pide
+  if (filterByReservation && activeReservation && activeReservation.productIds.length > 0) {
+    where.id = { in: activeReservation.productIds };
+  }
+
   const [products, total, categories] = await safeQuery(
     () => Promise.all([
       prisma.product.findMany({
@@ -60,9 +98,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           category: { select: { id: true, name: true } },
           images: { orderBy: { position: "asc" }, take: 1 },
           variants: {
-            where: { stock: { gt: 0 } }, // Pre-filter; availableStock = stock - reservedStock se evalúa post-fetch
+            where: { stock: { gt: 0 } },
             orderBy: { price: "asc" },
-            take: 3, // Tomar más por si los primeros tienen toda la reserva ocupada
+            take: 3,
             select: {
               id: true,
               title: true,
@@ -91,16 +129,66 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
   const totalPages = Math.ceil(total / limit);
 
+  // Set de IDs de productos en reserva para badges
+  const reservationProductIds = new Set<string>(activeReservation?.productIds ?? []);
+
+  // Calcular plazas restantes para el popup
+  const spotsRemaining =
+    activeReservation?.maxUnits != null && activeReservation.coupon
+      ? Math.max(0, activeReservation.maxUnits - activeReservation.coupon.usesCount)
+      : null;
+
+  const couponLabel =
+    activeReservation?.coupon?.type === "PERCENT"
+      ? `${Number(activeReservation.coupon.value).toFixed(0)}% descuento`
+      : activeReservation?.coupon
+      ? `${Number(activeReservation.coupon.value).toFixed(2)} € descuento`
+      : undefined;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      {/* Popup de reserva — solo si tiene popup habilitado */}
+      {activeReservation?.popupEnabled && (
+        <ReservationPopup
+          reservation={{
+            ...activeReservation,
+            closesAt: activeReservation.closesAt.toISOString(),
+            deliveryDate: activeReservation.deliveryDate?.toISOString() ?? null,
+            description: activeReservation.description ?? null,
+            spotsRemaining,
+            coupon: activeReservation.coupon
+              ? {
+                  ...activeReservation.coupon,
+                  value: Number(activeReservation.coupon.value),
+                }
+              : null,
+          }}
+        />
+      )}
+
       {/* Cabecera */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-semibold text-snow">Tienda</h1>
         <p className="text-slate-300 text-sm mt-1">
           {total} producto{total !== 1 ? "s" : ""} disponible{total !== 1 ? "s" : ""}
           {params.q && ` para "${params.q}"`}
+          {filterByReservation && activeReservation && (
+            <> &mdash; mostrando productos en <span className="text-amber-400">reserva anticipada</span></>
+          )}
         </p>
       </div>
+
+      {/* Banner de reserva activa */}
+      {activeReservation && (
+        <ReservationBanner
+          id={activeReservation.id}
+          name={activeReservation.name}
+          closesAt={activeReservation.closesAt.toISOString()}
+          couponCode={activeReservation.coupon?.code}
+          couponLabel={couponLabel}
+          hasProductFilter={activeReservation.productIds.length > 0}
+        />
+      )}
 
       {/* Filtros */}
       <ProductFilters
@@ -121,12 +209,13 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               {products.map((product) => {
                 const productImage = product.images[0];
 
-                // Seleccionar la primera variante con stock disponible real
                 const firstAvailableVariant = product.variants.find(
                   (v) => v.stock - v.reservedStock > 0
                 );
-                // Fallback: primera variante (para mostrar precio aunque esté agotada)
                 const displayVariant = firstAvailableVariant ?? product.variants[0];
+
+                // Determinar si este producto está en la reserva activa
+                const isReservationProduct = reservationProductIds.has(product.id);
 
                 return (
                   <ProductCard
@@ -153,6 +242,14 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                       isPro
                     }
                     categoryName={product.category?.name}
+                    reservation={
+                      isReservationProduct && activeReservation
+                        ? {
+                            badgeText: activeReservation.badgeText,
+                            closesAt: activeReservation.closesAt.toISOString(),
+                          }
+                        : undefined
+                    }
                   />
                 );
               })}
@@ -164,7 +261,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                   <a
                     key={p}
-                    href={`/products?page=${p}${params.categoryId ? `&categoryId=${params.categoryId}` : ""}${params.q ? `&q=${params.q}` : ""}`}
+                    href={`/products?page=${p}${params.categoryId ? `&categoryId=${params.categoryId}` : ""}${params.q ? `&q=${params.q}` : ""}${filterByReservation ? "&reservation=true" : ""}`}
                     className={`w-9 h-9 flex items-center justify-center rounded-[8px] text-sm transition-colors ${p === page
                       ? "bg-ash-50 text-graphite-700 font-semibold"
                       : "text-slate-300 hover:text-snow hover:bg-white/5"
@@ -184,14 +281,16 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               <ImageOff size={24} className="text-white/20" />
             </div>
             <h2 className="text-lg font-medium text-snow">
-              {params.q ? "Sin resultados" : "No hay productos disponibles"}
+              {params.q ? "Sin resultados" : filterByReservation ? "Sin productos en reserva" : "No hay productos disponibles"}
             </h2>
             <p className="text-slate-300 text-sm mt-2">
               {params.q
                 ? `No encontramos productos para "${params.q}". Prueba con otro término.`
+                : filterByReservation
+                ? "No hay productos asociados a la reserva activa."
                 : "Pronto habrá nuevos productos disponibles. ¡Estate atento!"}
             </p>
-            {params.q && (
+            {(params.q || filterByReservation) && (
               <a
                 href="/products"
                 className="mt-4 text-sm text-ash-50 hover:text-snow underline underline-offset-2 transition-colors"

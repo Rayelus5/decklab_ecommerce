@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/safe-query";
 import { StatsCard } from "@/components/admin/stats-card";
-import { ShoppingBag, Users, Crown, AlertTriangle, ChevronRight, TrendingUp, ShoppingCart } from "lucide-react";
+import { ShoppingBag, Users, Crown, AlertTriangle, ChevronRight, TrendingUp, ShoppingCart, Clock } from "lucide-react";
 
 export const metadata: Metadata = { title: "Dashboard — DECKLAB Admin" };
 
@@ -42,6 +42,7 @@ export default async function AdminDashboardPage() {
     lowStockVariants,
     recentOrders,
     abandonedCartsToday,
+    activeReservationsCount,
   ] = await safeQuery(
     () => Promise.all([
       prisma.order.count({ where: { createdAt: { gte: startOfToday }, isPaid: true } }),
@@ -66,8 +67,9 @@ export default async function AdminDashboardPage() {
         },
       }),
       prisma.abandonedCart.count({ where: { createdAt: { gte: startOfToday }, convertedAt: null } }),
+      prisma.reservationPeriod.count({ where: { isActive: true, opensAt: { lte: now }, closesAt: { gt: now } } }),
     ]),
-    [0, { _sum: { total: null } }, { _sum: { total: null } }, 0, 0, 0, [], [], 0] as const,
+    [0, { _sum: { total: null } }, { _sum: { total: null } }, 0, 0, 0, [], [], 0, 0] as const,
     "admin dashboard"
   );
 
@@ -84,7 +86,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <StatsCard
           title="Ventas hoy"
           value={`${todaySales.toFixed(2).replace(".", ",")} €`}
@@ -118,6 +120,13 @@ export default async function AdminDashboardPage() {
           subtitle={abandonedCartsToday > 0 ? "Sin convertir" : "Sin abandono hoy"}
           icon={ShoppingCart}
           accent={abandonedCartsToday > 0 ? "amber" : "default"}
+        />
+        <StatsCard
+          title="Reservas activas"
+          value={activeReservationsCount}
+          subtitle={activeReservationsCount > 0 ? "Abiertas ahora" : "Sin reservas abiertas"}
+          icon={Clock}
+          accent={activeReservationsCount > 0 ? "amber" : "default"}
         />
       </div>
 
@@ -206,9 +215,9 @@ export default async function AdminDashboardPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { href: "/admin/products/new", label: "Nuevo producto" },
-          { href: "/admin/coupons", label: "Gestionar cupones" },
+          { href: "/admin/reservations/new", label: "Nueva reserva" },
           { href: "/admin/abandoned-carts", label: "Carritos abandonados" },
-          { href: "/admin/shipping", label: "Tarifas de envío" },
+          { href: "/admin/coupons", label: "Gestionar cupones" },
         ].map(({ href, label }) => (
           <Link
             key={href}

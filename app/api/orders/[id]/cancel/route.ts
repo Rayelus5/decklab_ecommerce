@@ -73,13 +73,16 @@ export async function POST(
       // 2. Liberar stock según el estado previo
       for (const item of order.items) {
         if (order.status === "PENDING") {
-          // Stock nunca fue decrementado → solo liberar reserva
-          await tx.productVariant.update({
-            where: { id: item.variantId },
-            data: { reservedStock: { decrement: item.quantity } },
-          });
+          // Stock nunca fue decrementado → solo liberar reserva.
+          // GREATEST(0, ...) previene negativos si la reserva ya fue liberada por
+          // el cron o el webhook de sesión expirada antes de que se cancelara el pedido.
+          await tx.$executeRaw`
+            UPDATE "ProductVariant"
+            SET "reservedStock" = GREATEST(0, "reservedStock" - ${item.quantity})
+            WHERE id = ${item.variantId}
+          `;
         } else {
-          // PAID → webhook ya decrementó stock y reservedStock → restaurar stock
+          // PAID → webhook ya decrementó stock y reservedStock → restaurar solo stock
           await tx.productVariant.update({
             where: { id: item.variantId },
             data: { stock: { increment: item.quantity } },

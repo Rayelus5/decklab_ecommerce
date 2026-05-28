@@ -204,15 +204,18 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       include: { items: true },
     });
 
-    // 2. Decrementar stock Y liberar reserva (confirmar la reserva)
+    // 2. Decrementar stock y liberar reserva de forma idempotente.
+    // GREATEST(0, reservedStock - qty) evita que vaya a negativo si la sesión
+    // expiró y el webhook de expiración ya liberó la reserva antes de que llegara
+    // el pago (edge case de Stripe con sesiones al límite del tiempo).
     for (const item of parsedItems) {
-      await tx.productVariant.update({
-        where: { id: item.variantId },
-        data: {
-          stock: { decrement: item.quantity },
-          reservedStock: { decrement: item.quantity },
-        },
-      });
+      await tx.$executeRaw`
+        UPDATE "ProductVariant"
+        SET
+          "stock"         = "stock" - ${item.quantity},
+          "reservedStock" = GREATEST(0, "reservedStock" - ${item.quantity})
+        WHERE id = ${item.variantId}
+      `;
     }
 
     // 3. Descontar allowance PRO
@@ -291,46 +294,60 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 }
 
 async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session) {
-  // Buscar el AbandonedCart por stripeSessionId para obtener los items
+  type CartItem = { variantId: string; quantity: number; pricePaid: number; wasProPrice: boolean };
+
   const abandonedCart = await prisma.abandonedCart.findUnique({
     where: { stripeSessionId: session.id },
   });
 
-  if (!abandonedCart) {
-    console.log("[WEBHOOK] No AbandonedCart found for expired session:", session.id);
-    return;
-  }
-
   // Si ya convirtió (pago completado antes de expirar — edge case), no hacer nada
-  if (abandonedCart.convertedAt) {
+  if (abandonedCart?.convertedAt) {
     console.log("[WEBHOOK] Session already converted, skipping expired handler:", session.id);
     return;
   }
 
-  const cartItems = abandonedCart.cartItems as Array<{
-    variantId: string;
-    quantity: number;
-    pricePaid: number;
-    wasProPrice: boolean;
-  }>;
+  // Obtener los items del carrito: primero desde AbandonedCart, luego desde
+  // el metadata de la sesión de Stripe como fallback de seguridad (en caso de
+  // que el registro no se hubiera creado por un error puntual).
+  let cartItems: CartItem[] | null = null;
 
-  // 1. Liberar reservas de stock
-  try {
-    await prisma.$transaction(
-      cartItems.map((item) =>
-        prisma.productVariant.update({
-          where: { id: item.variantId },
-          data: { reservedStock: { decrement: item.quantity } },
-        })
-      )
-    );
-    console.log(`[WEBHOOK] Stock reservations released for expired session: ${session.id}`);
-  } catch (err) {
-    console.error("[WEBHOOK] Error releasing stock reservations:", err);
+  if (abandonedCart) {
+    cartItems = abandonedCart.cartItems as CartItem[];
+  } else {
+    // Fallback: el metadata del checkout tiene cartItems como JSON
+    const raw = session.metadata?.cartItems;
+    if (raw) {
+      try {
+        cartItems = JSON.parse(raw) as CartItem[];
+        console.log(`[WEBHOOK] AbandonedCart not found — releasing stock from session metadata: ${session.id}`);
+      } catch {
+        console.error("[WEBHOOK] Failed to parse cartItems from session metadata:", session.id);
+      }
+    } else {
+      console.error("[WEBHOOK] No cart items found for expired session:", session.id);
+    }
   }
 
-  // 2. Enviar email de recuperación (si no se envió ya)
-  if (!abandonedCart.recoveryEmailSentAt) {
+  // 1. Liberar reservas de stock de forma idempotente (GREATEST evita negativos)
+  if (cartItems?.length) {
+    try {
+      await prisma.$transaction(
+        cartItems.map((item) =>
+          prisma.$executeRaw`
+            UPDATE "ProductVariant"
+            SET "reservedStock" = GREATEST(0, "reservedStock" - ${item.quantity})
+            WHERE id = ${item.variantId}
+          `
+        )
+      );
+      console.log(`[WEBHOOK] Stock reservations released for expired session: ${session.id}`);
+    } catch (err) {
+      console.error("[WEBHOOK] Error releasing stock reservations:", err);
+    }
+  }
+
+  // 2. Enviar email de recuperación (solo si tenemos el AbandonedCart)
+  if (abandonedCart && !abandonedCart.recoveryEmailSentAt) {
     try {
       await sendAbandonedCartEmail(
         abandonedCart.userId,

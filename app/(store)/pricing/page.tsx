@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/safe-query";
 import { Check, Zap, Truck, Lock, BarChart2, Star } from "lucide-react";
 import { PricingCard } from "@/components/pricing/pricing-card";
 import { Waves } from "@/components/ui/wave-background";
+import { SubscriptionSuccess } from "@/components/pricing/subscription-success";
 
 export const metadata: Metadata = {
   title: "Planes PRO — DECKLAB",
@@ -38,6 +40,10 @@ export default async function PricingPage() {
 
   return (
     <div>
+      {/* Overlay de activación PRO — solo visible cuando ?subscribed=1 */}
+      <Suspense>
+        <SubscriptionSuccess />
+      </Suspense>
       {/* Hero con wave background */}
       <div className="relative py-20 overflow-hidden">
         <Waves

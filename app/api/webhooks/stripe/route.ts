@@ -18,7 +18,56 @@ export const config = {
   },
 };
 
+async function handleSubscriptionCheckoutCompleted(session: Stripe.Checkout.Session) {
+  const { userId, tierId } = session.metadata ?? {};
+
+  if (!userId || !tierId) {
+    console.error("[WEBHOOK] Missing subscription metadata in session:", session.id);
+    return;
+  }
+
+  const subscriptionId = typeof session.subscription === "string"
+    ? session.subscription
+    : null;
+
+  if (!subscriptionId) {
+    console.error("[WEBHOOK] No subscriptionId in subscription session:", session.id);
+    return;
+  }
+
+  // Idempotencia: si el usuario ya tiene este proSubscriptionId, saltar
+  const existing = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { proSubscriptionId: true },
+  });
+  if (existing?.proSubscriptionId === subscriptionId) {
+    console.log("[WEBHOOK] Subscription already activated:", subscriptionId);
+    return;
+  }
+
+  // Activar PRO en la BD
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      isPro: true,
+      proTierId: tierId,
+      proSubscriptionId: subscriptionId,
+      proSince: new Date(),
+    },
+  });
+
+  // Allowance inicial (invoice.paid para subscription_create se saltará para no duplicar)
+  await refillProAllowance(userId);
+
+  console.log(`[WEBHOOK] PRO activated for user ${userId}, tier ${tierId}, sub ${subscriptionId}`);
+}
+
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+  // Delegar sesiones de suscripción a su propio handler
+  if (session.mode === "subscription") {
+    return handleSubscriptionCheckoutCompleted(session);
+  }
+
   const {
     userId, addressId, shippingRateId, shippingType, shippingRegion,
     couponCode, couponId: metaCouponId, discountAmount: metaDiscountAmount,
@@ -267,6 +316,13 @@ async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session) {
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
+  // "subscription_create" ya lo gestiona handleSubscriptionCheckoutCompleted — evitar doble allowance
+  const billingReason = (invoice as unknown as Record<string, unknown>).billing_reason as string | null;
+  if (billingReason === "subscription_create") {
+    console.log("[WEBHOOK] Skipping refill for subscription_create — handled by checkout.session.completed");
+    return;
+  }
+
   // Refill de allowance PRO en renovación de suscripción
   const subscriptionId = (invoice as unknown as Record<string, unknown>).subscription as string | null;
 

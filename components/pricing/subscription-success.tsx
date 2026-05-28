@@ -1,17 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 import { Loader2, Crown, RefreshCcw } from "lucide-react";
 
 const MAX_ATTEMPTS = 12; // 12 × 2s = 24 segundos máximo
 const POLL_INTERVAL = 2000;
 
 export function SubscriptionSuccess() {
-  const { data: session, update } = useSession();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const subscribed = searchParams.get("subscribed") === "1";
 
@@ -21,35 +17,40 @@ export function SubscriptionSuccess() {
 
   useEffect(() => {
     if (!subscribed) return;
+    if (timedOut) return;
 
-    // Ya tiene PRO — redirigir inmediatamente
-    if (session?.user?.isPro) {
-      toast.success("¡Bienvenido a PRO! Tu cuenta ya está activa.");
-      router.replace("/profile");
-      return;
-    }
-
-    // Tiempo agotado
     if (attempts >= MAX_ATTEMPTS) {
       setTimedOut(true);
       return;
     }
 
-    // Evitar disparar múltiples polls simultáneos
     if (isPolling.current) return;
-
     isPolling.current = true;
+
     const timer = setTimeout(async () => {
-      await update(); // trigger === "update" → refreshFromDb() en el jwt callback
-      setAttempts((a) => a + 1);
+      try {
+        const res = await fetch("/api/subscriptions/status");
+        if (res.ok) {
+          const data = await res.json() as { isPro: boolean };
+          if (data.isPro) {
+            // PRO activado en BD — redirigir con hard reload para que NextAuth
+            // re-ejecute el jwt callback y actualice el token con isPro=true
+            window.location.href = "/profile";
+            return;
+          }
+        }
+      } catch {
+        // Ignorar errores de red temporales, seguir intentando
+      }
       isPolling.current = false;
+      setAttempts((a) => a + 1);
     }, POLL_INTERVAL);
 
     return () => {
       clearTimeout(timer);
       isPolling.current = false;
     };
-  }, [subscribed, session?.user?.isPro, attempts, update, router]);
+  }, [subscribed, attempts, timedOut]);
 
   if (!subscribed) return null;
 
@@ -64,15 +65,15 @@ export function SubscriptionSuccess() {
             <div className="text-center">
               <p className="text-snow font-semibold text-base">Pago procesado</p>
               <p className="text-slate-300 text-sm mt-2 leading-relaxed">
-                Tu suscripción PRO está siendo activada. Recarga la página en unos segundos para ver tu nuevo plan.
+                Tu suscripción PRO está siendo activada. Recarga la página para ver tu nuevo plan.
               </p>
             </div>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => { window.location.href = "/profile"; }}
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-graphite-700 font-semibold text-sm rounded-[10px] transition-colors cursor-pointer"
             >
               <RefreshCcw size={14} />
-              Recargar página
+              Ir a mi perfil
             </button>
           </>
         ) : (
@@ -83,14 +84,14 @@ export function SubscriptionSuccess() {
             <div className="text-center">
               <p className="text-snow font-semibold text-base">Activando tu membresía PRO</p>
               <p className="text-slate-300 text-sm mt-2 leading-relaxed">
-                Estamos confirmando tu pago con Stripe. Esto solo tardará unos segundos…
+                Confirmando el pago con Stripe. Esto solo tardará unos segundos…
               </p>
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-1.5">
               {Array.from({ length: 5 }).map((_, i) => (
                 <div
                   key={i}
-                  className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                  className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${
                     i < (attempts % 5) + 1 ? "bg-amber-400" : "bg-white/15"
                   }`}
                 />

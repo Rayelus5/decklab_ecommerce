@@ -34,6 +34,8 @@ interface CartState {
   items: CartItem[];
   isOpen: boolean;
   useProPricing: boolean; // Toggle global: el usuario elige si usar su saldo PRO
+  // ID de la sesión de Stripe Checkout activa (si el usuario inició checkout sin pagar)
+  pendingSessionId: string | null;
 
   // --- Acciones ---
   addItem: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void;
@@ -44,6 +46,7 @@ interface CartState {
   closeCart: () => void;
   toggleCart: () => void;
   toggleProPricing: () => void;
+  setPendingSessionId: (id: string | null) => void;
 
   // --- Computed ---
   getTotalItems: () => number;
@@ -60,12 +63,23 @@ interface CartState {
 // -------------------------------------------------------
 // Store
 // -------------------------------------------------------
+/** Llama al endpoint de liberación de forma no bloqueante */
+function releaseReservation(sessionId: string) {
+  if (typeof window === "undefined") return;
+  fetch("/api/cart/release", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId }),
+  }).catch(() => { /* silencioso — el webhook de expiración de Stripe lo limpiará */ });
+}
+
 export const useCart = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
       isOpen: false,
       useProPricing: true,
+      pendingSessionId: null,
 
       addItem: (newItem) => {
         set((state) => {
@@ -99,31 +113,48 @@ export const useCart = create<CartState>()(
       },
 
       removeItem: (variantId) => {
-        set((state) => ({
-          items: state.items.filter((i) => i.variantId !== variantId),
-        }));
+        const { items, pendingSessionId } = get();
+        const newItems = items.filter((i) => i.variantId !== variantId);
+        set({ items: newItems });
+        // Si el carrito quedó vacío y hay una sesión pendiente → liberar reserva
+        if (newItems.length === 0 && pendingSessionId) {
+          releaseReservation(pendingSessionId);
+          set({ pendingSessionId: null });
+        }
       },
 
       updateQuantity: (variantId, quantity) => {
-        set((state) => {
-          if (quantity <= 0) {
-            return { items: state.items.filter((i) => i.variantId !== variantId) };
+        const { items, pendingSessionId } = get();
+        if (quantity <= 0) {
+          const newItems = items.filter((i) => i.variantId !== variantId);
+          set({ items: newItems });
+          if (newItems.length === 0 && pendingSessionId) {
+            releaseReservation(pendingSessionId);
+            set({ pendingSessionId: null });
           }
-          return {
-            items: state.items.map((i) =>
-              i.variantId === variantId
-                ? { ...i, quantity: Math.min(quantity, i.stock) }
-                : i
-            ),
-          };
+          return;
+        }
+        set({
+          items: items.map((i) =>
+            i.variantId === variantId
+              ? { ...i, quantity: Math.min(quantity, i.stock) }
+              : i
+          ),
         });
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => {
+        const { pendingSessionId } = get();
+        set({ items: [], pendingSessionId: null });
+        if (pendingSessionId) {
+          releaseReservation(pendingSessionId);
+        }
+      },
       openCart: () => set({ isOpen: true }),
       closeCart: () => set({ isOpen: false }),
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
       toggleProPricing: () => set((state) => ({ useProPricing: !state.useProPricing })),
+      setPendingSessionId: (id) => set({ pendingSessionId: id }),
 
       getTotalItems: () => {
         return get().items.reduce((total, item) => total + item.quantity, 0);
@@ -246,6 +277,7 @@ export const useCart = create<CartState>()(
       partialize: (state) => ({
         items: state.items,
         useProPricing: state.useProPricing,
+        pendingSessionId: state.pendingSessionId, // Persiste para sobrevivir recargas
       }),
     }
   )

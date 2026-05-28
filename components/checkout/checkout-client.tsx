@@ -66,7 +66,7 @@ export function CheckoutClient({
   shippingRates,
 }: CheckoutClientProps) {
   const router = useRouter();
-  const { items, clearCart, getTotalWeight, useProPricing } = useCart();
+  const { items, clearCart, getTotalWeight, useProPricing, setPendingSessionId } = useCart();
 
   // useMemo evita el bucle infinito de getSnapshot que ocurre cuando se usa
   // getSubtotal directamente como selector (devuelve un valor nuevo cada vez).
@@ -154,6 +154,11 @@ export function CheckoutClient({
       if (!res.ok) {
         toast.error(data.error ?? "Error al iniciar el pago");
         return;
+      }
+      // Guardar sessionId en el store para poder liberar la reserva si el usuario
+      // vacía el carrito antes de completar el pago
+      if (data.sessionId) {
+        setPendingSessionId(data.sessionId);
       }
       window.location.href = data.url;
     } catch {

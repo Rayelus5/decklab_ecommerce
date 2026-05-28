@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/safe-query";
 import { ShoppingCart, Mail, CheckCircle, XCircle, ChevronRight } from "lucide-react";
+import { AbandonedCartActions } from "./abandoned-cart-actions";
 
 export const metadata: Metadata = { title: "Carritos abandonados — DECKLAB Admin" };
 
@@ -31,6 +32,7 @@ export default async function AbandonedCartsPage({ searchParams }: AbandonedCart
         orderBy: { createdAt: "desc" },
         select: {
           id: true,
+          stripeSessionId: true,
           cartItems: true,
           subtotal: true,
           recoveryEmailSentAt: true,
@@ -146,12 +148,15 @@ export default async function AbandonedCartsPage({ searchParams }: AbandonedCart
                 <th className="text-right text-xs font-semibold text-slate-300 px-4 py-3 uppercase tracking-wide">
                   Fecha
                 </th>
+                <th className="text-right text-xs font-semibold text-slate-300 px-4 py-3 uppercase tracking-wide">
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/6">
               {carts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center text-slate-300/60 py-12">
+                  <td colSpan={7} className="text-center text-slate-300/60 py-12">
                     Sin carritos abandonados en este filtro
                   </td>
                 </tr>
@@ -195,6 +200,13 @@ export default async function AbandonedCartsPage({ searchParams }: AbandonedCart
                           month: "short",
                           year: "numeric",
                         })}
+                      </td>
+                      <td className="px-4 py-3">
+                        <AbandonedCartActions
+                          cartId={cart.id}
+                          recoveryEmailSentAt={cart.recoveryEmailSentAt}
+                          convertedAt={cart.convertedAt}
+                        />
                       </td>
                     </tr>
                   );

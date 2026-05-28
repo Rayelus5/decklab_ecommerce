@@ -307,7 +307,39 @@ export async function POST(req: NextRequest) {
       locale: "es",
     });
 
-    // 10. Guardar carrito abandonado en BD (se marca como convertido en el webhook al pagar)
+    // 10. Liberar carritos abandonados anteriores del usuario (sesiones antiguas sin pagar)
+    // Esto evita que múltiples reservas de stock se acumulen por reinicios de checkout.
+    try {
+      const oldCarts = await prisma.abandonedCart.findMany({
+        where: {
+          userId: session.user.id,
+          convertedAt: null,
+          stripeSessionId: { not: stripeSession.id },
+        },
+        select: { id: true, stripeSessionId: true, cartItems: true },
+      });
+
+      for (const oldCart of oldCarts) {
+        const oldItems = oldCart.cartItems as Array<{ variantId: string; quantity: number }>;
+        await prisma.$transaction(
+          oldItems.map((item) =>
+            prisma.$executeRaw`
+              UPDATE "ProductVariant"
+              SET "reservedStock" = GREATEST(0, "reservedStock" - ${item.quantity})
+              WHERE id = ${item.variantId}
+            `
+          )
+        ).catch((err) =>
+          console.error("[CHECKOUT] Error releasing old cart reservations:", err)
+        );
+        stripe.checkout.sessions.expire(oldCart.stripeSessionId).catch(() => {});
+        await prisma.abandonedCart.delete({ where: { id: oldCart.id } }).catch(() => {});
+      }
+    } catch (err) {
+      console.error("[CHECKOUT] Error releasing old abandoned carts:", err);
+    }
+
+    // 11. Guardar carrito abandonado en BD (se marca como convertido en el webhook al pagar)
     try {
       await prisma.abandonedCart.upsert({
         where: { stripeSessionId: stripeSession.id },
@@ -324,7 +356,7 @@ export async function POST(req: NextRequest) {
       console.error("[CHECKOUT] Error creating AbandonedCart:", err);
     }
 
-    return NextResponse.json({ url: stripeSession.url });
+    return NextResponse.json({ url: stripeSession.url, sessionId: stripeSession.id });
   } catch (error) {
     console.error("[CHECKOUT STRIPE]", error);
     return NextResponse.json(
@@ -341,10 +373,11 @@ async function releaseStockReservations(items: CartItemInput[]) {
   try {
     await prisma.$transaction(
       items.map((item) =>
-        prisma.productVariant.update({
-          where: { id: item.variantId },
-          data: { reservedStock: { decrement: item.quantity } },
-        })
+        prisma.$executeRaw`
+          UPDATE "ProductVariant"
+          SET "reservedStock" = GREATEST(0, "reservedStock" - ${item.quantity})
+          WHERE id = ${item.variantId}
+        `
       )
     );
   } catch (err) {

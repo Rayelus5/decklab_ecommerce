@@ -47,6 +47,9 @@ async function handleSubscriptionCheckoutCompleted(session: Stripe.Checkout.Sess
 
   const isPlanChange = !!(oldSubscriptionId && oldSubscriptionId !== subscriptionId);
 
+  // Guardar stripeCustomerId si aún no lo tiene (retrocompatibilidad)
+  const stripeCustomerId = typeof session.customer === "string" ? session.customer : null;
+
   // Activar PRO en la BD
   // proSince: se preserva si es un cambio de plan (ya era PRO antes)
   await prisma.user.update({
@@ -56,6 +59,7 @@ async function handleSubscriptionCheckoutCompleted(session: Stripe.Checkout.Sess
       proTierId: tierId,
       proSubscriptionId: subscriptionId,
       proSince: existing?.proSince ?? new Date(),
+      ...(stripeCustomerId && !existing ? { stripeCustomerId } : {}),
     },
   });
 
@@ -155,6 +159,15 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       select: { id: true, code: true },
     });
     coupon = found;
+  }
+
+  // Guardar stripeCustomerId si aún no lo tiene (retrocompatibilidad con pagos anteriores)
+  const stripeCustomerIdPayment = typeof session.customer === "string" ? session.customer : null;
+  if (stripeCustomerIdPayment) {
+    await prisma.user.updateMany({
+      where: { id: userId, stripeCustomerId: null },
+      data: { stripeCustomerId: stripeCustomerIdPayment },
+    });
   }
 
   // Transacción atómica

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
+import { getOrCreateStripeCustomer } from "@/lib/stripe-customer";
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,6 +30,13 @@ export async function POST(req: NextRequest) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
+    // Reutilizar el cliente de Stripe existente (evita duplicados)
+    const stripeCustomerId = await getOrCreateStripeCustomer(
+      session.user.id,
+      session.user.email,
+      session.user.name
+    );
+
     // Crear Stripe Checkout Session para suscripción
     const stripeSession = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -41,7 +49,7 @@ export async function POST(req: NextRequest) {
       ],
       success_url: `${appUrl}/pricing?subscribed=1`,
       cancel_url: `${appUrl}/pricing`,
-      customer_email: session.user.email,
+      customer: stripeCustomerId,
       subscription_data: {
         metadata: {
           userId: session.user.id,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth, isErrorResponse } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
+import { getOrCreateStripeCustomer } from "@/lib/stripe-customer";
 
 /**
  * POST /api/subscriptions/change
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
   const [user, newTier] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { proSubscriptionId: true, stripeCustomerId: true, email: true },
+      select: { proSubscriptionId: true, stripeCustomerId: true, email: true, name: true },
     }),
     prisma.proTier.findUnique({
       where: { id: tierId, isActive: true },
@@ -69,6 +70,13 @@ export async function POST(req: NextRequest) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
+  // Reutilizar el cliente de Stripe existente (evita duplicados)
+  const stripeCustomerId = await getOrCreateStripeCustomer(
+    session.user.id,
+    user.email ?? session.user.email,
+    user.name
+  );
+
   // Crear nueva sesión de Checkout para el nuevo tier.
   // El webhook cancelará la suscripción anterior cuando ésta se active.
   const stripeSession = await stripe.checkout.sessions.create({
@@ -77,10 +85,7 @@ export async function POST(req: NextRequest) {
     line_items: [{ price: newTier.stripePriceId, quantity: 1 }],
     success_url: `${appUrl}/pricing?subscribed=1`,
     cancel_url: `${appUrl}/pricing`,
-    // Reutilizar el customer de Stripe si existe (evita pedir tarjeta de nuevo)
-    ...(user.stripeCustomerId
-      ? { customer: user.stripeCustomerId }
-      : { customer_email: user.email ?? session.user.email }),
+    customer: stripeCustomerId,
     subscription_data: {
       metadata: {
         userId: session.user.id,

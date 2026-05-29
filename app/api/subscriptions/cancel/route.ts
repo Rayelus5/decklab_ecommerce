@@ -40,12 +40,18 @@ export async function POST(req: NextRequest) {
     }
 
     // Cancelar al final del período en Stripe (no inmediatamente)
-    await stripe.subscriptions.update(user.proSubscriptionId, {
+    const subscription = await stripe.subscriptions.update(user.proSubscriptionId, {
       cancel_at_period_end: true,
     });
 
+    const firstItem = subscription.items.data[0];
+    const periodEnd = firstItem?.current_period_end
+      ? new Date(firstItem.current_period_end * 1000).toISOString()
+      : null;
+
     return NextResponse.json({
       message: "Suscripción cancelada. Mantendrás el acceso PRO hasta el final del período actual.",
+      periodEnd,
     });
   } catch (error) {
     console.error("[SUBSCRIPTIONS CANCEL]", error);

@@ -365,6 +365,33 @@ async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session) {
   }
 }
 
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  // Se dispara cuando el período de una suscripción cancelada expira definitivamente.
+  // Revoca el acceso PRO en la BD.
+  const user = await prisma.user.findFirst({
+    where: { proSubscriptionId: subscription.id },
+    select: { id: true },
+  });
+
+  if (!user) {
+    console.log("[WEBHOOK] No user found for deleted subscription:", subscription.id);
+    return;
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      isPro: false,
+      proTierId: null,
+      proSince: null,
+      proSubscriptionId: null,
+      proAllowanceBalance: 0,
+    },
+  });
+
+  console.log(`[WEBHOOK] PRO access revoked for user ${user.id} (subscription ${subscription.id} deleted)`);
+}
+
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
   // "subscription_create" ya lo gestiona handleSubscriptionCheckoutCompleted — evitar doble allowance
   const billingReason = (invoice as unknown as Record<string, unknown>).billing_reason as string | null;
@@ -432,6 +459,9 @@ export async function POST(req: NextRequest) {
         break;
       case "invoice.paid":
         await handleInvoicePaid(event.data.object as Stripe.Invoice);
+        break;
+      case "customer.subscription.deleted":
+        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
         break;
       default:
         break;

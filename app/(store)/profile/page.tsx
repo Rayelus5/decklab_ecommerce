@@ -3,10 +3,11 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { stripe } from "@/lib/stripe";
 import { safeQuery } from "@/lib/safe-query";
 import { Package, MapPin, Settings, Crown, BarChart2, ChevronRight, AlertTriangle } from "lucide-react";
 import { ProAllowanceBar } from "@/components/profile/pro-allowance-bar";
-import { ManagePlanButton } from "./manage-plan-button";
+import { ManagePlanModal } from "./manage-plan-modal";
 
 export const metadata: Metadata = {
   title: "Mi perfil — DECKLAB",
@@ -22,7 +23,7 @@ export default async function ProfilePage() {
       where: { id: session.user.id },
       select: {
         name: true, email: true, isPro: true, proAllowanceBalance: true,
-        proSince: true, isTelegramMember: true, telegramUsername: true,
+        proSince: true, proSubscriptionId: true, isTelegramMember: true, telegramUsername: true,
         proTier: { select: { name: true, monthlyAllowance: true } },
         _count: { select: { orders: true, addresses: true } },
       },
@@ -35,6 +36,23 @@ export default async function ProfilePage() {
 
   const balance = Number(user.proAllowanceBalance ?? 0);
   const maxAllowance = Number(user.proTier?.monthlyAllowance ?? 0);
+
+  // Datos de la suscripción Stripe (server-side, sin llamada del cliente)
+  let subscriptionPeriodEnd: Date | null = null;
+  let cancelAtPeriodEnd = false;
+
+  if (user.isPro && user.proSubscriptionId) {
+    try {
+      const sub = await stripe.subscriptions.retrieve(user.proSubscriptionId);
+      const firstItem = sub.items.data[0];
+      if (firstItem?.current_period_end) {
+        subscriptionPeriodEnd = new Date(firstItem.current_period_end * 1000);
+      }
+      cancelAtPeriodEnd = sub.cancel_at_period_end;
+    } catch {
+      // PRO manual sin suscripción Stripe activa — degrada sin romper la página
+    }
+  }
 
   // Últimos 3 pedidos para el resumen
   const recentOrders = await safeQuery(
@@ -92,7 +110,13 @@ export default async function ProfilePage() {
                 {user.proTier.name}
               </span>
             </div>
-            <ManagePlanButton />
+            <ManagePlanModal
+              tierName={user.proTier.name}
+              proSince={user.proSince}
+              periodEnd={subscriptionPeriodEnd}
+              cancelAtPeriodEnd={cancelAtPeriodEnd}
+              hasStripeSubscription={!!user.proSubscriptionId}
+            />
           </div>
           <ProAllowanceBar balance={balance} max={maxAllowance} />
           {user.proSince && (

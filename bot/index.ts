@@ -24,6 +24,21 @@ const prisma = new PrismaClient();
 const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN);
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://decklab.rayelus.com";
 
+/**
+ * Telegram exige que los botones de inline keyboard usen URLs https:// públicas.
+ * En desarrollo (localhost / http://) devuelve null para omitir el teclado.
+ */
+function inlineUrl(path: string): string | null {
+  try {
+    const url = new URL(path, APP_URL);
+    if (url.protocol !== "https:") return null;
+    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return null;
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
 // =============================================================
 // Utilidades
 // =============================================================
@@ -192,14 +207,14 @@ bot.command("pedido", async (ctx: Context) => {
       `[Ver en Correos](https://www.correos.es/es/es/herramientas/localizador/envios/detalle?tracking-number=${order.shipment.trackingNumber})`;
   }
 
-  const keyboard = new InlineKeyboard().url(
-    "Ver en DECKLAB",
-    `${APP_URL}/profile/orders`
-  );
+  const ordersUrl = inlineUrl("/profile/orders");
+  const keyboard = ordersUrl
+    ? new InlineKeyboard().url("Ver en DECKLAB", ordersUrl)
+    : undefined;
 
   await ctx.reply(message, {
     parse_mode: "Markdown",
-    reply_markup: keyboard,
+    ...(keyboard ? { reply_markup: keyboard } : {}),
   });
 });
 
@@ -292,16 +307,16 @@ bot.command("mispedidos", async (ctx: Context) => {
     )
     .join("\n");
 
-  const keyboard = new InlineKeyboard().url(
-    "Ver todos los pedidos",
-    `${APP_URL}/profile/orders`
-  );
+  const ordersUrl = inlineUrl("/profile/orders");
+  const keyboard = ordersUrl
+    ? new InlineKeyboard().url("Ver todos los pedidos", ordersUrl)
+    : undefined;
 
   await ctx.reply(
     `📋 *Tus últimos pedidos:*\n\n${orderLines}`,
     {
       parse_mode: "Markdown",
-      reply_markup: keyboard,
+      ...(keyboard ? { reply_markup: keyboard } : {}),
     }
   );
 });

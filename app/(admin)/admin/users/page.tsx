@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { Crown, ChevronRight } from "lucide-react";
+import { CreateUserDialog } from "./create-user-dialog";
 
 export const metadata: Metadata = { title: "Usuarios — DECKLAB Admin" };
 
@@ -51,9 +52,12 @@ export default async function AdminUsersPage({
 
   return (
     <div className="p-6 flex flex-col gap-6 max-w-6xl">
-      <div>
-        <h1 className="text-2xl font-semibold text-snow">Usuarios</h1>
-        <p className="text-slate-300 text-sm mt-1">{total} usuario{total !== 1 ? "s" : ""} registrado{total !== 1 ? "s" : ""}</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-snow">Usuarios</h1>
+          <p className="text-slate-300 text-sm mt-1">{total} usuario{total !== 1 ? "s" : ""} registrado{total !== 1 ? "s" : ""}</p>
+        </div>
+        <CreateUserDialog />
       </div>
 
       {/* Search */}

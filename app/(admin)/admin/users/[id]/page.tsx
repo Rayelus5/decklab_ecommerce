@@ -2,8 +2,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { ArrowLeft, Crown, ShoppingBag, MapPin } from "lucide-react";
+import { ArrowLeft, Crown, ShoppingBag } from "lucide-react";
 import { UserActions } from "./user-actions";
+import { AddressManager } from "./address-manager";
 
 export const metadata: Metadata = { title: "Usuario — DECKLAB Admin" };
 
@@ -50,8 +51,19 @@ export default async function AdminUserDetailPage({
         createdAt: true,
         proTier: { select: { name: true, monthlyAllowance: true } },
         addresses: {
-          select: { id: true, label: true, line1: true, city: true, country: true, isDefault: true },
-          orderBy: { isDefault: "desc" },
+          select: {
+            id: true,
+            label: true,
+            line1: true,
+            line2: true,
+            city: true,
+            postalCode: true,
+            province: true,
+            country: true,
+            phone: true,
+            isDefault: true,
+          },
+          orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
         },
         orders: {
           orderBy: { createdAt: "desc" },
@@ -182,24 +194,10 @@ export default async function AdminUserDetailPage({
           </div>
 
           {/* Addresses */}
-          {user.addresses.length > 0 && (
-            <div className="bg-graphite-700/40 border border-white/8 rounded-[16px] p-5 flex flex-col gap-4">
-              <h2 className="text-sm font-semibold text-snow flex items-center gap-2">
-                <MapPin size={14} className="text-slate-300" />
-                Direcciones
-              </h2>
-              <div className="flex flex-col gap-2">
-                {user.addresses.map((addr) => (
-                  <div key={addr.id} className="text-xs text-slate-300 flex items-center gap-2">
-                    {addr.isDefault && <span className="text-mint-signal font-medium">Pred.</span>}
-                    <span className="text-snow">{addr.line1}</span>
-                    <span className="text-slate-300/60">{addr.city}, {addr.country}</span>
-                    {addr.label && <span className="text-slate-300/40">({addr.label})</span>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <AddressManager
+            userId={user.id}
+            initialAddresses={user.addresses}
+          />
         </div>
 
         {/* Right: admin actions */}
@@ -208,6 +206,8 @@ export default async function AdminUserDetailPage({
             userId={user.id}
             currentAllowance={balance}
             isTelegramMember={user.isTelegramMember}
+            telegramId={user.telegramId ?? null}
+            telegramUsername={user.telegramUsername ?? null}
             isPro={user.isPro}
             isBlocked={user.isBlocked}
             proTierId={user.proTierId ?? null}

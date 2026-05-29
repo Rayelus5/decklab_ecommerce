@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { safeQuery } from "@/lib/safe-query";
 import { Package, MapPin, Settings, Crown, BarChart2, ChevronRight, AlertTriangle } from "lucide-react";
 import { ProAllowanceBar } from "@/components/profile/pro-allowance-bar";
+import { ManagePlanButton } from "./manage-plan-button";
 
 export const metadata: Metadata = {
   title: "Mi perfil — DECKLAB",
@@ -91,12 +92,7 @@ export default async function ProfilePage() {
                 {user.proTier.name}
               </span>
             </div>
-            <Link
-              href="/pricing"
-              className="text-xs text-slate-300 hover:text-snow transition-colors"
-            >
-              Gestionar plan
-            </Link>
+            <ManagePlanButton />
           </div>
           <ProAllowanceBar balance={balance} max={maxAllowance} />
           {user.proSince && (

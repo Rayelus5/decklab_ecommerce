@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin, isErrorResponse } from "@/lib/api-auth";
 import { prisma } from "@/lib/prisma";
+import { checkGroupMembership } from "@/lib/telegram";
 import { z } from "zod";
 
 const updateUserSchema = z.object({
@@ -11,6 +12,9 @@ const updateUserSchema = z.object({
   // Gestión PRO manual
   isPro: z.boolean().optional(),
   proTierId: z.string().nullable().optional(),
+  // Vinculación de Telegram
+  telegramId: z.string().nullable().optional(),         // ID numérico como string (o null para desvincular)
+  telegramUsername: z.string().nullable().optional(),   // @username sin @ (o null)
 });
 
 export async function PATCH(
@@ -36,6 +40,8 @@ export async function PATCH(
       role,
       isPro,
       proTierId,
+      telegramId,
+      telegramUsername,
     } = parsed.data;
 
     const updateData: Record<string, unknown> = {};
@@ -44,6 +50,44 @@ export async function PATCH(
     if (isTelegramMember !== undefined) updateData.isTelegramMember = isTelegramMember;
     if (isBlocked !== undefined) updateData.isBlocked = isBlocked;
     if (role !== undefined) updateData.role = role;
+
+    // Vinculación de Telegram
+    if (telegramId !== undefined) {
+      if (telegramId === null || telegramId === "") {
+        // Desvincular Telegram
+        updateData.telegramId = null;
+        updateData.telegramUsername = null;
+        updateData.isTelegramMember = false;
+      } else {
+        const numericId = parseInt(telegramId, 10);
+        if (isNaN(numericId)) {
+          return NextResponse.json(
+            { error: "El ID de Telegram debe ser un número" },
+            { status: 400 }
+          );
+        }
+        updateData.telegramId = telegramId;
+        if (telegramUsername !== undefined) {
+          // Normalizar: quitar @ si lo incluyó el admin
+          updateData.telegramUsername = telegramUsername
+            ? telegramUsername.replace(/^@/, "")
+            : null;
+        }
+        // Verificar membresía en el grupo automáticamente
+        try {
+          const isMember = await checkGroupMembership(numericId);
+          updateData.isTelegramMember = isMember;
+        } catch {
+          // No bloquear si Telegram no responde — el admin puede ajustarlo manualmente
+          console.error("[ADMIN USER PATCH] Error checking Telegram membership");
+        }
+      }
+    } else if (telegramUsername !== undefined) {
+      // Solo actualizar username sin cambiar el ID
+      updateData.telegramUsername = telegramUsername
+        ? telegramUsername.replace(/^@/, "")
+        : null;
+    }
 
     if (isPro !== undefined) {
       updateData.isPro = isPro;

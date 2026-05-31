@@ -28,10 +28,11 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { addressId, shippingRateId, couponCode, items } = body as {
+    const { addressId, shippingRateId, couponCode, useProPricing, items } = body as {
       addressId: string;
       shippingRateId: string;
       couponCode?: string;
+      useProPricing?: boolean;
       items: CartItemInput[];
     };
 
@@ -121,7 +122,12 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Determinar precios (PRO vs normal)
-    const userBalance = session.user.isPro
+    // wantsProPricing: el usuario es PRO Y ha elegido usar su saldo PRO en este checkout
+    // useProPricing viene del cliente (preferencia, no control de acceso).
+    // La autorización real es session.user.isPro (de servidor — inmutable).
+    const wantsProPricing = session.user.isPro && (useProPricing !== false);
+
+    const userBalance = wantsProPricing
       ? await prisma.user.findUnique({
           where: { id: session.user.id },
           select: { proAllowanceBalance: true },
@@ -152,7 +158,7 @@ export async function POST(req: NextRequest) {
     for (const item of items) {
       const variant = variants.find((v) => v.id === item.variantId)!;
       const hasProPrice =
-        session.user.isPro &&
+        wantsProPricing &&
         variant.pricePro != null &&
         Number(variant.pricePro) > 0;
 
@@ -302,7 +308,7 @@ export async function POST(req: NextRequest) {
         couponId: couponId ?? "",
         discountAmount: discountAmount.toFixed(2),
         cartItems: JSON.stringify(cartMetaItems),
-        isPro: session.user.isPro ? "true" : "false",
+        isPro: wantsProPricing ? "true" : "false",
       },
       locale: "es",
     });

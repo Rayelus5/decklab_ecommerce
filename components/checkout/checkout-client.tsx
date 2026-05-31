@@ -147,6 +147,7 @@ export function CheckoutClient({
           addressId: selectedAddressId,
           shippingRateId: selectedShippingRateId,
           couponCode: couponCode || undefined,
+          useProPricing,
           items: items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
         }),
       });

@@ -403,6 +403,12 @@ model Order {
   // --- Facturación ---
   invoiceUrl String? // URL del PDF de factura generado
 
+  // --- Envío unificado ---
+  // Pedido con el que se comparte la bolsa de envío (paga solo la diferencia de tarifa)
+  consolidatedWithOrderId String?
+  consolidatedWith        Order?  @relation("OrderConsolidation", fields: [consolidatedWithOrderId], references: [id])
+  consolidatedOrders      Order[] @relation("OrderConsolidation")
+
   // --- Relaciones ---
   user      User       @relation(fields: [userId], references: [id])
   address   Address?   @relation(fields: [addressId], references: [id])
@@ -419,6 +425,7 @@ model Order {
   @@index([stripePaymentIntentId])
   @@index([paypalOrderId])
   @@index([orderNumber])
+  @@index([consolidatedWithOrderId])
 }
 
 model OrderItem {

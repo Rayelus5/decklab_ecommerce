@@ -28,15 +28,23 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { addressId, shippingRateId, couponCode, useProPricing, items } = body as {
+    const {
+      addressId,
+      shippingRateId,
+      consolidateOrderId,
+      couponCode,
+      useProPricing,
+      items,
+    } = body as {
       addressId: string;
-      shippingRateId: string;
+      shippingRateId?: string;
+      consolidateOrderId?: string;
       couponCode?: string;
       useProPricing?: boolean;
       items: CartItemInput[];
     };
 
-    if (!addressId || !shippingRateId || !items?.length) {
+    if (!addressId || (!shippingRateId && !consolidateOrderId) || !items?.length) {
       return NextResponse.json({ error: "Datos de checkout incompletos" }, { status: 400 });
     }
 
@@ -48,19 +56,91 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Dirección no válida" }, { status: 400 });
     }
 
-    // 2. Verificar shipping rate
-    const shippingRate = await prisma.shippingRate.findUnique({
-      where: { id: shippingRateId, active: true },
-    });
-    if (!shippingRate) {
-      return NextResponse.json({ error: "Método de envío no válido" }, { status: 400 });
+    // 2a. Verificar shipping rate (rama normal)
+    // Declaramos variables que se rellenan por una u otra rama
+    let resolvedShippingType: string;
+    let resolvedShippingRegion: string;
+    let resolvedShippingRateName: string;
+    let resolvedBaseShippingCost: number; // coste bruto antes de PRO freeShipping
+
+    // Para la rama de consolidación necesitamos el pedido original
+    // (se usa después de cargar las variantes para calcular el cartWeight)
+    type ConsolidateInfo = {
+      shippingType: string;
+      shippingRegion: string;
+      shippingCost: number;
+      existingWeight: number;
+    };
+    let consolidateInfo: ConsolidateInfo | null = null;
+
+    if (consolidateOrderId) {
+      // Validación preliminar — cargar el pedido original
+      const originalOrder = await prisma.order.findFirst({
+        where: {
+          id: consolidateOrderId,
+          userId: session.user.id,
+          status: { in: ["PAID", "PROCESSING"] },
+        },
+        select: {
+          shippingType: true,
+          shippingRegion: true,
+          shippingCost: true,
+          items: {
+            select: {
+              quantity: true,
+              variant: { select: { weight: true } },
+            },
+          },
+        },
+      });
+
+      if (!originalOrder) {
+        return NextResponse.json({ error: "Pedido a consolidar no válido" }, { status: 400 });
+      }
+
+      consolidateInfo = {
+        shippingType: originalOrder.shippingType,
+        shippingRegion: originalOrder.shippingRegion,
+        shippingCost: Number(originalOrder.shippingCost),
+        existingWeight: originalOrder.items.reduce(
+          (sum, item) => sum + item.variant.weight * item.quantity,
+          0
+        ),
+      };
+
+      // Valores provisionales — se sobreescriben en el paso 2b tras cargar variantes
+      resolvedShippingType = originalOrder.shippingType;
+      resolvedShippingRegion = originalOrder.shippingRegion;
+      resolvedShippingRateName = "Envío unificado"; // provisional
+      resolvedBaseShippingCost = 0;                  // provisional
+    } else {
+      // Rama normal
+      const shippingRate = await prisma.shippingRate.findUnique({
+        where: { id: shippingRateId!, active: true },
+      });
+      if (!shippingRate) {
+        return NextResponse.json({ error: "Método de envío no válido" }, { status: 400 });
+      }
+      resolvedShippingType = shippingRate.type;
+      resolvedShippingRegion = shippingRate.region;
+      resolvedShippingRateName = shippingRate.name;
+      resolvedBaseShippingCost = Number(shippingRate.price);
     }
 
-    // 3. Verificar y cargar variantes
+    // 3. Verificar y cargar variantes (incluyendo weight para calcular cartWeight)
     const variantIds = items.map((i) => i.variantId);
     const variants = await prisma.productVariant.findMany({
       where: { id: { in: variantIds } },
-      include: {
+      select: {
+        id: true,
+        sku: true,
+        title: true,
+        price: true,
+        pricePro: true,
+        proExempt: true,
+        stock: true,
+        reservedStock: true,
+        weight: true,
         product: {
           select: {
             id: true,
@@ -77,8 +157,55 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Algunas variantes no están disponibles" }, { status: 400 });
     }
 
+    // 2b. Calcular coste final de envío en la rama de consolidación
+    // Ahora que tenemos variants con weight, podemos calcular el cartWeight
+    if (consolidateInfo) {
+      const cartWeight = items.reduce((sum, item) => {
+        const v = variants.find((vv) => vv.id === item.variantId);
+        return sum + (v?.weight ?? 0) * item.quantity;
+      }, 0);
+      const combinedWeight = consolidateInfo.existingWeight + cartWeight;
+
+      // Buscar tarifa — primero en el mismo tipo
+      let rate = await prisma.shippingRate.findFirst({
+        where: {
+          type: consolidateInfo.shippingType,
+          region: consolidateInfo.shippingRegion as "NATIONAL" | "EUROPE",
+          active: true,
+          minWeight: { lte: combinedWeight },
+          OR: [{ maxWeight: { gt: combinedWeight } }, { maxWeight: -1 }],
+        },
+        orderBy: { price: "asc" },
+      });
+
+      // Si no existe → buscar en cualquier tipo (más barato disponible)
+      if (!rate) {
+        rate = await prisma.shippingRate.findFirst({
+          where: {
+            region: consolidateInfo.shippingRegion as "NATIONAL" | "EUROPE",
+            active: true,
+            minWeight: { lte: combinedWeight },
+            OR: [{ maxWeight: { gt: combinedWeight } }, { maxWeight: -1 }],
+          },
+          orderBy: { price: "asc" },
+        });
+      }
+
+      if (!rate) {
+        return NextResponse.json(
+          { error: "No existe tarifa activa para el peso combinado de este envío" },
+          { status: 422 }
+        );
+      }
+
+      const diff = Math.max(0, Number(rate.price) - consolidateInfo.shippingCost);
+      resolvedBaseShippingCost = diff;
+      resolvedShippingType = rate.type;
+      resolvedShippingRegion = consolidateInfo.shippingRegion;
+      resolvedShippingRateName = rate.name;
+    }
+
     // 4. Verificar stock disponible (pre-flight) y reservar atómicamente
-    // Pre-flight: evitar crear sesiones condenadas antes de llamar a Stripe
     for (const item of items) {
       const variant = variants.find((v) => v.id === item.variantId);
       if (!variant || variant.product.isArchived) {
@@ -96,7 +223,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Reservar stock atómicamente — si algún item falla (race condition), rollback completo
+    // Reservar stock atómicamente
     try {
       await prisma.$transaction(async (tx) => {
         for (const item of items) {
@@ -118,13 +245,10 @@ export async function POST(req: NextRequest) {
           { status: 409 }
         );
       }
-      throw err; // Relanzar errores inesperados
+      throw err;
     }
 
     // 5. Determinar precios (PRO vs normal)
-    // wantsProPricing: el usuario es PRO Y ha elegido usar su saldo PRO en este checkout
-    // useProPricing viene del cliente (preferencia, no control de acceso).
-    // La autorización real es session.user.isPro (de servidor — inmutable).
     const wantsProPricing = session.user.isPro && (useProPricing !== false);
 
     const userBalance = wantsProPricing
@@ -136,7 +260,7 @@ export async function POST(req: NextRequest) {
 
     let remainingAllowance = Number(userBalance?.proAllowanceBalance ?? 0);
 
-    // 6. Construir line items para Stripe
+    // 6. Construir line items de productos para Stripe
     const lineItems: Array<{
       price_data: {
         currency: string;
@@ -199,29 +323,33 @@ export async function POST(req: NextRequest) {
     }
 
     // 7. Añadir envío como line item
-    const proTier = session.user.isPro && session.user.proTierId
-      ? await prisma.proTier.findUnique({
-          where: { id: session.user.proTierId },
-          select: { benefits: true },
-        })
-      : null;
+    const proTier =
+      session.user.isPro && session.user.proTierId
+        ? await prisma.proTier.findUnique({
+            where: { id: session.user.proTierId },
+            select: { benefits: true },
+          })
+        : null;
 
     const benefits = proTier?.benefits as Record<string, unknown> | null;
     const freeShipping = benefits?.freeShipping === true;
 
-    const shippingCost = (!freeShipping && Number(shippingRate.price) > 0)
-      ? Number(shippingRate.price)
-      : 0;
+    // Si el envío está unificado y la diferencia es 0, freeShipping también aplica
+    const effectiveShippingCost = freeShipping ? 0 : resolvedBaseShippingCost;
 
-    if (shippingCost > 0) {
+    if (effectiveShippingCost > 0) {
+      const shippingLabel = consolidateOrderId
+        ? `Suplemento envío unificado — ${resolvedShippingRateName}`
+        : `Envío — ${resolvedShippingRateName}`;
+
       lineItems.push({
         price_data: {
           currency: "eur",
           product_data: {
-            name: `Envío — ${shippingRate.name}`,
-            description: shippingRate.type,
+            name: shippingLabel,
+            description: resolvedShippingType,
           },
-          unit_amount: Math.round(shippingCost * 100),
+          unit_amount: Math.round(effectiveShippingCost * 100),
         },
         quantity: 1,
       });
@@ -247,7 +375,6 @@ export async function POST(req: NextRequest) {
       );
 
       if (!validation.valid || !validation.coupon) {
-        // Liberar reservas si el cupón falla
         await releaseStockReservations(items);
         return NextResponse.json(
           { error: validation.error ?? "Cupón no válido" },
@@ -265,9 +392,10 @@ export async function POST(req: NextRequest) {
       couponId = validation.coupon.id;
 
       if (discountAmount > 0) {
-        const label = validation.coupon.type === "PERCENT"
-          ? `${validation.coupon.value}% — ${validation.coupon.code}`
-          : `${discountAmount.toFixed(2)}€ — ${validation.coupon.code}`;
+        const label =
+          validation.coupon.type === "PERCENT"
+            ? `${validation.coupon.value}% — ${validation.coupon.code}`
+            : `${discountAmount.toFixed(2)}€ — ${validation.coupon.code}`;
 
         const stripeCoupon = await stripe.coupons.create({
           name: `Descuento ${label}`,
@@ -283,7 +411,6 @@ export async function POST(req: NextRequest) {
     // 9. Crear sesión de Stripe
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-    // Reutilizar el cliente de Stripe existente (evita duplicados)
     const stripeCustomerId = await getOrCreateStripeCustomer(
       session.user.id,
       session.user.email,
@@ -301,20 +428,24 @@ export async function POST(req: NextRequest) {
       metadata: {
         userId: session.user.id,
         addressId,
-        shippingRateId,
-        shippingType: shippingRate.type,
-        shippingRegion: shippingRate.region,
+        shippingRateId: shippingRateId ?? "",
+        shippingType: resolvedShippingType,
+        shippingRegion: resolvedShippingRegion,
         couponCode: couponCode ?? "",
         couponId: couponId ?? "",
         discountAmount: discountAmount.toFixed(2),
         cartItems: JSON.stringify(cartMetaItems),
         isPro: wantsProPricing ? "true" : "false",
+        // Campos de consolidación (vacíos si es pedido normal)
+        consolidateOrderId: consolidateOrderId ?? "",
+        consolidateShippingDiff: consolidateOrderId
+          ? effectiveShippingCost.toFixed(2)
+          : "",
       },
       locale: "es",
     });
 
-    // 10. Liberar carritos abandonados anteriores del usuario (sesiones antiguas sin pagar)
-    // Esto evita que múltiples reservas de stock se acumulen por reinicios de checkout.
+    // 10. Liberar carritos abandonados anteriores del usuario
     try {
       const oldCarts = await prisma.abandonedCart.findMany({
         where: {
@@ -327,17 +458,19 @@ export async function POST(req: NextRequest) {
 
       for (const oldCart of oldCarts) {
         const oldItems = oldCart.cartItems as Array<{ variantId: string; quantity: number }>;
-        await prisma.$transaction(
-          oldItems.map((item) =>
-            prisma.$executeRaw`
-              UPDATE "ProductVariant"
-              SET "reservedStock" = GREATEST(0, "reservedStock" - ${item.quantity})
-              WHERE id = ${item.variantId}
-            `
+        await prisma
+          .$transaction(
+            oldItems.map((item) =>
+              prisma.$executeRaw`
+                UPDATE "ProductVariant"
+                SET "reservedStock" = GREATEST(0, "reservedStock" - ${item.quantity})
+                WHERE id = ${item.variantId}
+              `
+            )
           )
-        ).catch((err) =>
-          console.error("[CHECKOUT] Error releasing old cart reservations:", err)
-        );
+          .catch((err) =>
+            console.error("[CHECKOUT] Error releasing old cart reservations:", err)
+          );
         stripe.checkout.sessions.expire(oldCart.stripeSessionId).catch(() => {});
         await prisma.abandonedCart.delete({ where: { id: oldCart.id } }).catch(() => {});
       }
@@ -345,7 +478,7 @@ export async function POST(req: NextRequest) {
       console.error("[CHECKOUT] Error releasing old abandoned carts:", err);
     }
 
-    // 11. Guardar carrito abandonado en BD (se marca como convertido en el webhook al pagar)
+    // 11. Guardar carrito abandonado en BD
     try {
       await prisma.abandonedCart.upsert({
         where: { stripeSessionId: stripeSession.id },
@@ -358,7 +491,6 @@ export async function POST(req: NextRequest) {
         update: {},
       });
     } catch (err) {
-      // No bloquear el checkout si falla el registro del carrito abandonado
       console.error("[CHECKOUT] Error creating AbandonedCart:", err);
     }
 

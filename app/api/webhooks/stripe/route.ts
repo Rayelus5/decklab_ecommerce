@@ -96,9 +96,12 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     userId, addressId, shippingRateId, shippingType, shippingRegion,
     couponCode, couponId: metaCouponId, discountAmount: metaDiscountAmount,
     cartItems, isPro,
+    consolidateOrderId, consolidateShippingDiff,
   } = session.metadata ?? {};
 
-  if (!userId || !addressId || !shippingRateId || !cartItems) {
+  const isConsolidation = Boolean(consolidateOrderId);
+
+  if (!userId || !addressId || (!shippingRateId && !isConsolidation) || !cartItems) {
     console.error("[WEBHOOK] Missing metadata in session", session.id);
     return;
   }
@@ -126,11 +129,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     wasProPrice: boolean;
   }>;
 
-  // Obtener shipping rate para snapshot
-  const shippingRate = await prisma.shippingRate.findUnique({
-    where: { id: shippingRateId },
-    select: { price: true },
-  });
+  // Obtener shipping rate para snapshot (solo en pedidos normales, no consolidados)
+  const shippingRate = !isConsolidation && shippingRateId
+    ? await prisma.shippingRate.findUnique({
+        where: { id: shippingRateId },
+        select: { price: true },
+      })
+    : null;
 
   // Obtener variantes para decrementar stock
   const variantIds = parsedItems.map((i) => i.variantId);
@@ -141,7 +146,11 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
   // Calcular totales
   const subtotal = parsedItems.reduce((sum, item) => sum + item.pricePaid * item.quantity, 0);
-  const shippingCost = Number(shippingRate?.price ?? 0);
+  // Para consolidación: shippingCost = diferencia pagada (puede ser 0)
+  // Para pedido normal: shippingCost = precio de la tarifa de envío
+  const shippingCost = isConsolidation
+    ? Number(consolidateShippingDiff ?? 0)
+    : Number(shippingRate?.price ?? 0);
   const discountTotal = Number(metaDiscountAmount ?? 0);
   // Usar el total real cobrado por Stripe (evita discrepancias por redondeo)
   const total = session.amount_total != null
@@ -189,6 +198,10 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         total,
         couponId: coupon?.id ?? null,
         couponCode: coupon ? couponCode : null,
+        // Envío unificado: enlazar con el pedido base
+        consolidatedWithOrderId: isConsolidation && consolidateOrderId
+          ? consolidateOrderId
+          : null,
         items: {
           create: parsedItems.map((item) => {
             const variant = variants.find((v) => v.id === item.variantId);

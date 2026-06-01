@@ -19,6 +19,7 @@ import {
   ChevronRight,
   ShoppingCart,
   Clock,
+  Mail,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { href: "/admin/categories", icon: Tag, label: "Categorías" },
   { href: "/admin/orders", icon: ShoppingBag, label: "Pedidos" },
   { href: "/admin/abandoned-carts", icon: ShoppingCart, label: "Carritos" },
+  { href: "/admin/emails", icon: Mail, label: "Emails" },
   { href: "/admin/users", icon: Users, label: "Usuarios" },
   { href: "/admin/pro-tiers", icon: Crown, label: "PRO Tiers" },
   { href: "/admin/shipping", icon: Truck, label: "Envíos" },

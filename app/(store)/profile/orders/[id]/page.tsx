@@ -63,6 +63,9 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
     include: {
       address: true,
       shipment: true,
+      consolidatedWith: {
+        select: { id: true, orderNumber: true },
+      },
     },
   });
 
@@ -125,6 +128,23 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           </p>
         </div>
       </div>
+
+      {/* Envío unificado — banner informativo */}
+      {order.consolidatedWith && (
+        <div className="bg-sky-500/8 border border-sky-500/20 rounded-[12px] px-4 py-3 flex items-center gap-3">
+          <Truck size={14} className="text-sky-400 shrink-0" />
+          <p className="text-xs text-sky-300">
+            Este pedido se envía junto al{" "}
+            <Link
+              href={`/profile/orders/${order.consolidatedWith.id}`}
+              className="font-semibold underline underline-offset-2 hover:text-sky-100 transition-colors"
+            >
+              Pedido #{order.consolidatedWith.orderNumber}
+            </Link>{" "}
+            (envío unificado). Solo se cobra la diferencia de tarifa.
+          </p>
+        </div>
+      )}
 
       {/* Progress tracker */}
       {!isTerminal && (

@@ -1,13 +1,16 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { CheckoutErrorBoundary } from "@/components/error-boundary";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, MapPin, Truck, Tag, CreditCard, Check, AlertTriangle } from "lucide-react";
+import {
+  ArrowLeft, ArrowRight, MapPin, Truck, Tag, CreditCard, Check, AlertTriangle,
+  PackagePlus, Loader2, Package, Info,
+} from "lucide-react";
 import { clsx } from "clsx";
 import { useCart } from "@/lib/hooks/use-cart";
 import { Button } from "@/components/ui/button";
@@ -57,6 +60,28 @@ function detectRegion(country: string): "NATIONAL" | "EUROPE" {
   return country.toUpperCase() === "ES" ? "NATIONAL" : "EUROPE";
 }
 
+interface EligibleOrder {
+  id: string;
+  orderNumber: number;
+  shippingType: string;
+  shippingRegion: string;
+  shippingCost: number;
+  orderWeight: number;
+  createdAt: string;
+}
+
+interface ConsolidateEstimate {
+  combinedWeight: number;
+  existingWeight: number;
+  cartWeight: number;
+  rateName: string;
+  rateType: string;
+  ratePrice: number;
+  originalShippingCost: number;
+  difference: number;
+  typeChanged: boolean;
+}
+
 export function CheckoutClient({
   userId,
   isPro,
@@ -82,6 +107,13 @@ export function CheckoutClient({
   const [couponLoading, setCouponLoading] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
 
+  // — Envío unificado —
+  const [eligibleOrders, setEligibleOrders] = useState<EligibleOrder[]>([]);
+  const [eligibleLoading, setEligibleLoading] = useState(false);
+  const [consolidateOrderId, setConsolidateOrderId] = useState<string | null>(null);
+  const [consolidateEstimate, setConsolidateEstimate] = useState<ConsolidateEstimate | null>(null);
+  const [estimateLoading, setEstimateLoading] = useState(false);
+
   const { register, watch, formState: { errors } } = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
@@ -106,8 +138,68 @@ export function CheckoutClient({
   });
 
   const selectedRate = applicableRates.find((r) => r.id === selectedShippingRateId);
-  const shippingCost = hasFreeShipping ? 0 : (selectedRate?.price ?? 0);
+
+  // Coste de envío efectivo: consolidación, PRO gratis, o tarifa normal
+  const shippingCost = (() => {
+    if (consolidateOrderId) {
+      return hasFreeShipping ? 0 : (consolidateEstimate?.difference ?? 0);
+    }
+    return hasFreeShipping ? 0 : (selectedRate?.price ?? 0);
+  })();
+
   const total = subtotal + shippingCost - couponDiscount;
+
+  // ── Fetch pedidos elegibles al entrar en step 2 ──
+  useEffect(() => {
+    if (step !== 2 || !selectedRegion) return;
+    setEligibleLoading(true);
+    fetch(`/api/checkout/eligible-orders?region=${selectedRegion}`)
+      .then((r) => r.json())
+      .then((data) => setEligibleOrders(Array.isArray(data) ? data : []))
+      .catch(() => setEligibleOrders([]))
+      .finally(() => setEligibleLoading(false));
+  }, [step, selectedRegion]);
+
+  // ── Seleccionar un pedido para consolidar ──
+  async function handleSelectConsolidate(orderId: string) {
+    if (consolidateOrderId === orderId) {
+      // Deseleccionar si ya estaba seleccionado
+      setConsolidateOrderId(null);
+      setConsolidateEstimate(null);
+      return;
+    }
+    setConsolidateOrderId(orderId);
+    setConsolidateEstimate(null);
+    setEstimateLoading(true);
+    try {
+      const res = await fetch("/api/checkout/consolidate-estimate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, cartWeight: totalWeight }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setConsolidateEstimate(data as ConsolidateEstimate);
+      } else {
+        toast.error(data.error ?? "No se pudo calcular el coste de consolidación");
+        setConsolidateOrderId(null);
+      }
+    } catch {
+      toast.error("Error de conexión");
+      setConsolidateOrderId(null);
+    } finally {
+      setEstimateLoading(false);
+    }
+  }
+
+  // ── Cambiar a envío normal (desactiva consolidación) ──
+  function handleSelectNormalRate(rateId: string) {
+    setConsolidateOrderId(null);
+    setConsolidateEstimate(null);
+    // Actualizar el form field
+    const event = { target: { value: rateId } };
+    register("shippingRateId").onChange(event as React.ChangeEvent<HTMLInputElement>);
+  }
 
   async function applyCoupon() {
     if (!couponCode.trim()) return;
@@ -134,7 +226,7 @@ export function CheckoutClient({
   }
 
   async function handleStripeCheckout() {
-    if (!selectedAddressId || !selectedShippingRateId) {
+    if (!selectedAddressId || (!selectedShippingRateId && !consolidateOrderId)) {
       toast.error("Selecciona una dirección y método de envío");
       return;
     }
@@ -145,7 +237,8 @@ export function CheckoutClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           addressId: selectedAddressId,
-          shippingRateId: selectedShippingRateId,
+          shippingRateId: consolidateOrderId ? undefined : selectedShippingRateId,
+          consolidateOrderId: consolidateOrderId || undefined,
           couponCode: couponCode || undefined,
           useProPricing,
           items: items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
@@ -321,20 +414,152 @@ export function CheckoutClient({
                     </p>
                   </div>
                 )}
-                {applicableRates.length === 0 ? (
+
+                {/* ── Card de envío unificado (solo si hay pedidos elegibles) ── */}
+                {eligibleLoading && (
+                  <div className="flex items-center gap-2 text-xs text-slate-300/60 py-1">
+                    <Loader2 size={12} className="animate-spin" />
+                    Comprobando pedidos activos...
+                  </div>
+                )}
+
+                {!eligibleLoading && eligibleOrders.length > 0 && (
+                  <div
+                    className={clsx(
+                      "border rounded-[11px] overflow-hidden transition-all",
+                      consolidateOrderId
+                        ? "border-sky-500/40 bg-sky-500/5"
+                        : "border-white/12 bg-white/2"
+                    )}
+                  >
+                    {/* Header de la card */}
+                    <div className="flex items-start gap-3 p-4 pb-3">
+                      <PackagePlus size={15} className="text-sky-400 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-semibold text-snow">Unificar con pedido existente</p>
+                        <p className="text-xs text-slate-300/70 mt-0.5 leading-relaxed">
+                          Combina el envío con un pedido activo y paga solo la diferencia de tarifa si aplica.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Lista de pedidos elegibles */}
+                    <div className="flex flex-col divide-y divide-white/6 border-t border-white/8">
+                      {eligibleOrders.map((order) => {
+                        const isSelected = consolidateOrderId === order.id;
+                        return (
+                          <button
+                            key={order.id}
+                            onClick={() => handleSelectConsolidate(order.id)}
+                            className={clsx(
+                              "flex items-start gap-3 px-4 py-3 text-left transition-colors w-full",
+                              isSelected
+                                ? "bg-sky-500/8"
+                                : "hover:bg-white/3"
+                            )}
+                          >
+                            {/* Radio visual */}
+                            <div className={clsx(
+                              "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors",
+                              isSelected
+                                ? "border-sky-400 bg-sky-400"
+                                : "border-white/30 bg-transparent"
+                            )}>
+                              {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-graphite-700" />}
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-sm font-medium text-snow">
+                                  Pedido #{order.orderNumber}
+                                </span>
+                                <span className="text-[10px] px-1.5 py-0.5 bg-white/8 text-slate-300 rounded-[4px] uppercase shrink-0">
+                                  {order.shippingType}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-300/60 mt-0.5">
+                                {order.orderWeight}g ya empaquetado ·{" "}
+                                {order.shippingCost === 0
+                                  ? "envío gratis"
+                                  : `${order.shippingCost.toFixed(2).replace(".", ",")} € pagados`}
+                              </p>
+
+                              {/* Breakdown del estimate (solo para el seleccionado) */}
+                              {isSelected && (
+                                <div className="mt-2.5">
+                                  {estimateLoading ? (
+                                    <div className="flex items-center gap-1.5 text-xs text-slate-300/60">
+                                      <Loader2 size={11} className="animate-spin" />
+                                      Calculando diferencia...
+                                    </div>
+                                  ) : consolidateEstimate ? (
+                                    <div className="bg-graphite-700/60 border border-white/8 rounded-[8px] p-2.5 flex flex-col gap-1">
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span className="text-slate-300/70">Peso anterior</span>
+                                        <span className="text-slate-300 tabular-nums">{consolidateEstimate.existingWeight}g</span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-xs">
+                                        <span className="text-slate-300/70">Carrito nuevo</span>
+                                        <span className="text-slate-300 tabular-nums">{consolidateEstimate.cartWeight}g</span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-xs font-medium border-t border-white/8 pt-1 mt-0.5">
+                                        <span className="text-snow">Total combinado</span>
+                                        <span className="text-snow tabular-nums">{consolidateEstimate.combinedWeight}g</span>
+                                      </div>
+                                      <div className="flex items-center justify-between text-xs border-t border-white/8 pt-1 mt-0.5">
+                                        <span className="text-slate-300/70">Tarifa aplicada</span>
+                                        <span className="text-slate-300">{consolidateEstimate.rateName}</span>
+                                      </div>
+                                      {consolidateEstimate.typeChanged && (
+                                        <div className="flex items-start gap-1.5 mt-1 text-xs text-amber-400/80">
+                                          <Info size={11} className="shrink-0 mt-0.5" />
+                                          El tipo de envío ha cambiado a {consolidateEstimate.rateType} porque el peso combinado supera el límite anterior.
+                                        </div>
+                                      )}
+                                      <div className="flex items-center justify-between text-xs font-semibold border-t border-white/8 pt-1 mt-0.5">
+                                        <span className="text-snow">Diferencia a pagar</span>
+                                        {consolidateEstimate.difference === 0 ? (
+                                          <span className="text-mint-signal">¡Gratis!</span>
+                                        ) : (
+                                          <span className="text-snow tabular-nums">
+                                            {consolidateEstimate.difference.toFixed(2).replace(".", ",")} €
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Tarifas de envío normales ── */}
+                {applicableRates.length === 0 && eligibleOrders.length === 0 ? (
                   <p className="text-sm text-slate-300 py-4 text-center">
                     No hay métodos de envío disponibles para tu dirección. Contacta con soporte.
                   </p>
-                ) : (
+                ) : applicableRates.length > 0 && (
                   <div className="flex flex-col gap-2">
+                    {eligibleOrders.length > 0 && (
+                      <p className="text-xs text-slate-300/50 flex items-center gap-1.5">
+                        <Package size={11} />
+                        O elige un método de envío independiente:
+                      </p>
+                    )}
                     {applicableRates.map((rate) => {
                       const effectivePrice = hasFreeShipping ? 0 : rate.price;
+                      const isActive = !consolidateOrderId && selectedShippingRateId === rate.id;
                       return (
                         <label
                           key={rate.id}
                           className={clsx(
                             "flex items-start gap-3 p-4 rounded-[11px] border cursor-pointer transition-all",
-                            selectedShippingRateId === rate.id
+                            isActive
                               ? "border-ash-50/40 bg-ash-50/5"
                               : "border-white/8 hover:border-white/15"
                           )}
@@ -343,6 +568,11 @@ export function CheckoutClient({
                             type="radio"
                             value={rate.id}
                             {...register("shippingRateId")}
+                            onChange={(e) => {
+                              register("shippingRateId").onChange(e);
+                              setConsolidateOrderId(null);
+                              setConsolidateEstimate(null);
+                            }}
                             className="mt-1 accent-ash-50"
                           />
                           <div className="flex-1">
@@ -373,14 +603,15 @@ export function CheckoutClient({
                     })}
                   </div>
                 )}
+
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={() => setStep(1)} size="lg" className="flex-1">
                     <ArrowLeft size={15} />
                     Volver
                   </Button>
                   <Button
-                    onClick={() => selectedShippingRateId && setStep(3)}
-                    disabled={!selectedShippingRateId && applicableRates.length > 0}
+                    onClick={() => (selectedShippingRateId || consolidateOrderId) && setStep(3)}
+                    disabled={!selectedShippingRateId && !consolidateOrderId}
                     size="lg"
                     className="flex-1"
                   >
@@ -514,16 +745,22 @@ export function CheckoutClient({
                   </div>
                 )}
                 <div className="flex justify-between text-slate-300">
-                  <span>Envío</span>
+                  <span>{consolidateOrderId ? "Suplemento envío" : "Envío"}</span>
                   <span className="tabular-nums">
-                    {selectedRate
-                      ? hasFreeShipping
-                        ? "Gratis"
-                        : `${selectedRate.price.toFixed(2).replace(".", ",")} €`
-                      : "—"}
+                    {consolidateOrderId
+                      ? (hasFreeShipping || consolidateEstimate?.difference === 0)
+                        ? <span className="text-mint-signal text-xs">Gratis</span>
+                        : consolidateEstimate
+                          ? `${consolidateEstimate.difference.toFixed(2).replace(".", ",")} €`
+                          : "—"
+                      : selectedRate
+                        ? hasFreeShipping
+                          ? "Gratis"
+                          : `${selectedRate.price.toFixed(2).replace(".", ",")} €`
+                        : "—"}
                   </span>
                 </div>
-                {selectedRate && (
+                {(selectedRate || consolidateOrderId) && (
                   <div className="flex justify-between font-semibold text-snow border-t border-white/8 pt-2 mt-1">
                     <span>Total</span>
                     <span className="tabular-nums">{total.toFixed(2).replace(".", ",")} €</span>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, PackagePlus } from "lucide-react";
 
 export const metadata: Metadata = { title: "Pedidos — DECKLAB Admin" };
 
@@ -50,8 +50,9 @@ export default async function AdminOrdersPage({
         total: true,
         paymentMethod: true,
         createdAt: true,
+        consolidatedWithOrderId: true,
         user: { select: { name: true, email: true } },
-        _count: { select: { items: true } },
+        _count: { select: { items: true, consolidatedOrders: true } },
         shipment: { select: { trackingNumber: true } },
       },
     }),
@@ -123,7 +124,21 @@ export default async function AdminOrdersPage({
               {orders.map((order) => (
                 <tr key={order.id} className="border-b border-white/5 last:border-0 hover:bg-white/3 transition-colors">
                   <td className="px-4 py-3">
-                    <span className="text-snow font-semibold">#{order.orderNumber}</span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-snow font-semibold">#{order.orderNumber}</span>
+                      {order.consolidatedWithOrderId && (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 bg-sky-500/12 border border-sky-500/20 text-sky-400 rounded-full font-medium">
+                          <PackagePlus size={9} />
+                          Unificado
+                        </span>
+                      )}
+                      {order._count.consolidatedOrders > 0 && (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 bg-sky-500/12 border border-sky-500/20 text-sky-300 rounded-full font-medium">
+                          <PackagePlus size={9} />
+                          Base ×{order._count.consolidatedOrders}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <p className="text-snow text-xs">{order.user.name ?? "—"}</p>

@@ -2,8 +2,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { ArrowLeft, Crown, ImageOff, MapPin, CreditCard, PackagePlus } from "lucide-react";
+import { ArrowLeft, Crown, ImageOff, MapPin, CreditCard } from "lucide-react";
 import { OrderActions } from "./order-actions";
+import { ConsolidationManager, type PackingGroupMember } from "./consolidation-manager";
 
 export const metadata: Metadata = { title: "Pedido — DECKLAB Admin" };
 
@@ -47,6 +48,54 @@ export default async function AdminOrderDetailPage({
   });
 
   if (!order) notFound();
+
+  // ── Build packing group ───────────────────────────────────────────────────
+  // Find all orders that belong to the same consolidation group as this one.
+  // A group = base order + all its secondaries.
+  const baseOrderId = order.consolidatedWithOrderId ?? order.id;
+
+  // Load all group members with their items (for weight/content display)
+  const groupOrders = await prisma.order.findMany({
+    where: {
+      OR: [
+        { id: baseOrderId },
+        { consolidatedWithOrderId: baseOrderId },
+      ],
+    },
+    select: {
+      id: true,
+      orderNumber: true,
+      shippingCost: true,
+      consolidatedWithOrderId: true,
+      items: {
+        select: {
+          quantity: true,
+          variant: {
+            select: {
+              weight: true,
+              title: true,
+              product: { select: { title: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const packingGroup: PackingGroupMember[] = groupOrders.map((o) => ({
+    id: o.id,
+    orderNumber: o.orderNumber,
+    isCurrentOrder: o.id === order.id,
+    isBase: o.consolidatedWithOrderId === null,
+    shippingCost: Number(o.shippingCost),
+    totalWeight: o.items.reduce((s, i) => s + i.variant.weight * i.quantity, 0),
+    items: o.items.map((i) => ({
+      title: i.variant.product.title,
+      variantTitle: i.variant.title ?? null,
+      quantity: i.quantity,
+      weight: i.variant.weight,
+    })),
+  }));
 
   const items = await prisma.orderItem.findMany({
     where: { orderId: id },
@@ -97,47 +146,13 @@ export default async function AdminOrderDetailPage({
         </div>
       </div>
 
-      {/* ── Envío unificado — info admin ── */}
-      {(order.consolidatedWith || order.consolidatedOrders.length > 0) && (
-        <div className="bg-sky-500/8 border border-sky-500/20 rounded-[12px] px-4 py-3 flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <PackagePlus size={14} className="text-sky-400 shrink-0" />
-            <span className="text-xs font-semibold text-sky-300">Envío unificado</span>
-          </div>
-          {order.consolidatedWith && (
-            <p className="text-xs text-sky-300/80">
-              Este pedido va en la misma bolsa que el{" "}
-              <Link
-                href={`/admin/orders/${order.consolidatedWith.id}`}
-                className="font-semibold underline underline-offset-2 hover:text-sky-100"
-              >
-                Pedido #{order.consolidatedWith.orderNumber}
-              </Link>
-              . El cliente pagó{" "}
-              {Number(order.shippingCost) === 0
-                ? "sin suplemento de envío"
-                : `${Number(order.shippingCost).toFixed(2)} € de suplemento`}.
-            </p>
-          )}
-          {order.consolidatedOrders.length > 0 && (
-            <div className="text-xs text-sky-300/80">
-              <span className="font-medium">Pedidos consolidados en esta bolsa: </span>
-              {order.consolidatedOrders.map((co, i) => (
-                <span key={co.id}>
-                  {i > 0 && ", "}
-                  <Link
-                    href={`/admin/orders/${co.id}`}
-                    className="font-semibold underline underline-offset-2 hover:text-sky-100"
-                  >
-                    #{co.orderNumber}
-                  </Link>
-                  {" "}(+{Number(co.shippingCost).toFixed(2)} €)
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {/* ── Envío unificado — gestión admin ── */}
+      <ConsolidationManager
+        orderId={order.id}
+        orderNumber={order.orderNumber}
+        consolidatedWithOrder={order.consolidatedWith ?? null}
+        packingGroup={packingGroup}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Left: items + totals */}

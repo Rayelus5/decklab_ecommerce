@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 // import Image from "next/image";
-import { ShoppingCart, Lock, Zap, ImageOff, Crown } from "lucide-react";
+import { Lock, Zap, ImageOff, Crown } from "lucide-react";
 import { clsx } from "clsx";
-import { toast } from "sonner";
-import { useCart } from "@/lib/hooks/use-cart";
 import { ReservationProductBadge } from "@/components/reservations/reservation-product-badge";
 
 interface ProductVariantPreview {
@@ -51,34 +49,11 @@ export function ProductCard({
   categoryName,
   reservation,
 }: ProductCardProps) {
-  const addItem = useCart((s) => s.addItem);
-
   const isOutOfStock = !variant || variant.stock === 0;
   const hasPriceProDefined = !!(variant?.pricePro && variant.pricePro > 0);
   const isPayingProPrice = isPro && hasPriceProDefined;
   const displayPrice = isPayingProPrice ? variant!.pricePro! : (variant?.price ?? 0);
   const originalPrice = variant?.price ?? 0;
-
-  function handleAddToCart(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!variant || isOutOfStock) { toast.error("Este producto está agotado"); return; }
-    if (!hasAccess) { toast.error("No tienes acceso a este producto"); return; }
-    addItem({
-      variantId: variant.id,
-      productId: id,
-      productTitle: title,
-      variantTitle: variant.title,
-      slug,
-      imageUrl,
-      price: variant.price,
-      pricePro: variant.pricePro ?? undefined,
-      weight: 0,
-      stock: variant.stock,
-      proExempt: variant.proExempt,
-    });
-    toast.success(`${title} añadido al carrito`);
-  }
 
   return (
     <Link
@@ -152,26 +127,6 @@ export function ProductCard({
           )}
         </div>
 
-        {/* Botón añadir al carrito — aparece en hover sobre imagen */}
-        {hasAccess && !isOutOfStock && (
-          <button
-            onClick={handleAddToCart}
-            className={clsx(
-              "absolute bottom-3 right-3 z-10",
-              "flex items-center gap-2 px-3 py-2",
-              "bg-snow text-graphite-700 rounded-[10px]",
-              "text-xs font-bold",
-              "shadow-lg",
-              "opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0",
-              "transition-all duration-200 ease-out",
-              "hover:bg-ash-50 active:scale-95 cursor-pointer"
-            )}
-            aria-label={`Añadir ${title} al carrito`}
-          >
-            <ShoppingCart size={13} />
-            Añadir
-          </button>
-        )}
       </div>
 
       {/* ── Info ────────────────────────────────────────────── */}

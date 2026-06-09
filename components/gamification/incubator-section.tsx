@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { startIncubation, hatchEgg, INCUBATION_TIMES } from "@/lib/gamification";
+import { startIncubation, hatchEgg } from "@/lib/gamification";
+import { INCUBATION_TIMES } from "@/lib/gamification-constants";
 import { useRouter } from "next/navigation";
 import { EggRarity, PokemonEgg, UserIncubator } from "@prisma/client";
 import { toast } from "sonner";

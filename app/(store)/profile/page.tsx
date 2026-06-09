@@ -47,13 +47,13 @@ export default async function ProfilePage() {
       if (!user.proSubscriptionId) return null;
       const sub = await stripe.subscriptions.retrieve(user.proSubscriptionId);
       return new Date((sub.items.data[0]?.current_period_end || 0) * 1000);
-    }),
+    }, null, "stripe sub end"),
     safeQuery(async () => {
       if (!user.proSubscriptionId) return false;
       const sub = await stripe.subscriptions.retrieve(user.proSubscriptionId);
       return sub.cancel_at_period_end;
-    }),
-    safeQuery(() => prisma.vipTier.findMany({ orderBy: { level: "asc" } })),
+    }, false, "stripe sub cancel"),
+    safeQuery(() => prisma.vipTier.findMany({ orderBy: { level: "asc" } }), [], "vip tiers"),
   ]);
 
   // Últimos 3 pedidos para el resumen

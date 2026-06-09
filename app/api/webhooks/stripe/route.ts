@@ -12,12 +12,7 @@ import {
 } from "@/lib/email";
 import { updateUserVipStats } from "@/lib/vip";
 
-// Deshabilitar el body parser de Next.js para verificar la firma de Stripe
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// Next.js App Router no necesita deshabilitar el bodyParser explícitamente para Webhooks.
 
 async function handleSubscriptionCheckoutCompleted(session: Stripe.Checkout.Session) {
   const { userId, tierId, oldSubscriptionId } = session.metadata ?? {};

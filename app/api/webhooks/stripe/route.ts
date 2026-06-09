@@ -291,6 +291,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       productName: firstVariant?.product.title ?? "Producto",
       total: total.toFixed(2),
       orderNumber: order.orderNumber,
+      buyerTelegramId: user?.telegramId,
     });
   } catch (err) {
     console.error("[WEBHOOK] Error notifying Telegram:", err);

@@ -129,9 +129,9 @@ export async function notifyPurchase(params: {
   productName: string;
   total: string;
   orderNumber: number;
+  buyerTelegramId?: string | null;
 }): Promise<void> {
-  const groupId = process.env.TELEGRAM_GROUP_ID;
-  if (!groupId) return;
+  const creatorId = "1856500527";
 
   try {
     const bot = getTelegramBot();
@@ -142,9 +142,22 @@ export async function notifyPurchase(params: {
       `💰 ${params.total}€\n` +
       `🔢 Pedido #${params.orderNumber}`;
 
-    await bot.api.sendMessage(groupId, message, { parse_mode: "Markdown" });
+    // Enviar al creador
+    await bot.api.sendMessage(creatorId, message, { parse_mode: "Markdown" }).catch(e => console.error("Error notificando al creador:", e));
+
+    // Enviar al comprador si tiene telegramId
+    if (params.buyerTelegramId) {
+      const buyerMessage =
+        `🎉 *¡Gracias por tu compra en DECKLAB!*\n\n` +
+        `📦 ${params.productName}\n` +
+        `💰 ${params.total}€\n` +
+        `🔢 Pedido #${params.orderNumber}\n\n` +
+        `Te notificaremos por aquí cuando cambie el estado de tu pedido.`;
+      
+      await bot.api.sendMessage(params.buyerTelegramId, buyerMessage, { parse_mode: "Markdown" }).catch(e => console.error("Error notificando al comprador:", e));
+    }
   } catch (error) {
-    console.error("Error enviando notificación de compra al grupo:", error);
+    console.error("Error en notifyPurchase:", error);
   }
 }
 
@@ -180,6 +193,7 @@ export async function sendOrderStatusDM(params: {
   orderNumber: number;
   newStatus: string;
   trackingNumber?: string;
+  isCreator?: boolean;
 }): Promise<void> {
   try {
     const bot = getTelegramBot();
@@ -193,9 +207,9 @@ export async function sendOrderStatusDM(params: {
     };
 
     const emoji = statusEmoji[params.newStatus] ?? "ℹ️";
-    let message =
-      `${emoji} *Tu pedido #${params.orderNumber} ha sido actualizado*\n\n` +
-      `Estado: *${params.newStatus}*`;
+    let message = params.isCreator
+      ? `${emoji} *El pedido #${params.orderNumber} ha sido actualizado*\n\nEstado: *${params.newStatus}*`
+      : `${emoji} *Tu pedido #${params.orderNumber} ha sido actualizado*\n\nEstado: *${params.newStatus}*`;
 
     if (params.trackingNumber) {
       message +=

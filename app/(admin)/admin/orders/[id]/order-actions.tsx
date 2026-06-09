@@ -37,10 +37,28 @@ export function OrderActions({
   const [carrier, setCarrier] = useState(currentCarrier);
   const [loading, setLoading] = useState(false);
   const [refundLoading, setRefundLoading] = useState(false);
+  const [notifyLoading, setNotifyLoading] = useState(false);
 
   const canRefund =
     (currentStatus === "PAID" || currentStatus === "PROCESSING") &&
     !!stripePaymentIntentId;
+
+  async function handleNotify() {
+    setNotifyLoading(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}/notify-telegram`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Error al notificar por Telegram");
+        return;
+      }
+      toast.success("Notificación enviada por Telegram");
+    } catch {
+      toast.error("Error de conexión al notificar");
+    } finally {
+      setNotifyLoading(false);
+    }
+  }
 
   async function handleRefund() {
     const confirmed = window.confirm(
@@ -136,6 +154,10 @@ export function OrderActions({
       <Button onClick={handleSave} loading={loading}>
         <Save size={14} />
         Guardar cambios
+      </Button>
+
+      <Button onClick={handleNotify} loading={notifyLoading} variant="outline" className="mt-2 text-slate-300 border-white/10 hover:bg-white/5">
+        Notificar estado por Telegram
       </Button>
 
       {canRefund && (

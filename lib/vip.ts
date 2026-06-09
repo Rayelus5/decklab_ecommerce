@@ -107,3 +107,59 @@ export async function deleteVipTier(id: string) {
     where: { id },
   });
 }
+
+// ============================================================================
+// RECALCULAR TODOS LOS USUARIOS (Manual Action)
+// ============================================================================
+export async function recalculateAllUsersVip() {
+  try {
+    const allUsers = await prisma.user.findMany({
+      select: { id: true },
+    });
+
+    const allTiers = await prisma.vipTier.findMany({
+      orderBy: [
+        { minSpent: "desc" },
+        { minOrders: "desc" },
+      ],
+    });
+
+    let updatedCount = 0;
+
+    for (const user of allUsers) {
+      // Calcular totales históricos de órdenes PAID
+      const orders = await prisma.order.findMany({
+        where: { userId: user.id, isPaid: true },
+        select: { total: true },
+      });
+
+      const totalOrdersCount = orders.length;
+      const totalSpent = orders.reduce((sum, order) => sum.plus(order.total), new Prisma.Decimal(0));
+
+      let newTierId = null;
+
+      for (const tier of allTiers) {
+        if (totalSpent.gte(tier.minSpent) && totalOrdersCount >= tier.minOrders) {
+          newTierId = tier.id;
+          break;
+        }
+      }
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          totalSpent,
+          totalOrdersCount,
+          vipTierId: newTierId,
+        },
+      });
+      updatedCount++;
+    }
+
+    return { success: true, updatedCount };
+  } catch (error) {
+    console.error("Error recalculando VIP de usuarios:", error);
+    return { success: false, error: "Error interno recalculando." };
+  }
+}
+

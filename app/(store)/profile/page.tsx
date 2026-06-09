@@ -9,6 +9,7 @@ import { Package, MapPin, Settings, Crown, BarChart2, ChevronRight, AlertTriangl
 import { ProAllowanceBar } from "@/components/profile/pro-allowance-bar";
 import { ManagePlanModal } from "./manage-plan-modal";
 import { VipCard3D } from "@/components/vip/vip-card-3d";
+import { VipInfoModal } from "@/components/vip/vip-info-modal";
 
 export const metadata: Metadata = {
   title: "Mi perfil — DECKLAB",
@@ -25,9 +26,9 @@ export default async function ProfilePage() {
       select: {
         name: true, email: true, isPro: true, proAllowanceBalance: true,
         proSince: true, proSubscriptionId: true, isTelegramMember: true, telegramUsername: true,
-        pokemonedas: true,
+        pokemonedas: true, totalSpent: true, totalOrdersCount: true,
         proTier: { select: { name: true, monthlyAllowance: true } },
-        vipTier: true,
+        vipTier: true, vipTierId: true,
         _count: { select: { orders: true, addresses: true } },
       },
     }),
@@ -41,21 +42,19 @@ export default async function ProfilePage() {
   const maxAllowance = Number(user.proTier?.monthlyAllowance ?? 0);
 
   // Datos de la suscripción Stripe (server-side, sin llamada del cliente)
-  let subscriptionPeriodEnd: Date | null = null;
-  let cancelAtPeriodEnd = false;
-
-  if (user.isPro && user.proSubscriptionId) {
-    try {
+  const [subscriptionPeriodEnd, cancelAtPeriodEnd, vipTiers] = await Promise.all([
+    safeQuery(async () => {
+      if (!user.proSubscriptionId) return null;
       const sub = await stripe.subscriptions.retrieve(user.proSubscriptionId);
-      const firstItem = sub.items.data[0];
-      if (firstItem?.current_period_end) {
-        subscriptionPeriodEnd = new Date(firstItem.current_period_end * 1000);
-      }
-      cancelAtPeriodEnd = sub.cancel_at_period_end;
-    } catch {
-      // PRO manual sin suscripción Stripe activa — degrada sin romper la página
-    }
-  }
+      return new Date((sub.items.data[0]?.current_period_end || 0) * 1000);
+    }),
+    safeQuery(async () => {
+      if (!user.proSubscriptionId) return false;
+      const sub = await stripe.subscriptions.retrieve(user.proSubscriptionId);
+      return sub.cancel_at_period_end;
+    }),
+    safeQuery(() => prisma.vipTier.findMany({ orderBy: { level: "asc" } })),
+  ]);
 
   // Últimos 3 pedidos para el resumen
   const recentOrders = await safeQuery(
@@ -105,13 +104,23 @@ export default async function ProfilePage() {
           <p className="text-slate-300 text-sm mt-1">{user.email}</p>
         </div>
 
-        {/* Pokemonedas */}
-        <div className="bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg shadow-amber-500/5">
-          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-400 to-amber-600 flex items-center justify-center text-black text-xs font-bold border border-amber-300 shadow-sm">
-            ₽
+        <div className="flex items-center gap-3">
+          {/* VIP Button */}
+          <VipInfoModal 
+            tiers={vipTiers || []} 
+            userTierId={user.vipTierId} 
+            totalSpent={Number(user.totalSpent || 0)} 
+            totalOrdersCount={user.totalOrdersCount || 0} 
+          />
+
+          {/* Pokemonedas */}
+          <div className="bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg shadow-amber-500/5">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-400 to-amber-600 flex items-center justify-center text-black text-xs font-bold border border-amber-300 shadow-sm">
+              ₽
+            </div>
+            <span className="text-amber-400 font-bold">{user.pokemonedas.toLocaleString()}</span>
+            <span className="text-amber-500/80 text-sm font-medium hidden sm:inline">Pokemonedas</span>
           </div>
-          <span className="text-amber-400 font-bold">{user.pokemonedas.toLocaleString()}</span>
-          <span className="text-amber-500/80 text-sm font-medium hidden sm:inline">Pokemonedas</span>
         </div>
       </div>
 

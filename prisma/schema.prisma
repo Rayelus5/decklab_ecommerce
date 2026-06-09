@@ -23,17 +23,40 @@ enum UserRole {
 
 enum ShippingRegion {
   NATIONAL // España peninsular + Baleares
-  EUROPE   // Resto de Europa
+  EUROPE // Resto de Europa
 }
 
 enum OrderStatus {
-  PENDING    // Pedido creado (no pagado aún)
-  PAID       // Pago confirmado por webhook
+  PENDING // Pedido creado (no pagado aún)
+  PAID // Pago confirmado por webhook
   PROCESSING // En preparación por el equipo
-  SHIPPED    // Enviado (con tracking)
-  DELIVERED  // Entregado
-  CANCELLED  // Cancelado
-  REFUNDED   // Reembolsado
+  SHIPPED // Enviado (con tracking)
+  DELIVERED // Entregado
+  CANCELLED // Cancelado
+  REFUNDED // Reembolsado
+}
+
+enum PromoRewardType {
+  EGG
+}
+
+enum EggRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+  MYTHIC
+}
+
+enum IncubatorType {
+  INFINITE
+}
+
+enum EggStatus {
+  INVENTORY
+  INCUBATING
+  HATCHED
 }
 
 // =============================================================
@@ -55,13 +78,13 @@ model User {
 
   // --- Telegram Gate ---
   telegramId         String?   @unique // ID numérico de Telegram
-  telegramUsername   String?            // @username (sin @)
+  telegramUsername   String? // @username (sin @)
   isTelegramMember   Boolean   @default(false)
-  telegramVerifiedAt DateTime?          // Última verificación de membresía
+  telegramVerifiedAt DateTime? // Última verificación de membresía
 
   // --- Lógica PRO ---
   isPro               Boolean   @default(false)
-  proSubscriptionId   String?   // Stripe Subscription ID activa
+  proSubscriptionId   String? // Stripe Subscription ID activa
   proTierId           String?
   proAllowanceBalance Decimal   @default(0) @db.Decimal(10, 2) // Saldo de compra disponible
   proSince            DateTime? // Para calcular permanencia mínima (2 ciclos = 4 meses)
@@ -69,13 +92,27 @@ model User {
   // --- Control de acceso ---
   isBlocked Boolean @default(false) // Admin puede bloquear el acceso
 
+  // --- Sistema VIP ---
+  vipTierId        String?
+  totalSpent       Decimal @default(0) @db.Decimal(10, 2)
+  totalOrdersCount Int     @default(0)
+
+  // --- Gamificación ---
+  pokemonedas   Int @default(0)
+  boxesUnlocked Int @default(8)
+
   // --- Relaciones ---
   addresses      Address[]
   orders         Order[]
   sessions       Session[]
   accounts       Account[]
-  proTier        ProTier?        @relation(fields: [proTierId], references: [id])
-  adminLogs      AdminActionLog[] @relation("AdminWhoActed")
+  proTier        ProTier?          @relation(fields: [proTierId], references: [id])
+  vipTier        VipTier?          @relation(fields: [vipTierId], references: [id])
+  usedPromoCodes PromoCode[]       @relation("UserWhoUsedCode")
+  incubators     UserIncubator[]
+  eggs           PokemonEgg[]
+  pokemons       PokemonInstance[]
+  adminLogs      AdminActionLog[]  @relation("AdminWhoActed")
   abandonedCarts AbandonedCart[]
 
   createdAt DateTime @default(now())
@@ -180,16 +217,16 @@ model Product {
   // Nivel mínimo de tier para ver el producto anticipadamente (null = todos)
   earlyAccessTierLevel Int?
   // Si true, solo usuarios con exclusiveProducts: true en su tier pueden verlo
-  isExclusive Boolean @default(false)
+  isExclusive          Boolean @default(false)
 
   // --- Probabilidades y Contenido ---
   // JSON con la tabla de probabilidades: { "Rare": "45%", "Ultra Rare": "5%", ... }
   probabilityData Json?
   // Siempre true en DECKLAB (sin devoluciones), visible en la ficha
-  noReturns Boolean @default(true)
+  noReturns       Boolean @default(true)
 
   // --- Relaciones ---
-  category Category?       @relation(fields: [categoryId], references: [id])
+  category Category?        @relation(fields: [categoryId], references: [id])
   variants ProductVariant[]
   images   ProductImage[]
 
@@ -267,7 +304,7 @@ model ProTier {
   //   "exclusiveProducts": false,   // Acceso a productos exclusivos
   //   "bonusAllowancePercent": 0    // % extra de allowance en cada refill
   // }
-  benefits Json?
+  benefits    Json?
 
   // Control
   isActive  Boolean @default(true)
@@ -284,11 +321,11 @@ model ShippingRate {
   id   String @id @default(cuid())
   name String // "Ordinario Nacional < 500g"
 
-  type   String         // "ORDINARIO" | "CERTIFICADO"
+  type   String // "ORDINARIO" | "CERTIFICADO"
   region ShippingRegion
 
-  minWeight Int     // Peso mínimo en gramos (inclusivo)
-  maxWeight Int     // Peso máximo en gramos (exclusivo, -1 = sin límite)
+  minWeight Int // Peso mínimo en gramos (inclusivo)
+  maxWeight Int // Peso máximo en gramos (exclusivo, -1 = sin límite)
   price     Decimal @db.Decimal(10, 2)
 
   active Boolean @default(true)
@@ -304,14 +341,14 @@ model Coupon {
   id   String @id @default(cuid())
   code String @unique // Ej: "DECKLAB20"
 
-  type  String  // "PERCENT" | "FIXED"
+  type  String // "PERCENT" | "FIXED"
   value Decimal @db.Decimal(10, 2) // 20 = 20% o 20€ fijo
 
   // Restricciones
   minOrderAmount Decimal? @db.Decimal(10, 2) // Pedido mínimo para aplicar
-  maxUses        Int?                          // Usos globales máximos (null = ilimitado)
+  maxUses        Int? // Usos globales máximos (null = ilimitado)
   usesCount      Int      @default(0)
-  maxUsesPerUser Int?                          // Usos por usuario (null = ilimitado)
+  maxUsesPerUser Int? // Usos por usuario (null = ilimitado)
 
   expiresAt DateTime?
   isActive  Boolean   @default(true)
@@ -336,12 +373,12 @@ model Coupon {
 
 model ReservationPeriod {
   id          String  @id @default(cuid())
-  name        String                      // "Reserva Enero 2026"
-  description String? @db.Text           // Texto del popup/banner
+  name        String // "Reserva Enero 2026"
+  description String? @db.Text // Texto del popup/banner
 
   // Timing
-  opensAt      DateTime  // Cuando abre la reserva (puede ser en el pasado = ya abierta)
-  closesAt     DateTime  // Cuando cierra (countdown target)
+  opensAt      DateTime // Cuando abre la reserva (puede ser en el pasado = ya abierta)
+  closesAt     DateTime // Cuando cierra (countdown target)
   deliveryDate DateTime? // Fecha estimada de entrega/envío al cliente
 
   // Descuento — cupón ya existente en el sistema
@@ -353,7 +390,7 @@ model ReservationPeriod {
 
   // Visual / Marketing
   badgeText    String  @default("RESERVA") // Texto del badge en la card
-  popupEnabled Boolean @default(true)       // Mostrar popup en /products
+  popupEnabled Boolean @default(true) // Mostrar popup en /products
 
   // Plazas limitadas (null = sin límite visible)
   // spotsRemaining se calcula en runtime: maxUnits - coupon.usesCount
@@ -392,9 +429,9 @@ model Order {
   shippingRegion String // "NATIONAL" | "EUROPE"
 
   // --- Pago ---
-  stripePaymentIntentId String?  @unique // Stripe
-  paypalOrderId         String?  @unique // PayPal
-  paymentMethod         String   @default("STRIPE") // "STRIPE" | "PAYPAL"
+  stripePaymentIntentId String? @unique // Stripe
+  paypalOrderId         String? @unique // PayPal
+  paymentMethod         String  @default("STRIPE") // "STRIPE" | "PAYPAL"
 
   // --- Cupón ---
   couponId   String?
@@ -410,10 +447,10 @@ model Order {
   consolidatedOrders      Order[] @relation("OrderConsolidation")
 
   // --- Relaciones ---
-  user      User       @relation(fields: [userId], references: [id])
-  address   Address?   @relation(fields: [addressId], references: [id])
+  user      User        @relation(fields: [userId], references: [id])
+  address   Address?    @relation(fields: [addressId], references: [id])
   addressId String?
-  coupon    Coupon?    @relation(fields: [couponId], references: [id])
+  coupon    Coupon?     @relation(fields: [couponId], references: [id])
   items     OrderItem[]
   shipment  Shipment?
 
@@ -503,7 +540,7 @@ model AbandonedCart {
   stripeSessionId String @unique // ID de la sesión de Stripe Checkout
 
   // Snapshot del carrito en el momento de iniciar el checkout
-  cartItems Json    // Array de CartItem serializado
+  cartItems Json // Array de CartItem serializado
   subtotal  Decimal @db.Decimal(10, 2)
 
   // Estado de recuperación
@@ -518,4 +555,89 @@ model AbandonedCart {
   @@index([userId])
   @@index([convertedAt])
   @@index([recoveryEmailSentAt])
+}
+
+// =============================================================
+// SISTEMA VIP
+// =============================================================
+
+model VipTier {
+  id              String  @id @default(cuid())
+  level           Int     @unique
+  name            String
+  minSpent        Decimal @db.Decimal(10, 2)
+  minOrders       Int
+  cashbackPercent Decimal @db.Decimal(5, 2)
+  color           String  @default("#000000")
+  iconImage       String  @default("https://placeholder.co/100")
+  perks           Json?
+
+  users User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// =============================================================
+// GAMIFICACIÓN (POKÉMON)
+// =============================================================
+
+model PromoCode {
+  id         String          @id @default(cuid())
+  code       String          @unique
+  isUsed     Boolean         @default(false)
+  usedById   String?
+  usedAt     DateTime?
+  rewardType PromoRewardType @default(EGG)
+  rarity     EggRarity       @default(COMMON)
+
+  usedBy User? @relation("UserWhoUsedCode", fields: [usedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserIncubator {
+  id       String        @id @default(cuid())
+  userId   String
+  type     IncubatorType @default(INFINITE)
+  usesLeft Int?
+
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eggs PokemonEgg[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PokemonEgg {
+  id          String    @id @default(cuid())
+  userId      String
+  rarity      EggRarity
+  status      EggStatus @default(INVENTORY)
+  incubatorId String?
+  incubatedAt DateTime?
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  incubator UserIncubator?   @relation(fields: [incubatorId], references: [id])
+  pokemon   PokemonInstance?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PokemonInstance {
+  id            String  @id @default(cuid())
+  userId        String
+  pokedexNumber Int
+  boxNumber     Int
+  slotNumber    Int
+  stats         Json?
+  eggId         String? @unique
+
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  egg  PokemonEgg? @relation(fields: [eggId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

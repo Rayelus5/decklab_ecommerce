@@ -5,9 +5,10 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { safeQuery } from "@/lib/safe-query";
-import { Package, MapPin, Settings, Crown, BarChart2, ChevronRight, AlertTriangle } from "lucide-react";
+import { Package, MapPin, Settings, Crown, BarChart2, ChevronRight, AlertTriangle, Archive, Ticket } from "lucide-react";
 import { ProAllowanceBar } from "@/components/profile/pro-allowance-bar";
 import { ManagePlanModal } from "./manage-plan-modal";
+import { VipCard3D } from "@/components/vip/vip-card-3d";
 
 export const metadata: Metadata = {
   title: "Mi perfil — DECKLAB",
@@ -24,7 +25,9 @@ export default async function ProfilePage() {
       select: {
         name: true, email: true, isPro: true, proAllowanceBalance: true,
         proSince: true, proSubscriptionId: true, isTelegramMember: true, telegramUsername: true,
+        pokemonedas: true,
         proTier: { select: { name: true, monthlyAllowance: true } },
+        vipTier: true,
         _count: { select: { orders: true, addresses: true } },
       },
     }),
@@ -87,6 +90,7 @@ export default async function ProfilePage() {
   };
 
   const QUICK_LINKS = [
+    { href: "/profile/inventory", Icon: Archive, label: "Mis cajas", count: null },
     { href: "/profile/orders", Icon: Package, label: "Mis pedidos", count: user._count.orders },
     { href: "/profile/addresses", Icon: MapPin, label: "Mis direcciones", count: user._count.addresses },
     { href: "/profile/settings", Icon: Settings, label: "Configuración", count: null },
@@ -95,10 +99,35 @@ export default async function ProfilePage() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
       {/* Cabecera */}
-      <div>
-        <h1 className="text-2xl font-semibold text-snow">Mi perfil</h1>
-        <p className="text-slate-300 text-sm mt-1">{user.email}</p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-2xl font-semibold text-snow">Mi perfil</h1>
+          <p className="text-slate-300 text-sm mt-1">{user.email}</p>
+        </div>
+
+        {/* Pokemonedas */}
+        <div className="bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg shadow-amber-500/5">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-400 to-amber-600 flex items-center justify-center text-black text-xs font-bold border border-amber-300 shadow-sm">
+            ₽
+          </div>
+          <span className="text-amber-400 font-bold">{user.pokemonedas.toLocaleString()}</span>
+          <span className="text-amber-500/80 text-sm font-medium hidden sm:inline">Pokemonedas</span>
+        </div>
       </div>
+
+      {/* Tarjeta VIP 3D */}
+      {user.vipTier && (
+        <div className="w-full flex justify-center my-4">
+          <VipCard3D
+            level={user.vipTier.level}
+            name={user.vipTier.name}
+            color={user.vipTier.color}
+            iconImage={user.vipTier.iconImage}
+            userName={user.name || "CLIENTE VIP"}
+            memberSince={user.proSince}
+          />
+        </div>
+      )}
 
       {/* Card PRO */}
       {user.isPro && user.proTier ? (
@@ -151,25 +180,39 @@ export default async function ProfilePage() {
       )}
 
       {/* Accesos rápidos */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
         {QUICK_LINKS.map(({ href, Icon, label, count }) => (
           <Link
             key={href}
             href={href}
-            className="flex items-center justify-between gap-3 bg-graphite-700/40 border border-white/8 hover:border-white/15 rounded-[11px] p-4 transition-all group"
+            className="flex flex-col gap-3 bg-graphite-700/40 border border-white/8 hover:border-white/15 rounded-[11px] p-4 transition-all group"
           >
-            <div className="flex items-center gap-3">
-              <Icon size={16} className="text-slate-300" />
-              <span className="text-sm font-medium text-snow">{label}</span>
-            </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between">
+              <Icon size={20} className="text-slate-300" />
               {count !== null && (
-                <span className="text-xs text-slate-300 tabular-nums">{count}</span>
+                <span className="text-xs font-semibold text-slate-300 tabular-nums bg-white/10 px-2 py-0.5 rounded-full">{count}</span>
               )}
+            </div>
+            <div className="flex items-center justify-between mt-1">
+              <span className="text-sm font-medium text-snow">{label}</span>
               <ChevronRight size={14} className="text-slate-300/40 group-hover:text-slate-300 transition-colors" />
             </div>
           </Link>
         ))}
+        {/* Enlace a Promociones */}
+        <Link
+          href="/promotion"
+          className="col-span-1 sm:col-span-2 md:col-span-4 flex items-center justify-between gap-3 bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/40 rounded-[11px] p-4 transition-all group"
+        >
+          <div className="flex items-center gap-3">
+            <Ticket size={20} className="text-amber-500" />
+            <div>
+              <span className="text-sm font-medium text-amber-500">Canjear Código Promocional</span>
+              <p className="text-xs text-amber-500/70">Consigue huevos Pokémon y recompensas exclusivas.</p>
+            </div>
+          </div>
+          <ChevronRight size={16} className="text-amber-500/50 group-hover:text-amber-500 transition-colors" />
+        </Link>
       </div>
 
       {/* Últimos pedidos */}
@@ -235,8 +278,8 @@ export default async function ProfilePage() {
               {user.telegramUsername
                 ? `@${user.telegramUsername}`
                 : user.isTelegramMember
-                ? "Verificado"
-                : "No vinculado"}
+                  ? "Verificado"
+                  : "No vinculado"}
             </p>
           </div>
           <div>

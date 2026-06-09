@@ -22,14 +22,21 @@ function getTimeLeft(closesAt: Date | string) {
 }
 
 export function CountdownTimer({ closesAt, className = "", compact = false }: CountdownTimerProps) {
-  const [timeLeft, setTimeLeft] = useState(() => getTimeLeft(closesAt));
+  const [isMounted, setIsMounted] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
 
   useEffect(() => {
+    setIsMounted(true);
+    setTimeLeft(getTimeLeft(closesAt));
     const id = setInterval(() => {
       setTimeLeft(getTimeLeft(closesAt));
     }, 1000);
     return () => clearInterval(id);
   }, [closesAt]);
+
+  if (!isMounted) {
+    return <span className={className}>Cargando...</span>;
+  }
 
   if (!timeLeft) {
     return <span className={className}>Reserva cerrada</span>;

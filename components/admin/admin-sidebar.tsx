@@ -20,6 +20,8 @@ import {
   ShoppingCart,
   Clock,
   Mail,
+  Star,
+  Gift,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -34,6 +36,8 @@ const NAV_ITEMS = [
   { href: "/admin/shipping", icon: Truck, label: "Envíos" },
   { href: "/admin/reservations", icon: Clock, label: "Reservas" },
   { href: "/admin/coupons", icon: Ticket, label: "Cupones" },
+  { href: "/admin/vip-tiers", icon: Star, label: "Niveles VIP" },
+  { href: "/admin/promocodes", icon: Gift, label: "Cód. Promocionales" },
   { href: "/admin/logs", icon: ScrollText, label: "Actividad" },
 ];
 

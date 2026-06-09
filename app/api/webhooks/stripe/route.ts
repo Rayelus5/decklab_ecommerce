@@ -10,6 +10,7 @@ import {
   sendSubscriptionRenewalEmail,
   sendAbandonedCartEmail,
 } from "@/lib/email";
+import { updateUserVipStats } from "@/lib/vip";
 
 // Deshabilitar el body parser de Next.js para verificar la firma de Stripe
 export const config = {
@@ -302,6 +303,16 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     await sendOrderConfirmationEmail(order.id);
   } catch (err) {
     console.error("[WEBHOOK] Error sending confirmation email:", err);
+  }
+
+  // 9. Actualizar estadísticas VIP y Cashback
+  try {
+    const vipResult = await updateUserVipStats(userId, total);
+    if (vipResult.success && vipResult.cashbackAwarded) {
+      console.log(`[WEBHOOK] VIP Stats updated for user ${userId}. Cashback awarded: ${vipResult.cashbackAwarded}€`);
+    }
+  } catch (err) {
+    console.error("[WEBHOOK] Error updating VIP stats:", err);
   }
 
   console.log(`[WEBHOOK] Order #${order.orderNumber} created for user ${userId}, total: ${total}€`);

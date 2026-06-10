@@ -38,7 +38,7 @@ interface Props {
 
 export function InventoryBoxes({ pokemons, boxesUnlocked, userId }: Props) {
   const router = useRouter();
-  
+
   const [currentBox, setCurrentBox] = useState(1);
   const [movingPokemon, setMovingPokemon] = useState<PokemonInstance | null>(null);
   const [statsPokemon, setStatsPokemon] = useState<PokemonInstance | null>(null);
@@ -70,9 +70,9 @@ export function InventoryBoxes({ pokemons, boxesUnlocked, userId }: Props) {
         toast.error("Ese hueco ya está ocupado.");
         return;
       }
-      
+
       if (!userId) return;
-      
+
       setIsMoving(true);
       const res = await movePokemon(userId, movingPokemon.id, currentBox, slotNum);
       if (res.success) {
@@ -88,12 +88,12 @@ export function InventoryBoxes({ pokemons, boxesUnlocked, userId }: Props) {
 
   return (
     <div className="bg-graphite-700/40 border border-white/8 rounded-2xl p-6 flex flex-col gap-6 relative">
-      
+
       {/* Banner de Modo Mover */}
       {movingPokemon && (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-500 text-black px-4 py-2 rounded-xl font-bold text-sm shadow-[0_0_20px_rgba(245,158,11,0.3)] z-20 flex items-center gap-3 animate-in slide-in-from-top-4">
           <span>Selecciona un hueco vacío para mover a {POKEMON_NAMES[movingPokemon.pokedexNumber - 1].toUpperCase()}</span>
-          <button 
+          <button
             onClick={() => setMovingPokemon(null)}
             className="bg-black/20 hover:bg-black/40 rounded-full p-1 transition-colors"
           >
@@ -126,30 +126,29 @@ export function InventoryBoxes({ pokemons, boxesUnlocked, userId }: Props) {
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild disabled={!!movingPokemon}>
                     <button
-                      className={`w-full h-full rounded-lg border flex items-center justify-center relative transition-all group overflow-hidden ${
-                        isSlotMovingSource 
-                          ? "bg-amber-500/20 border-amber-500 animate-pulse scale-90 opacity-50" 
-                          : "bg-white/10 border-white/20 hover:border-amber-400 hover:bg-white/20"
-                      }`}
+                      className={`w-full h-full rounded-lg border flex items-center justify-center relative transition-all group overflow-hidden ${isSlotMovingSource
+                        ? "bg-amber-500/20 border-amber-500 animate-pulse scale-90 opacity-50"
+                        : "bg-white/10 border-white/20 hover:border-amber-400 hover:bg-white/20"
+                        }`}
                     >
                       <img
                         src={getSpriteUrl(pokemon.pokedexNumber)}
                         alt={`Pokemon ${pokemon.pokedexNumber}`}
-                        className="w-full h-full object-cover scale-[1.2] group-hover:scale-[1.4] transition-transform pixelated"
+                        className="w-full h-full object-cover scale-[1.2] group-hover:scale-[1.4] transition-transform pixelated mb-10"
                       />
                     </button>
                   </DropdownMenu.Trigger>
 
                   <DropdownMenu.Portal>
                     <DropdownMenu.Content className="min-w-[160px] bg-graphite-800 border border-white/10 rounded-xl shadow-2xl p-1 z-50 animate-in fade-in zoom-in-95 duration-150">
-                      <DropdownMenu.Item 
+                      <DropdownMenu.Item
                         onClick={() => setStatsPokemon(pokemon)}
                         className="flex items-center gap-2 px-3 py-2 text-sm text-snow hover:bg-white/10 rounded-lg cursor-pointer outline-none transition-colors"
                       >
                         <BarChart2 size={16} className="text-sky-400" />
                         <span>Ver estadísticas</span>
                       </DropdownMenu.Item>
-                      <DropdownMenu.Item 
+                      <DropdownMenu.Item
                         onClick={() => setMovingPokemon(pokemon)}
                         className="flex items-center gap-2 px-3 py-2 text-sm text-snow hover:bg-white/10 rounded-lg cursor-pointer outline-none transition-colors"
                       >
@@ -164,11 +163,10 @@ export function InventoryBoxes({ pokemons, boxesUnlocked, userId }: Props) {
                 <button
                   onClick={() => handleSlotClick(slotNum)}
                   disabled={!movingPokemon || isMoving}
-                  className={`w-full h-full rounded-lg border flex items-center justify-center transition-all ${
-                    isSlotAvailable 
-                      ? "bg-amber-500/10 border-amber-500/50 hover:bg-amber-500/20 hover:scale-105 cursor-pointer border-dashed" 
-                      : "bg-black/20 border-white/5 cursor-default"
-                  }`}
+                  className={`w-full h-full rounded-lg border flex items-center justify-center transition-all ${isSlotAvailable
+                    ? "bg-amber-500/10 border-amber-500/50 hover:bg-amber-500/20 hover:scale-105 cursor-pointer border-dashed"
+                    : "bg-black/20 border-white/5 cursor-default"
+                    }`}
                 >
                   <span className="text-white/10 text-[10px]">{slotNum}</span>
                 </button>
@@ -191,10 +189,10 @@ export function InventoryBoxes({ pokemons, boxesUnlocked, userId }: Props) {
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 animate-in fade-in duration-200" />
           <Dialog.Content className="fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] w-[90vw] max-w-md bg-graphite-800 border border-white/10 rounded-3xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
-            
+
             {statsPokemon && (
               <div className="flex flex-col relative">
-                <button 
+                <button
                   onClick={() => setStatsPokemon(null)}
                   className="absolute top-4 right-4 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition-colors z-10"
                 >
@@ -209,10 +207,10 @@ export function InventoryBoxes({ pokemons, boxesUnlocked, userId }: Props) {
                 </div>
 
                 {/* Artwork HD */}
-                <div className="w-48 h-48 mx-auto -mt-32 relative z-10 bg-white/5 rounded-full border-4 border-graphite-800 overflow-hidden shadow-2xl flex items-center justify-center p-4">
-                  <img 
-                    src={getHqArtworkUrl(statsPokemon.pokedexNumber)} 
-                    alt="Pokemon Artwork" 
+                <div className="w-48 h-48 mx-auto -mt-32 relative z-10 bg-white/5 rounded-full border-4 border-graphite-800 overflow-hidden shadow-2xl flex items-center justify-center p-4 bg-white">
+                  <img
+                    src={getHqArtworkUrl(statsPokemon.pokedexNumber)}
+                    alt="Pokemon Artwork"
                     className="w-full h-full object-contain"
                   />
                 </div>
@@ -231,7 +229,7 @@ export function InventoryBoxes({ pokemons, boxesUnlocked, userId }: Props) {
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-sky-500/20 text-sky-400 border border-sky-500/20 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest backdrop-blur-sm">
                       Funcionalidad en desarrollo
                     </div>
-                    
+
                     <div className="flex items-center gap-3">
                       <span className="w-10 text-xs font-bold text-slate-400 uppercase">HP</span>
                       <div className="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">

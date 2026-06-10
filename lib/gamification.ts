@@ -260,3 +260,62 @@ export async function getUserGamificationData(userId: string) {
     return null;
   }
 }
+
+// ============================================================================
+// MOVER POKÉMON
+// ============================================================================
+export async function movePokemon(userId: string, pokemonId: string, targetBox: number, targetSlot: number) {
+  try {
+    // 1. Validar que la caja objetivo está desbloqueada
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { boxesUnlocked: true },
+    });
+
+    const maxBoxes = user?.boxesUnlocked || 8;
+    if (targetBox > maxBoxes || targetBox < 1) {
+      return { success: false, error: "La caja destino no está desbloqueada." };
+    }
+
+    if (targetSlot < 1 || targetSlot > 30) {
+      return { success: false, error: "Slot inválido." };
+    }
+
+    // 2. Comprobar que el Pokémon pertenece al usuario
+    const pokemon = await prisma.pokemonInstance.findUnique({
+      where: { id: pokemonId },
+    });
+
+    if (!pokemon || pokemon.userId !== userId) {
+      return { success: false, error: "Pokémon no encontrado." };
+    }
+
+    // 3. Comprobar que el slot destino está vacío
+    const slotOccupied = await prisma.pokemonInstance.findFirst({
+      where: {
+        userId,
+        boxNumber: targetBox,
+        slotNumber: targetSlot,
+      },
+    });
+
+    if (slotOccupied) {
+      return { success: false, error: "El hueco destino ya está ocupado." };
+    }
+
+    // 4. Mover el Pokémon
+    await prisma.pokemonInstance.update({
+      where: { id: pokemonId },
+      data: {
+        boxNumber: targetBox,
+        slotNumber: targetSlot,
+      },
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error moviendo Pokémon:", error);
+    return { success: false, error: "Error interno al mover." };
+  }
+}
+

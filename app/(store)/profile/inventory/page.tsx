@@ -59,7 +59,7 @@ export default async function InventoryPage() {
 
         {/* Main: Boxes */}
         <div className="lg:col-span-2">
-          <InventoryBoxes pokemons={pokemons} boxesUnlocked={user?.boxesUnlocked || 8} />
+          <InventoryBoxes pokemons={pokemons} boxesUnlocked={user?.boxesUnlocked || 8} userId={session.user.id} />
         </div>
       </div>
     </div>

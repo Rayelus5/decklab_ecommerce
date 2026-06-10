@@ -14,6 +14,15 @@ interface Props {
   userId: string;
 }
 
+const RARITY_COLORS: Record<string, { bg: string, border: string, text: string, hex: string }> = {
+  COMMON: { bg: "bg-slate-500/10", border: "border-slate-500/30", text: "text-slate-300", hex: "64748b" },
+  UNCOMMON: { bg: "bg-emerald-500/10", border: "border-emerald-500/30", text: "text-emerald-400", hex: "10b981" },
+  RARE: { bg: "bg-blue-500/10", border: "border-blue-500/30", text: "text-blue-400", hex: "3b82f6" },
+  EPIC: { bg: "bg-purple-500/10", border: "border-purple-500/30", text: "text-purple-400", hex: "a855f7" },
+  LEGENDARY: { bg: "bg-amber-500/10", border: "border-amber-500/30", text: "text-amber-400", hex: "f59e0b" },
+  MYTHIC: { bg: "bg-rose-500/10", border: "border-rose-500/30", text: "text-rose-400", hex: "f43f5e" },
+};
+
 export function IncubatorSection({ eggs, incubator, userId }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -87,10 +96,10 @@ export function IncubatorSection({ eggs, incubator, userId }: Props) {
         
         {incubatingEgg ? (
           <div className="flex flex-col items-center gap-3">
-            <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center border-2 border-amber-500/50 animate-pulse">
-              <span className="text-4xl">🥚</span>
+            <div className={`w-24 h-24 ${RARITY_COLORS[incubatingEgg.rarity]?.bg || "bg-white/5"} rounded-full flex items-center justify-center border-2 ${RARITY_COLORS[incubatingEgg.rarity]?.border || "border-amber-500/50"} animate-pulse overflow-hidden`}>
+              <img src={`https://placehold.co/100x100/${RARITY_COLORS[incubatingEgg.rarity]?.hex || "FBBF24"}/000000?text=Egg`} alt="Incubando Huevo" className="w-full h-full object-cover" />
             </div>
-            <p className="text-sm font-medium text-amber-400">Incubando ({incubatingEgg.rarity})</p>
+            <p className={`text-sm font-medium ${RARITY_COLORS[incubatingEgg.rarity]?.text || "text-amber-400"}`}>Incubando ({incubatingEgg.rarity})</p>
             {timeLeft !== null && (
               <div className="text-snow font-mono text-xl">
                 {timeLeft > 0 ? (
@@ -124,19 +133,24 @@ export function IncubatorSection({ eggs, incubator, userId }: Props) {
           <p className="text-sm text-slate-400 text-center py-4">No tienes huevos sin incubar.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-3">
-            {inventoryEggs.map((egg) => (
-              <div key={egg.id} className="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col items-center gap-2">
-                <span className="text-3xl">🥚</span>
-                <span className="text-xs font-semibold text-slate-300">{egg.rarity}</span>
-                <button
-                  onClick={() => handleIncubate(egg.id)}
-                  disabled={loading || !!incubatingEgg}
-                  className="w-full bg-white/10 hover:bg-white/20 disabled:opacity-50 text-white text-xs py-1.5 rounded-lg font-medium transition-colors"
-                >
-                  Incubar
-                </button>
-              </div>
-            ))}
+            {inventoryEggs.map((egg) => {
+              const colors = RARITY_COLORS[egg.rarity] || { bg: "bg-white/5", border: "border-white/10", text: "text-slate-300", hex: "FFFFFF" };
+              return (
+                <div key={egg.id} className={`${colors.bg} border ${colors.border} rounded-xl p-3 flex flex-col items-center gap-2 transition-colors`}>
+                  <div className={`w-16 h-16 rounded-full overflow-hidden border ${colors.border}`}>
+                    <img src={`https://placehold.co/100x100/${colors.hex}/000000?text=Egg`} alt="Huevo" className="w-full h-full object-cover" />
+                  </div>
+                  <span className={`text-xs font-bold ${colors.text}`}>{egg.rarity}</span>
+                  <button
+                    onClick={() => handleIncubate(egg.id)}
+                    disabled={loading || !!incubatingEgg}
+                    className={`w-full ${colors.bg} hover:brightness-125 border ${colors.border} disabled:opacity-50 text-white text-xs py-1.5 rounded-lg font-medium transition-all`}
+                  >
+                    Incubar
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

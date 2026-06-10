@@ -4,8 +4,10 @@ import { useState } from "react";
 import { redeemPromoCode } from "@/lib/gamification";
 import confetti from "canvas-confetti";
 import { Ticket, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function PromotionClient({ userId }: { userId?: string }) {
+  const router = useRouter();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
@@ -30,8 +32,11 @@ export function PromotionClient({ userId }: { userId?: string }) {
         origin: { y: 0.6 },
         colors: ["#FBBF24", "#F59E0B", "#D97706"] // Amber colors
       });
-      setMessage({ text: "¡Código canjeado con éxito! Revisa tu inventario de Cajas.", type: "success" });
+      setMessage({ text: "¡Código canjeado con éxito! Redirigiendo a tus cajas...", type: "success" });
       setCode("");
+      setTimeout(() => {
+        router.push("/profile/inventory");
+      }, 1500);
     } else {
       setMessage({ text: res.error || "Código inválido.", type: "error" });
     }

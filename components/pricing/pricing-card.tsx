@@ -182,7 +182,7 @@ export function PricingCard({
             fullWidth
             onClick={handleChange}
             loading={loading}
-          >
+           className="cursor-pointer">
             Cambiar a este plan
             <ExternalLink size={14} />
           </Button>
@@ -191,7 +191,7 @@ export function PricingCard({
             fullWidth
             onClick={handleSubscribe}
             loading={loading}
-          >
+           className="cursor-pointer">
             Suscribirse
             <ArrowRight size={14} />
           </Button>

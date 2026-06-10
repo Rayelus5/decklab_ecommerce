@@ -93,7 +93,7 @@ export default async function AdminUserDetailPage({
     <div className="p-6 flex flex-col gap-6 max-w-5xl">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Link href="/admin/users" className="p-1.5 rounded-[8px] text-slate-300 hover:text-snow hover:bg-white/6 transition-colors">
+        <Link href="/admin/users" className="cursor-pointer p-1.5 rounded-[8px] text-slate-300 hover:text-snow hover:bg-white/6 transition-colors">
           <ArrowLeft size={16} />
         </Link>
         <div>
@@ -173,7 +173,7 @@ export default async function AdminUserDetailPage({
                   <Link
                     key={order.id}
                     href={`/admin/orders/${order.id}`}
-                    className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0 hover:bg-white/3 -mx-1 px-1 rounded-[6px] transition-colors"
+                    className="cursor-pointer flex items-center justify-between py-2.5 first:pt-0 last:pb-0 hover:bg-white/3 -mx-1 px-1 rounded-[6px] transition-colors"
                   >
                     <div>
                       <p className="text-sm font-medium text-snow">#{order.orderNumber}</p>

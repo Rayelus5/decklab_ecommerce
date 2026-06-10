@@ -262,7 +262,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                   <a
                     key={p}
                     href={`/products?page=${p}${params.categoryId ? `&categoryId=${params.categoryId}` : ""}${params.q ? `&q=${params.q}` : ""}${filterByReservation ? "&reservation=true" : ""}`}
-                    className={`w-9 h-9 flex items-center justify-center rounded-[8px] text-sm transition-colors ${p === page
+                    className={`cursor-pointer w-9 h-9 flex items-center justify-center rounded-[8px] text-sm transition-colors ${p === page
                       ? "bg-ash-50 text-graphite-700 font-semibold"
                       : "text-slate-300 hover:text-snow hover:bg-white/5"
                       }`}
@@ -293,7 +293,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             {(params.q || filterByReservation) && (
               <a
                 href="/products"
-                className="mt-4 text-sm text-ash-50 hover:text-snow underline underline-offset-2 transition-colors"
+                className="cursor-pointer mt-4 text-sm text-ash-50 hover:text-snow underline underline-offset-2 transition-colors"
               >
                 Ver todos los productos
               </a>

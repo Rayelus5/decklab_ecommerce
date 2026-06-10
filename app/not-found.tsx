@@ -40,14 +40,14 @@ export default function NotFound() {
       <div className="flex flex-col sm:flex-row gap-3 mt-8">
         <Link
           href="/"
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[8px] bg-ash-50 text-graphite-700 text-sm font-medium hover:bg-white transition-colors"
+          className="cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[8px] bg-ash-50 text-graphite-700 text-sm font-medium hover:bg-white transition-colors"
         >
           <Home size={15} />
           Ir al inicio
         </Link>
         <Link
           href="/products"
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[8px] bg-white/5 border border-white/10 text-snow text-sm font-medium hover:bg-white/10 transition-colors"
+          className="cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-[8px] bg-white/5 border border-white/10 text-snow text-sm font-medium hover:bg-white/10 transition-colors"
         >
           <ShoppingBag size={15} />
           Ver la tienda

@@ -237,14 +237,14 @@ function AddressForm({ userId, addressId, initial, onSuccess, onCancel }: Addres
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 px-3 py-2 rounded-[8px] text-sm text-slate-300 hover:text-snow bg-white/5 hover:bg-white/8 transition-colors"
+          className="cursor-pointer flex-1 px-3 py-2 rounded-[8px] text-sm text-slate-300 hover:text-snow bg-white/5 hover:bg-white/8 transition-colors"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-[8px] text-sm font-semibold bg-ash-50 text-graphite-700 hover:bg-ash-50/90 disabled:opacity-60 transition-colors"
+          className="cursor-pointer flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-[8px] text-sm font-semibold bg-ash-50 text-graphite-700 hover:bg-ash-50/90 disabled:opacity-60 transition-colors"
         >
           {loading ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
           {addressId ? "Guardar" : "Añadir"}

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function PrivacidadPage() {
   return (
-    <article className="prose-legal">
+    <article className="cursor-pointer prose-legal">
       <h1>Política de Privacidad</h1>
       <p className="lead">Última actualización: junio de 2026</p>
 
@@ -102,10 +102,10 @@ export default function PrivacidadPage() {
       </p>
 
       <nav className="legal-nav">
-        <Link href="/legal/aviso-legal">Aviso Legal</Link>
-        <Link href="/legal/envios">Política de Envíos</Link>
-        <Link href="/legal/reembolsos">Política de Reembolsos</Link>
-        <Link href="/legal/descargo">Descargo de Responsabilidad</Link>
+        <Link href="/legal/aviso-legal" className="cursor-pointer">Aviso Legal</Link>
+        <Link href="/legal/envios" className="cursor-pointer">Política de Envíos</Link>
+        <Link href="/legal/reembolsos" className="cursor-pointer">Política de Reembolsos</Link>
+        <Link href="/legal/descargo" className="cursor-pointer">Descargo de Responsabilidad</Link>
       </nav>
     </article>
   );

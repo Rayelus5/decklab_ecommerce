@@ -127,7 +127,7 @@ export default async function AdminUsersPage({
                   <td className="px-4 py-3">
                     <Link
                       href={`/admin/users/${user.id}`}
-                      className="p-1.5 rounded-[6px] text-slate-300 hover:text-snow hover:bg-white/8 transition-colors flex items-center"
+                      className="cursor-pointer p-1.5 rounded-[6px] text-slate-300 hover:text-snow hover:bg-white/8 transition-colors flex items-center"
                     >
                       <ChevronRight size={14} />
                     </Link>
@@ -142,11 +142,11 @@ export default async function AdminUsersPage({
             <span className="text-xs text-slate-300">{total} usuarios</span>
             <div className="flex items-center gap-2">
               {page > 1 && (
-                <Link href={`/admin/users?${q ? `q=${q}&` : ""}page=${page - 1}`} className="px-3 py-1.5 text-xs text-slate-300 hover:text-snow bg-graphite-600/60 rounded-[6px]">Anterior</Link>
+                <Link href={`/admin/users?${q ? `q=${q}&` : ""}page=${page - 1}`} className="cursor-pointer px-3 py-1.5 text-xs text-slate-300 hover:text-snow bg-graphite-600/60 rounded-[6px]">Anterior</Link>
               )}
               <span className="text-xs text-slate-300">{page} / {totalPages}</span>
               {page < totalPages && (
-                <Link href={`/admin/users?${q ? `q=${q}&` : ""}page=${page + 1}`} className="px-3 py-1.5 text-xs text-slate-300 hover:text-snow bg-graphite-600/60 rounded-[6px]">Siguiente</Link>
+                <Link href={`/admin/users?${q ? `q=${q}&` : ""}page=${page + 1}`} className="cursor-pointer px-3 py-1.5 text-xs text-slate-300 hover:text-snow bg-graphite-600/60 rounded-[6px]">Siguiente</Link>
               )}
             </div>
           </div>

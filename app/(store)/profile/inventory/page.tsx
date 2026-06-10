@@ -32,7 +32,7 @@ export default async function InventoryPage() {
       <div>
         <Link
           href="/profile"
-          className="text-slate-300 hover:text-snow text-sm flex items-center gap-1 mb-4 transition-colors"
+          className="cursor-pointer text-slate-300 hover:text-snow text-sm flex items-center gap-1 mb-4 transition-colors"
         >
           <ChevronLeft size={16} /> Volver al perfil
         </Link>

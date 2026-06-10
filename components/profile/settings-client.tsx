@@ -331,7 +331,7 @@ function SubscriptionSection({
                   size="sm"
                   onClick={handleCancelSubscription}
                   loading={loading}
-                  className="text-ember-red border-ember-red/30 hover:bg-ember-red/10"
+                  className="cursor-pointer text-ember-red border-ember-red/30 hover:bg-ember-red/10"
                 >
                   Confirmar cancelación
                 </Button>

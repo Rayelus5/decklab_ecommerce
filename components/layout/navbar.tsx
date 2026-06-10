@@ -46,7 +46,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2 font-semibold text-snow hover:text-ash-50 transition-colors shrink-0"
+          className="cursor-pointer flex items-center gap-2 font-semibold text-snow hover:text-ash-50 transition-colors shrink-0"
         >
           <div className="w-7 h-7 bg-graphite-500 border border-white/15 rounded-[6px] flex items-center justify-center">
             <Layers size={14} className="text-ash-50" />
@@ -65,7 +65,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
             <Link
               key={link.href}
               href={link.href}
-              className={clsx(
+              className={clsx("cursor-pointer", 
                 "px-3 py-1.5 text-sm rounded-[8px] transition-colors",
                 pathname.startsWith(link.href)
                   ? "text-snow bg-white/8"
@@ -78,7 +78,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
           {isAdmin && (
             <Link
               href="/admin"
-              className={clsx(
+              className={clsx("cursor-pointer", 
                 "px-3 py-1.5 text-sm rounded-[8px] transition-colors",
                 pathname.startsWith("/admin")
                   ? "text-ember-red bg-ember-red/10"
@@ -95,7 +95,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
           {/* Carrito */}
           <Link
             href="/cart"
-            className="relative p-2 text-slate-300 hover:text-snow hover:bg-white/5 rounded-[8px] transition-colors"
+            className="cursor-pointer relative p-2 text-slate-300 hover:text-snow hover:bg-white/5 rounded-[8px] transition-colors"
             aria-label={`Carrito${itemCount > 0 ? `, ${itemCount} items` : ""}`}
           >
             <ShoppingCart size={18} />
@@ -172,7 +172,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
                   <div className="border-t border-white/8 mt-1 pt-1">
                     <button
                       onClick={handleSignOut}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:text-ember-red hover:bg-ember-red/10 transition-colors text-left"
+                      className="cursor-pointer w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:text-ember-red hover:bg-ember-red/10 transition-colors text-left"
                     >
                       <LogOut size={14} />
                       Cerrar sesión
@@ -185,7 +185,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
 
           {/* Mobile menu toggle */}
           <button
-            className="sm:hidden p-2 text-slate-300 hover:text-snow hover:bg-white/5 rounded-[8px] transition-colors"
+            className="cursor-pointer sm:hidden p-2 text-slate-300 hover:text-snow hover:bg-white/5 rounded-[8px] transition-colors"
             onClick={() => setMenuOpen((o) => !o)}
             aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={menuOpen}

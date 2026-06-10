@@ -98,8 +98,8 @@ function RateForm({
         <span className="text-sm text-slate-300">Tarifa activa</span>
       </label>
       <div className="flex gap-3">
-        <Button onClick={handleSubmit} loading={loading}><Check size={14} />{rate ? "Guardar" : "Crear tarifa"}</Button>
-        <Button variant="ghost" onClick={onCancel} disabled={loading}><X size={14} />Cancelar</Button>
+        <Button onClick={handleSubmit} loading={loading} className="cursor-pointer"><Check size={14} />{rate ? "Guardar" : "Crear tarifa"}</Button>
+        <Button variant="ghost" onClick={onCancel} disabled={loading} className="cursor-pointer"><X size={14} />Cancelar</Button>
       </div>
     </div>
   );

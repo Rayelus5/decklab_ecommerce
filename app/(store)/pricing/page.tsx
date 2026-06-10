@@ -269,7 +269,7 @@ export default async function PricingPage() {
           </p>
           <Link
             href="/login"
-            className="text-sm text-ash-50 hover:text-snow underline underline-offset-2 transition-colors"
+            className="cursor-pointer text-sm text-ash-50 hover:text-snow underline underline-offset-2 transition-colors"
           >
             Inicia sesión con Telegram para continuar
           </Link>

@@ -266,7 +266,7 @@ export function CheckoutClient({
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center flex flex-col items-center gap-5">
         <p className="text-lg text-snow font-medium">Tu carrito está vacío</p>
-        <Link href="/products"><Button>Ir a la tienda</Button></Link>
+        <Link href="/products" className="cursor-pointer"><Button>Ir a la tienda</Button></Link>
       </div>
     );
   }
@@ -278,7 +278,7 @@ export function CheckoutClient({
         <div className="flex items-center gap-4 mb-8">
           <Link
             href="/cart"
-            className="text-sm text-slate-300 hover:text-snow transition-colors flex items-center gap-1.5"
+            className="cursor-pointer text-sm text-slate-300 hover:text-snow transition-colors flex items-center gap-1.5"
           >
             <ArrowLeft size={15} />
             Carrito
@@ -334,7 +334,7 @@ export function CheckoutClient({
                     <p className="text-sm text-slate-300 mb-3">No tienes direcciones guardadas.</p>
                     <Link
                       href="/profile/addresses?redirect=/checkout"
-                      className="text-sm text-ash-50 hover:text-snow underline underline-offset-2"
+                      className="cursor-pointer text-sm text-ash-50 hover:text-snow underline underline-offset-2"
                     >
                       Añadir una dirección →
                     </Link>
@@ -381,7 +381,7 @@ export function CheckoutClient({
                     ))}
                     <Link
                       href="/profile/addresses?redirect=/checkout"
-                      className="text-xs text-slate-300 hover:text-snow transition-colors flex items-center gap-1 mt-1"
+                      className="cursor-pointer text-xs text-slate-300 hover:text-snow transition-colors flex items-center gap-1 mt-1"
                     >
                       + Añadir nueva dirección
                     </Link>
@@ -645,7 +645,7 @@ export function CheckoutClient({
                     loading={couponLoading}
                     variant="outline"
                     disabled={!couponCode.trim()}
-                  >
+                   className="cursor-pointer">
                     Aplicar
                   </Button>
                 </div>
@@ -704,7 +704,7 @@ export function CheckoutClient({
                     onClick={handleStripeCheckout}
                     loading={paymentLoading}
                     size="lg"
-                    className="flex-1"
+                    className="cursor-pointer flex-1"
                   >
                     Confirmar y pagar
                   </Button>

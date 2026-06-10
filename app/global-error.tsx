@@ -104,7 +104,7 @@ export default function GlobalError({
                 fontWeight: 500,
                 cursor: "pointer",
               }}
-            >
+             className="cursor-pointer">
               <RefreshCw size={14} />
               Intentar de nuevo
             </button>
@@ -123,7 +123,7 @@ export default function GlobalError({
                 fontWeight: 500,
                 textDecoration: "none",
               }}
-            >
+             className="cursor-pointer">
               Volver al inicio
             </a>
           </div>

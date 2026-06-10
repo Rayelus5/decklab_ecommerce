@@ -35,40 +35,34 @@ export function ReservationBanner({
   }
 
   return (
-    <div className="w-full mb-8 rounded-[16px] overflow-hidden border border-amber-500/20 bg-gradient-to-r from-amber-950/60 via-amber-900/30 to-amber-950/60">
-      <div className="px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5">
-        {/* Icono + nombre */}
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="shrink-0 w-8 h-8 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center">
-            <Clock size={15} className="text-amber-400" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs text-amber-400 font-medium uppercase tracking-wider">Reserva anticipada</p>
-            <p className="text-snow font-semibold text-sm truncate">{name}</p>
-          </div>
+    <div className="w-full mb-8 bg-amber-500/5 border border-amber-500/20 rounded-[16px] p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Icon & Title */}
+      <div className="flex items-center gap-4">
+        <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0">
+          <Clock size={18} className="text-amber-400" />
         </div>
+        <div>
+          <p className="text-[10px] text-amber-500 uppercase tracking-widest font-bold">Reserva Anticipada</p>
+          <h3 className="text-snow font-bold text-sm leading-tight">{name}</h3>
+        </div>
+      </div>
 
+      {/* Details & Actions */}
+      <div className="flex flex-wrap items-center gap-6">
         {/* Countdown */}
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs text-slate-400">Cierra en</span>
-          <CountdownTimer closesAt={closesAt} className="text-sm" />
+        <div className="flex flex-col">
+          <span className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Cierra en</span>
+          <CountdownTimer closesAt={closesAt} className="text-sm font-bold text-snow" />
         </div>
 
         {/* Cupón */}
         {couponCode && (
-          <div className="flex items-center gap-2 shrink-0">
-            <Tag size={13} className="text-amber-400 shrink-0" />
-            {couponLabel && <span className="text-xs text-amber-300">{couponLabel}</span>}
-            <div className="flex items-center gap-1.5 bg-void-black/50 border border-amber-500/20 rounded-[8px] px-2.5 py-1">
-              <span className="font-mono text-xs font-semibold text-snow tracking-wider">{couponCode}</span>
-              <button
-                onClick={copyCode}
-                aria-label="Copiar código"
-                className="text-slate-400 hover:text-amber-400 transition-colors cursor-pointer"
-              >
-                {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
-              </button>
-            </div>
+          <div className="flex flex-col">
+            <span className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">{couponLabel || "Cupón"}</span>
+            <button onClick={copyCode} className="flex items-center gap-1.5 group cursor-pointer">
+              <span className="font-mono text-xs font-bold text-amber-400 group-hover:text-amber-300 transition-colors">{couponCode}</span>
+              {copied ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} className="text-slate-500 group-hover:text-amber-300" />}
+            </button>
           </div>
         )}
 
@@ -76,9 +70,9 @@ export function ReservationBanner({
         {hasProductFilter && (
           <Link
             href="/products?reservation=true"
-            className="ml-auto shrink-0 text-xs font-semibold text-amber-400 hover:text-amber-300 underline underline-offset-2 transition-colors"
+            className="cursor-pointer ml-auto md:ml-0 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-bold px-4 py-2 rounded-lg transition-colors"
           >
-            Ver productos en reserva &rarr;
+            Ver Colección
           </Link>
         )}
       </div>

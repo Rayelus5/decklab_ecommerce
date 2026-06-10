@@ -25,7 +25,7 @@ export function CartItemRow({ item, proState }: CartItemProps) {
       {/* Imagen */}
       <Link
         href={`/products/${item.slug}`}
-        className="shrink-0 w-16 h-16 bg-graphite-600/50 border border-white/8 rounded-[8px] overflow-hidden relative"
+        className="cursor-pointer shrink-0 w-16 h-16 bg-graphite-600/50 border border-white/8 rounded-[8px] overflow-hidden relative"
         aria-label={`Ver ${item.productTitle}`}
       >
         {item.imageUrl ? (
@@ -46,7 +46,7 @@ export function CartItemRow({ item, proState }: CartItemProps) {
         <div className="flex items-start justify-between gap-2">
           <Link
             href={`/products/${item.slug}`}
-            className="text-sm font-medium text-snow hover:text-ash-50 transition-colors line-clamp-2 leading-snug"
+            className="cursor-pointer text-sm font-medium text-snow hover:text-ash-50 transition-colors line-clamp-2 leading-snug"
           >
             {item.productTitle}
             {item.variantTitle && (

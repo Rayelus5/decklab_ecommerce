@@ -38,7 +38,7 @@ export default async function AdminReservationsPage() {
         </div>
         <Link
           href="/admin/reservations/new"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-ash-50 hover:bg-white text-graphite-700 font-semibold text-sm rounded-[10px] transition-colors"
+          className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 bg-ash-50 hover:bg-white text-graphite-700 font-semibold text-sm rounded-[10px] transition-colors"
         >
           <Plus size={15} />
           Nueva reserva
@@ -51,7 +51,7 @@ export default async function AdminReservationsPage() {
           <p>No hay periodos de reserva creados todavía.</p>
           <Link
             href="/admin/reservations/new"
-            className="mt-3 inline-flex items-center gap-1.5 text-sm text-ash-50 hover:text-snow underline underline-offset-2 transition-colors"
+            className="cursor-pointer mt-3 inline-flex items-center gap-1.5 text-sm text-ash-50 hover:text-snow underline underline-offset-2 transition-colors"
           >
             <Plus size={13} />
             Crear la primera
@@ -147,7 +147,7 @@ export default async function AdminReservationsPage() {
                 {/* Editar */}
                 <Link
                   href={`/admin/reservations/${r.id}`}
-                  className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/8 text-slate-300 hover:text-snow text-xs rounded-[8px] transition-colors"
+                  className="cursor-pointer shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/8 text-slate-300 hover:text-snow text-xs rounded-[8px] transition-colors"
                 >
                   <Edit2 size={12} />
                   Editar

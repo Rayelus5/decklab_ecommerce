@@ -47,7 +47,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
-        className={clsx(
+        className={clsx("cursor-pointer", 
           base,
           variants[variant],
           sizes[size],

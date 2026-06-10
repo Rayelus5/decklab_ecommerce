@@ -221,7 +221,7 @@ export function UserActions({
             {proTiers.length === 0 && (
               <p className="text-xs text-slate-300/60 mt-1">
                 No hay tiers activos. Créalos en{" "}
-                <a href="/admin/pro-tiers" className="underline text-amber-400">PRO Tiers</a>.
+                <a href="/admin/pro-tiers" className="cursor-pointer underline text-amber-400">PRO Tiers</a>.
               </p>
             )}
           </div>
@@ -294,7 +294,7 @@ export function UserActions({
           <span className="text-sm text-slate-300">Membresía Telegram verificada</span>
         </label>
 
-        <Button onClick={handleSave} loading={loading} size="sm">
+        <Button onClick={handleSave} loading={loading} size="sm" className="cursor-pointer">
           <Save size={14} />
           Guardar cambios
         </Button>
@@ -343,7 +343,7 @@ export function UserActions({
                 href="https://t.me/userinfobot"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sky-400 underline-offset-2 hover:underline"
+                className="cursor-pointer text-sky-400 underline-offset-2 hover:underline"
               >
                 @userinfobot
               </a>{" "}
@@ -372,7 +372,7 @@ export function UserActions({
               type="button"
               onClick={handleTelegramLink}
               disabled={tgLoading}
-              className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-[8px] text-sm font-medium bg-sky-500/15 border border-sky-500/25 text-sky-300 hover:bg-sky-500/25 disabled:opacity-60 transition-colors"
+              className="cursor-pointer flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-[8px] text-sm font-medium bg-sky-500/15 border border-sky-500/25 text-sky-300 hover:bg-sky-500/25 disabled:opacity-60 transition-colors"
             >
               {tgLoading ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
               {isLinked ? "Actualizar" : "Vincular"}
@@ -383,7 +383,7 @@ export function UserActions({
                 onClick={handleTelegramUnlink}
                 disabled={tgLoading}
                 title="Desvincular Telegram"
-                className="px-3 py-2 rounded-[8px] text-sm text-slate-300/60 hover:text-ember-red hover:bg-ember-red/10 border border-white/8 disabled:opacity-60 transition-colors"
+                className="cursor-pointer px-3 py-2 rounded-[8px] text-sm text-slate-300/60 hover:text-ember-red hover:bg-ember-red/10 border border-white/8 disabled:opacity-60 transition-colors"
               >
                 <Unlink size={13} />
               </button>

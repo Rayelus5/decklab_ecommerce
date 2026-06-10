@@ -37,7 +37,7 @@ export function GamificationTabs({
         <button
           onClick={() => setActiveTab("collection")}
           className={clsx(
-            "flex items-center gap-2 px-6 py-3 font-semibold text-sm transition-all relative",
+            "flex items-center gap-2 px-6 py-3 font-semibold text-sm transition-all relative cursor-pointer",
             activeTab === "collection"
               ? "text-amber-400"
               : "text-slate-400 hover:text-slate-200"
@@ -53,7 +53,7 @@ export function GamificationTabs({
         <button
           onClick={() => setActiveTab("shop")}
           className={clsx(
-            "flex items-center gap-2 px-6 py-3 font-semibold text-sm transition-all relative",
+            "flex items-center gap-2 px-6 py-3 font-semibold text-sm transition-all relative cursor-pointer",
             activeTab === "shop"
               ? "text-amber-400"
               : "text-slate-400 hover:text-slate-200"
@@ -69,7 +69,7 @@ export function GamificationTabs({
         <button
           onClick={() => setActiveTab("battles")}
           className={clsx(
-            "flex items-center gap-2 px-6 py-3 font-semibold text-sm transition-all relative",
+            "flex items-center gap-2 px-6 py-3 font-semibold text-sm transition-all relative cursor-pointer",
             activeTab === "battles"
               ? "text-red-400"
               : "text-slate-400 hover:text-slate-200"

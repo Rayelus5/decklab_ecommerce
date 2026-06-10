@@ -61,7 +61,7 @@ export default async function AdminLogsPage({
       <div className="flex items-center gap-2 flex-wrap">
         <a
           href="/admin/logs"
-          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${!typeFilter ? "bg-ash-50 text-graphite-700" : "bg-graphite-700/60 border border-white/8 text-slate-300 hover:text-snow"}`}
+          className={`cursor-pointer px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${!typeFilter ? "bg-ash-50 text-graphite-700" : "bg-graphite-700/60 border border-white/8 text-slate-300 hover:text-snow"}`}
         >
           Todos
         </a>
@@ -69,7 +69,7 @@ export default async function AdminLogsPage({
           <a
             key={actionType}
             href={`/admin/logs?type=${actionType}`}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${typeFilter === actionType ? "bg-ash-50 text-graphite-700" : "bg-graphite-700/60 border border-white/8 text-slate-300 hover:text-snow"}`}
+            className={`cursor-pointer px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${typeFilter === actionType ? "bg-ash-50 text-graphite-700" : "bg-graphite-700/60 border border-white/8 text-slate-300 hover:text-snow"}`}
           >
             {actionType}
           </a>
@@ -135,11 +135,11 @@ export default async function AdminLogsPage({
             <span className="text-xs text-slate-300">{total} registros</span>
             <div className="flex items-center gap-2">
               {page > 1 && (
-                <a href={`/admin/logs?${typeFilter ? `type=${typeFilter}&` : ""}page=${page - 1}`} className="px-3 py-1.5 text-xs text-slate-300 hover:text-snow bg-graphite-600/60 rounded-[6px]">Anterior</a>
+                <a href={`/admin/logs?${typeFilter ? `type=${typeFilter}&` : ""}page=${page - 1}`} className="cursor-pointer px-3 py-1.5 text-xs text-slate-300 hover:text-snow bg-graphite-600/60 rounded-[6px]">Anterior</a>
               )}
               <span className="text-xs text-slate-300">{page} / {totalPages}</span>
               {page < totalPages && (
-                <a href={`/admin/logs?${typeFilter ? `type=${typeFilter}&` : ""}page=${page + 1}`} className="px-3 py-1.5 text-xs text-slate-300 hover:text-snow bg-graphite-600/60 rounded-[6px]">Siguiente</a>
+                <a href={`/admin/logs?${typeFilter ? `type=${typeFilter}&` : ""}page=${page + 1}`} className="cursor-pointer px-3 py-1.5 text-xs text-slate-300 hover:text-snow bg-graphite-600/60 rounded-[6px]">Siguiente</a>
               )}
             </div>
           </div>

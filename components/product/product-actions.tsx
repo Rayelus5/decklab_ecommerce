@@ -185,7 +185,7 @@ export function ProductActions({ product, isPro, accessDenied }: ProductActionsP
         disabled={isOutOfStock}
         fullWidth
         size="lg"
-      >
+       className="cursor-pointer">
         <ShoppingCart size={16} />
         {isOutOfStock ? "Agotado" : "Añadir al carrito"}
       </Button>

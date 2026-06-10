@@ -181,7 +181,7 @@ export default async function ProfilePage() {
           </div>
           <Link
             href="/pricing"
-            className="shrink-0 px-4 py-2 bg-ash-50 hover:bg-white text-graphite-700 text-sm font-semibold rounded-[8px] transition-colors"
+            className="cursor-pointer shrink-0 px-4 py-2 bg-ash-50 hover:bg-white text-graphite-700 text-sm font-semibold rounded-[8px] transition-colors"
           >
             Ver planes
           </Link>
@@ -194,7 +194,7 @@ export default async function ProfilePage() {
           <Link
             key={href}
             href={href}
-            className="flex flex-col gap-3 bg-graphite-700/40 border border-white/8 hover:border-white/15 rounded-[11px] p-4 transition-all group"
+            className="cursor-pointer flex flex-col gap-3 bg-graphite-700/40 border border-white/8 hover:border-white/15 rounded-[11px] p-4 transition-all group"
           >
             <div className="flex items-center justify-between">
               <Icon size={20} className="text-slate-300" />
@@ -211,7 +211,7 @@ export default async function ProfilePage() {
         {/* Enlace a Promociones */}
         <Link
           href="/promotion"
-          className="col-span-1 sm:col-span-2 md:col-span-4 flex items-center justify-between gap-3 bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/40 rounded-[11px] p-4 transition-all group"
+          className="cursor-pointer col-span-1 sm:col-span-2 md:col-span-4 flex items-center justify-between gap-3 bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/40 rounded-[11px] p-4 transition-all group"
         >
           <div className="flex items-center gap-3">
             <Ticket size={20} className="text-amber-500" />
@@ -231,7 +231,7 @@ export default async function ProfilePage() {
             <h2 className="text-sm font-semibold text-snow">Últimos pedidos</h2>
             <Link
               href="/profile/orders"
-              className="text-xs text-slate-300 hover:text-snow transition-colors flex items-center gap-1"
+              className="cursor-pointer text-xs text-slate-300 hover:text-snow transition-colors flex items-center gap-1"
             >
               Ver todos <ChevronRight size={12} />
             </Link>
@@ -241,7 +241,7 @@ export default async function ProfilePage() {
               <Link
                 key={order.id}
                 href={`/profile/orders/${order.id}`}
-                className="flex items-center justify-between py-3 first:pt-0 last:pb-0 hover:bg-white/3 -mx-1 px-1 rounded-[6px] transition-colors"
+                className="cursor-pointer flex items-center justify-between py-3 first:pt-0 last:pb-0 hover:bg-white/3 -mx-1 px-1 rounded-[6px] transition-colors"
               >
                 <div>
                   <p className="text-sm font-medium text-snow">

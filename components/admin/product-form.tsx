@@ -386,7 +386,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
             </div>
             <button
               onClick={addImage}
-              className="flex items-center gap-1.5 px-3 py-2 bg-graphite-600/60 border border-white/10 rounded-[8px] text-sm text-snow hover:bg-graphite-500/60 transition-colors whitespace-nowrap"
+              className="cursor-pointer flex items-center gap-1.5 px-3 py-2 bg-graphite-600/60 border border-white/10 rounded-[8px] text-sm text-snow hover:bg-graphite-500/60 transition-colors whitespace-nowrap"
             >
               <ImageIcon size={13} />
               Añadir
@@ -541,7 +541,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
         ))}
         <button
           onClick={addVariant}
-          className="flex items-center justify-center gap-2 w-full py-2.5 border border-dashed border-white/15 hover:border-white/30 rounded-[10px] text-sm text-slate-300 hover:text-snow transition-all"
+          className="cursor-pointer flex items-center justify-center gap-2 w-full py-2.5 border border-dashed border-white/15 hover:border-white/30 rounded-[10px] text-sm text-slate-300 hover:text-snow transition-all"
         >
           <Plus size={13} />
           Añadir variante
@@ -550,7 +550,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
 
       {/* ── Acciones ────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 pb-8">
-        <Button onClick={handleSubmit} loading={loading}>
+        <Button onClick={handleSubmit} loading={loading} className="cursor-pointer">
           <Save size={14} />
           {product ? "Guardar cambios" : "Crear producto"}
         </Button>
@@ -559,7 +559,7 @@ export function ProductForm({ categories, product }: ProductFormProps) {
           <button
             onClick={handleArchive}
             disabled={archiving}
-            className={`flex items-center gap-2 px-4 py-2 rounded-[8px] text-sm font-medium transition-colors border ${
+            className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-[8px] text-sm font-medium transition-colors border ${
               product.isArchived
                 ? "border-mint-signal/40 text-mint-signal hover:bg-mint-signal/10"
                 : "border-white/10 text-slate-300 hover:text-snow hover:border-white/20"

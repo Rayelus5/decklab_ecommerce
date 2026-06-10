@@ -77,7 +77,7 @@ export default function AccesoPrivadoPage() {
         <div className="flex flex-col gap-3 w-full">
           <Link
             href="/"
-            className="w-full flex items-center justify-center gap-2 bg-ash-50 text-graphite-700 hover:bg-white font-medium text-sm px-4 py-3 rounded-[8px] transition-colors"
+            className="cursor-pointer w-full flex items-center justify-center gap-2 bg-ash-50 text-graphite-700 hover:bg-white font-medium text-sm px-4 py-3 rounded-[8px] transition-colors"
           >
             Ir al login
           </Link>
@@ -85,7 +85,7 @@ export default function AccesoPrivadoPage() {
             href="https://t.me/decklab_bot"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 bg-transparent text-snow border border-white/10 hover:border-white/20 hover:bg-white/5 font-medium text-sm px-4 py-3 rounded-[8px] transition-all"
+            className="cursor-pointer w-full flex items-center justify-center gap-2 bg-transparent text-snow border border-white/10 hover:border-white/20 hover:bg-white/5 font-medium text-sm px-4 py-3 rounded-[8px] transition-all"
           >
             <MessageCircle size={16} className="text-sky-400" />
             Contactar por Telegram

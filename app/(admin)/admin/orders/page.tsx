@@ -86,7 +86,7 @@ export default async function AdminOrdersPage({
           <Link
             key={value}
             href={value ? `/admin/orders?status=${value}` : "/admin/orders"}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+            className={`cursor-pointer px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
               (statusFilter ?? "") === value
                 ? "bg-ash-50 text-graphite-700"
                 : "bg-graphite-700/60 border border-white/8 text-slate-300 hover:text-snow"
@@ -166,7 +166,7 @@ export default async function AdminOrdersPage({
                   <td className="px-4 py-3">
                     <Link
                       href={`/admin/orders/${order.id}`}
-                      className="p-1.5 rounded-[6px] text-slate-300 hover:text-snow hover:bg-white/8 transition-colors flex items-center"
+                      className="cursor-pointer p-1.5 rounded-[6px] text-slate-300 hover:text-snow hover:bg-white/8 transition-colors flex items-center"
                     >
                       <ChevronRight size={14} />
                     </Link>
@@ -185,7 +185,7 @@ export default async function AdminOrdersPage({
               {page > 1 && (
                 <Link
                   href={`/admin/orders?${statusFilter ? `status=${statusFilter}&` : ""}page=${page - 1}`}
-                  className="px-3 py-1.5 text-xs text-slate-300 hover:text-snow bg-graphite-600/60 rounded-[6px] transition-colors"
+                  className="cursor-pointer px-3 py-1.5 text-xs text-slate-300 hover:text-snow bg-graphite-600/60 rounded-[6px] transition-colors"
                 >
                   Anterior
                 </Link>
@@ -194,7 +194,7 @@ export default async function AdminOrdersPage({
               {page < totalPages && (
                 <Link
                   href={`/admin/orders?${statusFilter ? `status=${statusFilter}&` : ""}page=${page + 1}`}
-                  className="px-3 py-1.5 text-xs text-slate-300 hover:text-snow bg-graphite-600/60 rounded-[6px] transition-colors"
+                  className="cursor-pointer px-3 py-1.5 text-xs text-slate-300 hover:text-snow bg-graphite-600/60 rounded-[6px] transition-colors"
                 >
                   Siguiente
                 </Link>

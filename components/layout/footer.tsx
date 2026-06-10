@@ -28,10 +28,10 @@ export function Footer() {
 
           {/* Links tienda */}
           <nav className="flex items-center gap-4" aria-label="Navegación principal">
-            <Link href="/products" className="text-xs text-slate-300 hover:text-snow transition-colors">
+            <Link href="/products" className="cursor-pointer text-xs text-slate-300 hover:text-snow transition-colors">
               Tienda
             </Link>
-            <Link href="/pricing" className="text-xs text-slate-300 hover:text-snow transition-colors">
+            <Link href="/pricing" className="cursor-pointer text-xs text-slate-300 hover:text-snow transition-colors">
               PRO
             </Link>
             <span className="text-xs text-slate-300/40" aria-hidden="true">·</span>
@@ -48,7 +48,7 @@ export function Footer() {
             <Link
               key={link.href}
               href={link.href}
-              className="text-[11px] text-slate-300/50 hover:text-slate-300 transition-colors"
+              className="cursor-pointer text-[11px] text-slate-300/50 hover:text-slate-300 transition-colors"
             >
               {link.label}
             </Link>

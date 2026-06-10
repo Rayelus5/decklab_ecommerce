@@ -95,7 +95,7 @@ export function InventoryBoxes({ pokemons, boxesUnlocked, userId }: Props) {
           <span>Selecciona un hueco vacío para mover a {POKEMON_NAMES[movingPokemon.pokedexNumber - 1].toUpperCase()}</span>
           <button
             onClick={() => setMovingPokemon(null)}
-            className="bg-black/20 hover:bg-black/40 rounded-full p-1 transition-colors"
+            className="bg-black/20 hover:bg-black/40 rounded-full p-1 transition-colors cursor-pointer"
           >
             <X size={16} />
           </button>
@@ -104,11 +104,11 @@ export function InventoryBoxes({ pokemons, boxesUnlocked, userId }: Props) {
 
       {/* Box Header Controls */}
       <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl p-2 relative z-10">
-        <button onClick={prevBox} disabled={currentBox === 1} className="p-2 hover:bg-white/10 rounded-lg disabled:opacity-50 transition-colors">
+        <button onClick={prevBox} disabled={currentBox === 1} className="p-2 hover:bg-white/10 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer">
           <ChevronLeft className="text-white" />
         </button>
         <h2 className="text-xl font-bold text-snow">CAJA {currentBox}</h2>
-        <button onClick={nextBox} disabled={currentBox === boxesUnlocked} className="p-2 hover:bg-white/10 rounded-lg disabled:opacity-50 transition-colors">
+        <button onClick={nextBox} disabled={currentBox === boxesUnlocked} className="p-2 hover:bg-white/10 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer">
           <ChevronRight className="text-white" />
         </button>
       </div>
@@ -126,7 +126,7 @@ export function InventoryBoxes({ pokemons, boxesUnlocked, userId }: Props) {
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild disabled={!!movingPokemon}>
                     <button
-                      className={`w-full h-full rounded-lg border flex items-center justify-center relative transition-all group overflow-hidden ${isSlotMovingSource
+                      className={`cursor-pointer w-full h-full rounded-lg border flex items-center justify-center relative transition-all group overflow-hidden ${isSlotMovingSource
                         ? "bg-amber-500/20 border-amber-500 animate-pulse scale-90 opacity-50"
                         : "bg-white/10 border-white/20 hover:border-amber-400 hover:bg-white/20"
                         }`}
@@ -194,7 +194,7 @@ export function InventoryBoxes({ pokemons, boxesUnlocked, userId }: Props) {
               <div className="flex flex-col relative">
                 <button
                   onClick={() => setStatsPokemon(null)}
-                  className="absolute top-4 right-4 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition-colors z-10"
+                  className="absolute top-4 right-4 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition-colors z-10 cursor-pointer"
                 >
                   <X size={20} />
                 </button>

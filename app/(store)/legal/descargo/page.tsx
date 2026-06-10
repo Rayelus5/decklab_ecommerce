@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function DescargoDePage() {
   return (
-    <article className="prose-legal">
+    <article className="cursor-pointer prose-legal">
       <h1>Descargo de Responsabilidad</h1>
       <p className="lead">Última actualización: junio de 2026</p>
 
@@ -58,7 +58,7 @@ export default function DescargoDePage() {
       <p>
         La adquisición de productos aleatorios implica la aceptación de este riesgo
         por parte del comprador. Recomendamos leer la política de{" "}
-        <Link href="/legal/reembolsos">reembolsos</Link> antes de comprar.
+        <Link href="/legal/reembolsos" className="cursor-pointer">reembolsos</Link> antes de comprar.
       </p>
 
       <h2>4. Precios y mercado secundario</h2>
@@ -78,10 +78,10 @@ export default function DescargoDePage() {
       </p>
 
       <nav className="legal-nav">
-        <Link href="/legal/aviso-legal">Aviso Legal</Link>
-        <Link href="/legal/privacidad">Política de Privacidad</Link>
-        <Link href="/legal/envios">Política de Envíos</Link>
-        <Link href="/legal/reembolsos">Política de Reembolsos</Link>
+        <Link href="/legal/aviso-legal" className="cursor-pointer">Aviso Legal</Link>
+        <Link href="/legal/privacidad" className="cursor-pointer">Política de Privacidad</Link>
+        <Link href="/legal/envios" className="cursor-pointer">Política de Envíos</Link>
+        <Link href="/legal/reembolsos" className="cursor-pointer">Política de Reembolsos</Link>
       </nav>
     </article>
   );

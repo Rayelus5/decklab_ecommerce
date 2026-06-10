@@ -162,11 +162,11 @@ function TierForm({
       </label>
 
       <div className="flex gap-3">
-        <Button onClick={handleSubmit} loading={loading}>
+        <Button onClick={handleSubmit} loading={loading} className="cursor-pointer">
           <Check size={14} />
           {tier ? "Guardar cambios" : "Crear tier"}
         </Button>
-        <Button variant="ghost" onClick={onCancel} disabled={loading}>
+        <Button variant="ghost" onClick={onCancel} disabled={loading} className="cursor-pointer">
           <X size={14} />
           Cancelar
         </Button>

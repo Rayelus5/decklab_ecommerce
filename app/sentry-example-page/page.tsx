@@ -54,7 +54,7 @@ export default function Page() {
             target="_blank"
             rel="noopener"
             href="https://decklab-9i.sentry.io/issues/?project=4511461984632912"
-          >
+           className="cursor-pointer">
             Issues Page
           </a>
           . For more details about setting up Sentry,{" "}
@@ -62,7 +62,7 @@ export default function Page() {
             target="_blank"
             rel="noopener"
             href="https://docs.sentry.io/platforms/javascript/guides/nextjs/"
-          >
+           className="cursor-pointer">
             read our docs
           </a>
           .

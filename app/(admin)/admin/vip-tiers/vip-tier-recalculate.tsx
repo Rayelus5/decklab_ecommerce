@@ -36,7 +36,7 @@ export function VipTierRecalculate() {
     <button
       onClick={handleRecalculate}
       disabled={loading}
-      className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-black font-bold py-2 px-4 rounded-xl transition-colors disabled:opacity-50 text-sm"
+      className="cursor-pointer flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-black font-bold py-2 px-4 rounded-xl transition-colors disabled:opacity-50 text-sm"
     >
       {loading ? <Loader2 size={16} className="animate-spin" /> : <RefreshCcw size={16} />}
       {loading ? "Calculando..." : "Recalcular a todos los usuarios"}

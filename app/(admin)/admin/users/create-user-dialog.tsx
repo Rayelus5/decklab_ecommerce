@@ -86,7 +86,7 @@ export function CreateUserDialog() {
               <h2 className="text-lg font-semibold text-snow">Nuevo usuario</h2>
               <button
                 onClick={handleClose}
-                className="p-1.5 rounded-[6px] text-slate-300 hover:text-snow hover:bg-white/8 transition-colors"
+                className="cursor-pointer p-1.5 rounded-[6px] text-slate-300 hover:text-snow hover:bg-white/8 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -172,14 +172,14 @@ export function CreateUserDialog() {
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="flex-1 px-4 py-2 rounded-[8px] text-sm text-slate-300 hover:text-snow bg-white/5 hover:bg-white/8 transition-colors"
+                  className="cursor-pointer flex-1 px-4 py-2 rounded-[8px] text-sm text-slate-300 hover:text-snow bg-white/5 hover:bg-white/8 transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-[8px] text-sm font-semibold bg-ash-50 text-graphite-700 hover:bg-ash-50/90 disabled:opacity-60 transition-colors"
+                  className="cursor-pointer flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-[8px] text-sm font-semibold bg-ash-50 text-graphite-700 hover:bg-ash-50/90 disabled:opacity-60 transition-colors"
                 >
                   {loading ? (
                     <Loader2 size={14} className="animate-spin" />

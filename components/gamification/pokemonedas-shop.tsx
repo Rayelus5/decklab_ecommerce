@@ -111,7 +111,7 @@ export function PokemonedasShop({ userId, balance, pokemonedas }: Props) {
                 <button
                   onClick={() => handleBuy(pack.eur, pack.id)}
                   disabled={!!loadingBuy || balance < pack.eur}
-                  className="w-full mt-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 border border-white/10 text-white text-xs font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  className="w-full mt-2 bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed border border-white/10 text-white text-xs font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {loadingBuy === pack.id ? <Loader2 size={14} className="animate-spin" /> : `${pack.eur}€`}
                 </button>
@@ -142,7 +142,7 @@ export function PokemonedasShop({ userId, balance, pokemonedas }: Props) {
                 <button
                   onClick={() => handleRedeem(pack.eur, pack.id)}
                   disabled={!!loadingRedeem || pokemonedas < pack.pk}
-                  className="bg-emerald-500/20 hover:bg-emerald-500/30 disabled:opacity-50 border border-emerald-500/30 text-emerald-400 text-xs font-bold px-4 py-2 rounded-lg transition-colors flex items-center justify-center min-w-[80px]"
+                  className="bg-emerald-500/20 hover:bg-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed border border-emerald-500/30 text-emerald-400 text-xs font-bold px-4 py-2 rounded-lg transition-colors flex items-center justify-center min-w-[80px] cursor-pointer"
                 >
                   {loadingRedeem === pack.id ? <Loader2 size={14} className="animate-spin" /> : "Canjear"}
                 </button>

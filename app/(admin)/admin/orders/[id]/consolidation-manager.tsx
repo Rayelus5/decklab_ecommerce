@@ -157,7 +157,7 @@ export function ConsolidationManager({
               onClick={() => setShowLinkForm((v) => !v)}
               className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-snow transition-colors"
             >
-              <Link2 size={12} />
+              <Link2 size={12}  className="cursor-pointer" />
               {showLinkForm ? "Cancelar" : "Vincular con pedido"}
             </button>
           )}
@@ -185,7 +185,7 @@ export function ConsolidationManager({
               <button
                 onClick={handleUnlink}
                 disabled={unlinking}
-                className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-ember-red/15 border border-ember-red/30 text-ember-red hover:bg-ember-red/25 rounded-[6px] disabled:opacity-60 transition-colors"
+                className="cursor-pointer inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-ember-red/15 border border-ember-red/30 text-ember-red hover:bg-ember-red/25 rounded-[6px] disabled:opacity-60 transition-colors"
               >
                 {unlinking && <Loader2 size={11} className="animate-spin" />}
                 Sí, desvincular
@@ -214,7 +214,7 @@ export function ConsolidationManager({
             <button
               onClick={handleLink}
               disabled={linking || !linkInput.trim()}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-snow hover:bg-white text-graphite-700 text-xs font-semibold rounded-[7px] disabled:opacity-50 transition-colors"
+              className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 bg-snow hover:bg-white text-graphite-700 text-xs font-semibold rounded-[7px] disabled:opacity-50 transition-colors"
             >
               {linking ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />}
               Vincular
@@ -264,7 +264,7 @@ export function ConsolidationManager({
                       <Package size={12} className="text-slate-300/60 shrink-0" />
                       <Link
                         href={`/admin/orders/${member.id}`}
-                        className="text-xs font-semibold text-snow hover:text-ash-50 transition-colors"
+                        className="cursor-pointer text-xs font-semibold text-snow hover:text-ash-50 transition-colors"
                       >
                         Pedido #{member.orderNumber}
                         {member.isCurrentOrder && (

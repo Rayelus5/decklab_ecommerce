@@ -103,7 +103,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
       <div className="flex items-center gap-3">
         <Link
           href="/profile/orders"
-          className="p-1.5 rounded-[8px] text-slate-300 hover:text-snow hover:bg-white/6 transition-colors"
+          className="cursor-pointer p-1.5 rounded-[8px] text-slate-300 hover:text-snow hover:bg-white/6 transition-colors"
         >
           <ArrowLeft size={16} />
         </Link>
@@ -137,7 +137,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
             Este pedido se envía junto al{" "}
             <Link
               href={`/profile/orders/${order.consolidatedWith.id}`}
-              className="font-semibold underline underline-offset-2 hover:text-sky-100 transition-colors"
+              className="cursor-pointer font-semibold underline underline-offset-2 hover:text-sky-100 transition-colors"
             >
               Pedido #{order.consolidatedWith.orderNumber}
             </Link>{" "}
@@ -220,7 +220,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
               href="https://www.correos.es/ss/Satellite/site/pagina-inicio/info"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 mt-2 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              className="cursor-pointer inline-flex items-center gap-1 mt-2 text-xs text-blue-400 hover:text-blue-300 transition-colors"
             >
               Rastrear en Correos <ExternalLink size={11} />
             </a>
@@ -254,7 +254,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                 <div className="flex-1 min-w-0">
                   <Link
                     href={`/products/${item.variant.product.slug}`}
-                    className="text-sm font-medium text-snow hover:text-ash-50 transition-colors truncate block"
+                    className="cursor-pointer text-sm font-medium text-snow hover:text-ash-50 transition-colors truncate block"
                   >
                     {item.variant.product.title}
                   </Link>

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function AvisoLegalPage() {
   return (
-    <article className="prose-legal">
+    <article className="cursor-pointer prose-legal">
       <h1>Aviso Legal</h1>
       <p className="lead">Última actualización: junio de 2026</p>
 
@@ -41,7 +41,7 @@ export default function AvisoLegalPage() {
       </p>
       <p>
         Las imágenes de cartas Pokémon utilizadas con fines identificativos pertenecen a
-        sus respectivos titulares. Ver la sección de <Link href="/legal/descargo">descargo de responsabilidad</Link>.
+        sus respectivos titulares. Ver la sección de <Link href="/legal/descargo" className="cursor-pointer">descargo de responsabilidad</Link>.
       </p>
 
       <h2>4. Limitación de responsabilidad</h2>
@@ -59,10 +59,10 @@ export default function AvisoLegalPage() {
       </p>
 
       <nav className="legal-nav">
-        <Link href="/legal/privacidad">Política de Privacidad</Link>
-        <Link href="/legal/envios">Política de Envíos</Link>
-        <Link href="/legal/reembolsos">Política de Reembolsos</Link>
-        <Link href="/legal/descargo">Descargo de Responsabilidad</Link>
+        <Link href="/legal/privacidad" className="cursor-pointer">Política de Privacidad</Link>
+        <Link href="/legal/envios" className="cursor-pointer">Política de Envíos</Link>
+        <Link href="/legal/reembolsos" className="cursor-pointer">Política de Reembolsos</Link>
+        <Link href="/legal/descargo" className="cursor-pointer">Descargo de Responsabilidad</Link>
       </nav>
     </article>
   );

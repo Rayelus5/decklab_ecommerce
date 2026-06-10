@@ -124,14 +124,14 @@ export function ProductGallery({ images, productTitle }: ProductGalleryProps) {
             <>
               <button
                 onClick={goPrev}
-                className="absolute left-3 top-1/2 -translate-y-1/2 p-1.5 bg-graphite-800/80 border border-white/10 rounded-[8px] text-slate-300 hover:text-snow opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm"
+                className="cursor-pointer absolute left-3 top-1/2 -translate-y-1/2 p-1.5 bg-graphite-800/80 border border-white/10 rounded-[8px] text-slate-300 hover:text-snow opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm"
                 aria-label="Imagen anterior"
               >
                 <ChevronLeft size={18} />
               </button>
               <button
                 onClick={goNext}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 bg-graphite-800/80 border border-white/10 rounded-[8px] text-slate-300 hover:text-snow opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm"
+                className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 p-1.5 bg-graphite-800/80 border border-white/10 rounded-[8px] text-slate-300 hover:text-snow opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm"
                 aria-label="Imagen siguiente"
               >
                 <ChevronRight size={18} />
@@ -193,7 +193,7 @@ export function ProductGallery({ images, productTitle }: ProductGalleryProps) {
           {/* Close button */}
           <button
             onClick={closeLightbox}
-            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-[8px] text-snow transition-colors"
+            className="cursor-pointer absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 border border-white/10 rounded-[8px] text-snow transition-colors"
             aria-label="Cerrar"
           >
             <X size={20} />

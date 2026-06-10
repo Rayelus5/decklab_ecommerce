@@ -56,7 +56,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
           </div>
           <button
             onClick={this.handleReset}
-            className="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
+            className="cursor-pointer flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
           >
             <RefreshCw size={14} />
             Intentar de nuevo
@@ -116,7 +116,7 @@ export function AuthErrorBoundary({ children }: { children: React.ReactNode }) {
         </div>
         <a
           href="/login"
-          className="flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
+          className="cursor-pointer flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
         >
           Ir al inicio de sesión
         </a>

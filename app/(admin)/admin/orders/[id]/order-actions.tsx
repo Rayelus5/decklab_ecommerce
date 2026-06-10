@@ -151,12 +151,12 @@ export function OrderActions({
         />
       </div>
 
-      <Button onClick={handleSave} loading={loading}>
+      <Button onClick={handleSave} loading={loading} className="cursor-pointer">
         <Save size={14} />
         Guardar cambios
       </Button>
 
-      <Button onClick={handleNotify} loading={notifyLoading} variant="outline" className="mt-2 text-slate-300 border-white/10 hover:bg-white/5">
+      <Button onClick={handleNotify} loading={notifyLoading} variant="outline" className="cursor-pointer mt-2 text-slate-300 border-white/10 hover:bg-white/5">
         Notificar estado por Telegram
       </Button>
 

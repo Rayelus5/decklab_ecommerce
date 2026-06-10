@@ -116,7 +116,7 @@ export function VipTierForm() {
         />
       </label>
 
-      <button type="submit" disabled={loading} className="mt-2 bg-amber-500 hover:bg-amber-400 text-black font-bold py-2 px-4 rounded-md transition-colors flex justify-center items-center">
+      <button type="submit" disabled={loading} className="cursor-pointer mt-2 bg-amber-500 hover:bg-amber-400 text-black font-bold py-2 px-4 rounded-md transition-colors flex justify-center items-center">
         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Crear Nivel VIP"}
       </button>
     </form>

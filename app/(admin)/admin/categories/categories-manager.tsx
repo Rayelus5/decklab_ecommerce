@@ -103,8 +103,8 @@ function CategoryForm({
         <input className={field} value={form.image} onChange={(e) => set("image", e.target.value)} placeholder="https://..." />
       </div>
       <div className="flex gap-3">
-        <Button onClick={handleSubmit} loading={loading}><Check size={14} />{category ? "Guardar" : "Crear"}</Button>
-        <Button variant="ghost" onClick={onCancel} disabled={loading}><X size={14} />Cancelar</Button>
+        <Button onClick={handleSubmit} loading={loading} className="cursor-pointer"><Check size={14} />{category ? "Guardar" : "Crear"}</Button>
+        <Button variant="ghost" onClick={onCancel} disabled={loading} className="cursor-pointer"><X size={14} />Cancelar</Button>
       </div>
     </div>
   );

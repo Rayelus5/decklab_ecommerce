@@ -55,7 +55,7 @@ export default async function EditReservationPage({ params }: PageProps) {
     <div className="max-w-2xl mx-auto px-6 py-8">
       <Link
         href="/admin/reservations"
-        className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-snow transition-colors mb-8"
+        className="cursor-pointer inline-flex items-center gap-2 text-sm text-slate-300 hover:text-snow transition-colors mb-8"
       >
         <ArrowLeft size={15} />
         Volver a reservas

@@ -60,7 +60,7 @@ export default async function AdminProductsPage({
         </div>
         <Link
           href="/admin/products/new"
-          className="flex items-center gap-2 px-4 py-2 bg-ash-50 hover:bg-white text-graphite-700 text-sm font-semibold rounded-[8px] transition-colors"
+          className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-ash-50 hover:bg-white text-graphite-700 text-sm font-semibold rounded-[8px] transition-colors"
         >
           <Plus size={14} />
           Nuevo producto
@@ -80,7 +80,7 @@ export default async function AdminProductsPage({
         </form>
         <Link
           href={showArchived ? "/admin/products" : "/admin/products?archived=1"}
-          className={`flex items-center gap-2 px-3 py-2 rounded-[8px] text-sm transition-colors border ${
+          className={`cursor-pointer flex items-center gap-2 px-3 py-2 rounded-[8px] text-sm transition-colors border ${
             showArchived
               ? "bg-white/8 text-snow border-white/15"
               : "text-slate-300 border-white/8 hover:text-snow"
@@ -152,7 +152,7 @@ export default async function AdminProductsPage({
                       {new Date(product.createdAt).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" })}
                     </td>
                     <td className="px-4 py-3">
-                      <Link href={`/admin/products/${product.id}/edit`} className="p-1.5 rounded-[6px] text-slate-300 hover:text-snow hover:bg-white/8 transition-colors flex items-center">
+                      <Link href={`/admin/products/${product.id}/edit`} className="cursor-pointer p-1.5 rounded-[6px] text-slate-300 hover:text-snow hover:bg-white/8 transition-colors flex items-center">
                         <ChevronRight size={14} />
                       </Link>
                     </td>
@@ -166,9 +166,9 @@ export default async function AdminProductsPage({
           <div className="px-4 py-3 border-t border-white/8 flex items-center justify-between">
             <span className="text-xs text-slate-300">{total} productos</span>
             <div className="flex items-center gap-2">
-              {page > 1 && <Link href={`/admin/products?${q ? `q=${q}&` : ""}${showArchived ? "archived=1&" : ""}page=${page - 1}`} className="px-3 py-1.5 text-xs text-slate-300 hover:text-snow bg-graphite-600/60 rounded-[6px]">Anterior</Link>}
+              {page > 1 && <Link href={`/admin/products?${q ? `q=${q}&` : ""}${showArchived ? "archived=1&" : ""}page=${page - 1}`} className="cursor-pointer px-3 py-1.5 text-xs text-slate-300 hover:text-snow bg-graphite-600/60 rounded-[6px]">Anterior</Link>}
               <span className="text-xs text-slate-300">{page} / {totalPages}</span>
-              {page < totalPages && <Link href={`/admin/products?${q ? `q=${q}&` : ""}${showArchived ? "archived=1&" : ""}page=${page + 1}`} className="px-3 py-1.5 text-xs text-slate-300 hover:text-snow bg-graphite-600/60 rounded-[6px]">Siguiente</Link>}
+              {page < totalPages && <Link href={`/admin/products?${q ? `q=${q}&` : ""}${showArchived ? "archived=1&" : ""}page=${page + 1}`} className="cursor-pointer px-3 py-1.5 text-xs text-slate-300 hover:text-snow bg-graphite-600/60 rounded-[6px]">Siguiente</Link>}
             </div>
           </div>
         )}

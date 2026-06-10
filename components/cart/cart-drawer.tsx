@@ -77,14 +77,14 @@ export function CartDrawer({ isPro = false, proAllowanceBalance = 0 }: CartDrawe
             {items.length > 0 && (
               <button
                 onClick={clearCart}
-                className="text-xs text-slate-300 hover:text-ember-red transition-colors"
+                className="cursor-pointer text-xs text-slate-300 hover:text-ember-red transition-colors"
               >
                 Vaciar
               </button>
             )}
             <button
               onClick={closeCart}
-              className="p-1.5 text-slate-300 hover:text-snow hover:bg-white/5 rounded-[6px] transition-colors"
+              className="cursor-pointer p-1.5 text-slate-300 hover:text-snow hover:bg-white/5 rounded-[6px] transition-colors"
               aria-label="Cerrar carrito"
             >
               <X size={18} />
@@ -110,7 +110,7 @@ export function CartDrawer({ isPro = false, proAllowanceBalance = 0 }: CartDrawe
                   type="button"
                   onClick={toggleProPricing}
                   aria-label="Activar/desactivar precio PRO"
-                  className={`relative w-8 h-4 rounded-full transition-colors ${
+                  className={`cursor-pointer relative w-8 h-4 rounded-full transition-colors ${
                     useProPricing ? "bg-amber-500" : "bg-white/10"
                   }`}
                 >
@@ -166,7 +166,7 @@ export function CartDrawer({ isPro = false, proAllowanceBalance = 0 }: CartDrawe
                   Explora la tienda y añade productos.
                 </p>
               </div>
-              <Button variant="outline" size="sm" onClick={closeCart} className="mt-2">
+              <Button variant="outline" size="sm" onClick={closeCart} className="cursor-pointer mt-2">
                 Ver tienda
               </Button>
             </div>
@@ -211,7 +211,7 @@ export function CartDrawer({ isPro = false, proAllowanceBalance = 0 }: CartDrawe
               Sin devoluciones en ningún producto. El precio final incluye el envío elegido en el checkout.
             </p>
 
-            <Link href="/checkout" onClick={closeCart}>
+            <Link href="/checkout" onClick={closeCart} className="cursor-pointer">
               <Button fullWidth size="lg">
                 Ir al checkout
               </Button>

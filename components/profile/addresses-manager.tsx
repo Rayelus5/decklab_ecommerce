@@ -173,7 +173,7 @@ function AddressForm({
           <Check size={14} />
           Guardar dirección
         </Button>
-        <Button type="button" variant="ghost" onClick={onCancel} disabled={isLoading}>
+        <Button type="button" variant="ghost" onClick={onCancel} disabled={isLoading} className="cursor-pointer">
           <X size={14} />
           Cancelar
         </Button>

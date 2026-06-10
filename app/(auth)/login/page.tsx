@@ -60,7 +60,7 @@ export default function LoginPage() {
         No tienes cuenta?{" "}
         <Link
           href="/register"
-          className="text-ash-50 hover:text-snow underline underline-offset-2 transition-colors"
+          className="cursor-pointer text-ash-50 hover:text-snow underline underline-offset-2 transition-colors"
         >
           Regístrate
         </Link>

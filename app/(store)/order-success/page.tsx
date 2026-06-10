@@ -82,13 +82,13 @@ export default async function OrderSuccessPage({
         <div className="flex flex-col gap-3 w-full">
           <Link
             href="/profile/orders"
-            className="w-full px-6 py-3 bg-ash-50 hover:bg-white text-graphite-700 font-semibold text-sm rounded-[8px] transition-colors text-center"
+            className="cursor-pointer w-full px-6 py-3 bg-ash-50 hover:bg-white text-graphite-700 font-semibold text-sm rounded-[8px] transition-colors text-center"
           >
             Ver mis pedidos
           </Link>
           <Link
             href="/products"
-            className="w-full px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-snow font-medium text-sm rounded-[8px] transition-all text-center"
+            className="cursor-pointer w-full px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-snow font-medium text-sm rounded-[8px] transition-all text-center"
           >
             Seguir comprando
           </Link>

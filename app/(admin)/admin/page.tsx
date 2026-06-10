@@ -135,7 +135,7 @@ export default async function AdminDashboardPage() {
         <div className="lg:col-span-2 bg-graphite-700/40 border border-white/8 rounded-[16px] p-5 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-snow">Últimos pedidos</h2>
-            <Link href="/admin/orders" className="text-xs text-slate-300 hover:text-snow flex items-center gap-1 transition-colors">
+            <Link href="/admin/orders" className="cursor-pointer text-xs text-slate-300 hover:text-snow flex items-center gap-1 transition-colors">
               Ver todos <ChevronRight size={12} />
             </Link>
           </div>
@@ -144,7 +144,7 @@ export default async function AdminDashboardPage() {
               <Link
                 key={order.id}
                 href={`/admin/orders/${order.id}`}
-                className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0 hover:bg-white/3 -mx-1 px-1 rounded-[6px] transition-colors"
+                className="cursor-pointer flex items-center justify-between py-2.5 first:pt-0 last:pb-0 hover:bg-white/3 -mx-1 px-1 rounded-[6px] transition-colors"
               >
                 <div>
                   <p className="text-sm font-medium text-snow">
@@ -182,7 +182,7 @@ export default async function AdminDashboardPage() {
         <div className="bg-graphite-700/40 border border-white/8 rounded-[16px] p-5 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-snow">Stock bajo</h2>
-            <Link href="/admin/products" className="text-xs text-slate-300 hover:text-snow flex items-center gap-1 transition-colors">
+            <Link href="/admin/products" className="cursor-pointer text-xs text-slate-300 hover:text-snow flex items-center gap-1 transition-colors">
               Ver <ChevronRight size={12} />
             </Link>
           </div>
@@ -204,7 +204,7 @@ export default async function AdminDashboardPage() {
             </div>
           )}
           <div className="pt-2 border-t border-white/8">
-            <Link href="/admin/products" className="text-xs text-slate-300 hover:text-snow transition-colors flex items-center gap-1">
+            <Link href="/admin/products" className="cursor-pointer text-xs text-slate-300 hover:text-snow transition-colors flex items-center gap-1">
               Gestionar productos <ChevronRight size={11} />
             </Link>
           </div>
@@ -222,7 +222,7 @@ export default async function AdminDashboardPage() {
           <Link
             key={href}
             href={href}
-            className="bg-graphite-700/40 border border-white/8 hover:border-white/15 rounded-[12px] px-4 py-3 text-sm text-slate-300 hover:text-snow transition-all flex items-center justify-between gap-2"
+            className="cursor-pointer bg-graphite-700/40 border border-white/8 hover:border-white/15 rounded-[12px] px-4 py-3 text-sm text-slate-300 hover:text-snow transition-all flex items-center justify-between gap-2"
           >
             {label}
             <ChevronRight size={13} className="shrink-0 opacity-50" />

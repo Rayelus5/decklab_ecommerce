@@ -247,14 +247,14 @@ export function EmailComposer({ users }: EmailComposerProps) {
               </div>
               <button
                 onClick={selectAll}
-                className="shrink-0 px-3 py-2 text-xs text-slate-300 hover:text-snow bg-white/4 hover:bg-white/8 border border-white/8 rounded-[8px] transition-colors"
+                className="cursor-pointer shrink-0 px-3 py-2 text-xs text-slate-300 hover:text-snow bg-white/4 hover:bg-white/8 border border-white/8 rounded-[8px] transition-colors"
               >
                 Todos
               </button>
               {selectedIds.size > 0 && (
                 <button
                   onClick={clearSelection}
-                  className="shrink-0 px-3 py-2 text-xs text-slate-300 hover:text-snow bg-white/4 hover:bg-white/8 border border-white/8 rounded-[8px] transition-colors"
+                  className="cursor-pointer shrink-0 px-3 py-2 text-xs text-slate-300 hover:text-snow bg-white/4 hover:bg-white/8 border border-white/8 rounded-[8px] transition-colors"
                 >
                   Limpiar
                 </button>

@@ -28,7 +28,7 @@ export function VipInfoModal({ tiers, userTierId, totalSpent, totalOrdersCount }
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
-        <button className="bg-white/5 border border-white/10 hover:bg-white/10 px-3 py-2 rounded-xl flex items-center gap-2 transition-colors">
+        <button className="cursor-pointer bg-white/5 border border-white/10 hover:bg-white/10 px-3 py-2 rounded-xl flex items-center gap-2 transition-colors">
           <Crown size={14} className="text-amber-400" />
           <span className="text-xs font-bold text-snow tracking-wider">VIP</span>
         </button>
@@ -51,7 +51,7 @@ export function VipInfoModal({ tiers, userTierId, totalSpent, totalOrdersCount }
               </div>
             </div>
             <Dialog.Close asChild>
-              <button className="text-slate-400 hover:text-white transition-colors bg-white/5 rounded-full p-2">
+              <button className="cursor-pointer text-slate-400 hover:text-white transition-colors bg-white/5 rounded-full p-2">
                 <X size={20} />
               </button>
             </Dialog.Close>

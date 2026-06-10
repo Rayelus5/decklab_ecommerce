@@ -103,7 +103,7 @@ export default async function AbandonedCartsPage({ searchParams }: AbandonedCart
       <div className="flex items-center gap-2">
         <Link
           href="/admin/abandoned-carts"
-          className={`px-3 py-1.5 rounded-[8px] text-sm transition-colors ${
+          className={`cursor-pointer px-3 py-1.5 rounded-[8px] text-sm transition-colors ${
             !showConverted
               ? "bg-white/8 text-snow font-medium"
               : "text-slate-300 hover:text-snow hover:bg-white/5"
@@ -113,7 +113,7 @@ export default async function AbandonedCartsPage({ searchParams }: AbandonedCart
         </Link>
         <Link
           href="/admin/abandoned-carts?converted=true"
-          className={`px-3 py-1.5 rounded-[8px] text-sm transition-colors ${
+          className={`cursor-pointer px-3 py-1.5 rounded-[8px] text-sm transition-colors ${
             showConverted
               ? "bg-white/8 text-snow font-medium"
               : "text-slate-300 hover:text-snow hover:bg-white/5"
@@ -224,7 +224,7 @@ export default async function AbandonedCartsPage({ searchParams }: AbandonedCart
             <Link
               key={p}
               href={`/admin/abandoned-carts?page=${p}${showConverted ? "&converted=true" : ""}`}
-              className={`w-9 h-9 flex items-center justify-center rounded-[8px] text-sm transition-colors ${
+              className={`cursor-pointer w-9 h-9 flex items-center justify-center rounded-[8px] text-sm transition-colors ${
                 p === page
                   ? "bg-ash-50 text-graphite-700 font-semibold"
                   : "text-slate-300 hover:text-snow hover:bg-white/5"
@@ -236,7 +236,7 @@ export default async function AbandonedCartsPage({ searchParams }: AbandonedCart
           {page < totalPages && (
             <Link
               href={`/admin/abandoned-carts?page=${page + 1}${showConverted ? "&converted=true" : ""}`}
-              className="flex items-center gap-1 text-xs text-slate-300 hover:text-snow transition-colors ml-2"
+              className="cursor-pointer flex items-center gap-1 text-xs text-slate-300 hover:text-snow transition-colors ml-2"
             >
               Siguiente <ChevronRight size={12} />
             </Link>

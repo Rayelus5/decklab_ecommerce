@@ -31,7 +31,7 @@ export function ManagePlanButton() {
     <button
       onClick={handleClick}
       disabled={loading}
-      className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-snow disabled:opacity-60 transition-colors"
+      className="cursor-pointer inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-snow disabled:opacity-60 transition-colors"
     >
       {loading
         ? <Loader2 size={12} className="animate-spin" />

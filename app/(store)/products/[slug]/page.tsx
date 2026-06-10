@@ -131,7 +131,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       {/* Back link */}
       <Link
         href="/products"
-        className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-snow transition-colors mb-8"
+        className="cursor-pointer inline-flex items-center gap-2 text-sm text-slate-300 hover:text-snow transition-colors mb-8"
       >
         <ArrowLeft size={15} />
         Volver a la tienda
@@ -139,78 +139,62 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
       {/* Banner de reserva anticipada */}
       {activeReservation && (
-        <div className="mb-8 bg-amber-950/40 border border-amber-500/25 rounded-[14px] px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
-          {/* Icono + nombre */}
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="shrink-0 w-9 h-9 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center">
-              <Clock size={16} className="text-amber-400" />
+        <div className="mb-8 bg-amber-500/5 border border-amber-500/20 rounded-[16px] p-5 flex flex-col md:flex-row gap-6">
+          {/* Left: Icon, Name & Delivery */}
+          <div className="flex items-start gap-4 flex-1">
+            <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center shrink-0 border border-amber-500/20">
+              <Clock size={20} className="text-amber-400" />
             </div>
-            <div className="min-w-0">
-              <p className="text-xs text-amber-400 font-medium uppercase tracking-wider">Reserva anticipada</p>
-              <p className="text-snow font-semibold text-sm truncate">{activeReservation.name}</p>
+            <div>
+              <p className="text-[10px] text-amber-500 uppercase tracking-widest font-bold">Reserva Anticipada</p>
+              <h3 className="text-snow font-bold text-base leading-tight mt-0.5">{activeReservation.name}</h3>
+              {activeReservation.deliveryDate && (
+                <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-2">
+                  <Package size={12} />
+                  <span>
+                    Entrega est. <span className="text-slate-300 font-medium">
+                      {new Date(activeReservation.deliveryDate).toLocaleDateString("es-ES", {
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-4 sm:ml-auto items-center">
+          {/* Right: Urgent Info Grid */}
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4 md:pl-8 md:border-l md:border-white/5 shrink-0">
             {/* Countdown */}
-            <div className="flex flex-col items-center gap-0.5">
-              <p className="text-[10px] text-slate-400 uppercase tracking-wider">Cierra en</p>
-              <CountdownTimer closesAt={activeReservation.closesAt.toISOString()} className="text-sm" />
+            <div className="flex flex-col">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Cierra en</span>
+              <CountdownTimer closesAt={activeReservation.closesAt.toISOString()} className="text-sm font-bold text-snow" />
             </div>
-
-            {/* Código cupón */}
-            {activeReservation.coupon && (
-              <div className="flex flex-col gap-1">
-                <p className="text-[10px] text-slate-400 uppercase tracking-wider">
-                  Descuento{" "}
-                  {activeReservation.coupon.type === "PERCENT"
-                    ? `${Number(activeReservation.coupon.value).toFixed(0)}%`
-                    : `${Number(activeReservation.coupon.value).toFixed(2)} €`}
-                </p>
-                <ReservationCopyButton code={activeReservation.coupon.code} />
-              </div>
-            )}
-
-            {/* Fecha de entrega */}
-            {activeReservation.deliveryDate && (
-              <div className="flex items-center gap-1.5 text-xs text-slate-300">
-                <Calendar size={12} className="text-slate-400 shrink-0" />
-                <span>
-                  Entrega est.{" "}
-                  <span className="text-snow font-medium">
-                    {new Date(activeReservation.deliveryDate).toLocaleDateString("es-ES", {
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </span>
-                </span>
-              </div>
-            )}
 
             {/* Plazas restantes */}
             {spotsRemaining != null && (
-              <div className="flex items-center gap-1.5 text-xs">
-                <Users
-                  size={12}
-                  className={
-                    spotsRemaining > activeReservation.maxUnits! * 0.5
-                      ? "text-emerald-400"
-                      : spotsRemaining > activeReservation.maxUnits! * 0.2
-                      ? "text-amber-400"
-                      : "text-red-400"
-                  }
-                />
-                <span
-                  className={
-                    spotsRemaining > activeReservation.maxUnits! * 0.5
-                      ? "text-emerald-400 font-semibold"
-                      : spotsRemaining > activeReservation.maxUnits! * 0.2
-                      ? "text-amber-400 font-semibold"
-                      : "text-red-400 font-semibold"
-                  }
-                >
-                  {spotsRemaining} plazas restantes
+              <div className="flex flex-col">
+                <span className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Disponibilidad</span>
+                <span className={`text-sm font-bold ${spotsRemaining > activeReservation.maxUnits! * 0.5 ? "text-emerald-400" :
+                    spotsRemaining > activeReservation.maxUnits! * 0.2 ? "text-amber-400" : "text-red-400"
+                  }`}>
+                  {spotsRemaining} plazas libres
                 </span>
+              </div>
+            )}
+
+            {/* Código cupón */}
+            {activeReservation.coupon && (
+              <div className="flex flex-col col-span-2">
+                <span className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">
+                  OFERTA: {activeReservation.coupon.type === "PERCENT"
+                    ? `${Number(activeReservation.coupon.value).toFixed(0)}% dto.`
+                    : `${Number(activeReservation.coupon.value).toFixed(2)} € dto.`}
+                </span>
+                <div className="mt-1">
+                  <ReservationCopyButton code={activeReservation.coupon.code} />
+                </div>
               </div>
             )}
           </div>
@@ -225,7 +209,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <p className="text-sm font-medium text-snow">{accessMessage}</p>
             <Link
               href="/pricing"
-              className="text-xs text-ember-red hover:text-ember-red/80 underline underline-offset-2 mt-1 inline-block"
+              className="cursor-pointer text-xs text-ember-red hover:text-ember-red/80 underline underline-offset-2 mt-1 inline-block"
             >
               Ver planes PRO →
             </Link>
@@ -251,7 +235,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {product.category && (
               <Link
                 href={`/products?categoryId=${product.category.id}`}
-                className="text-xs text-slate-300 uppercase tracking-widest hover:text-snow transition-colors"
+                className="cursor-pointer text-xs text-slate-300 uppercase tracking-widest hover:text-snow transition-colors"
               >
                 {product.category.name}
               </Link>

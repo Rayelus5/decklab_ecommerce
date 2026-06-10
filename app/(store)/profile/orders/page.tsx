@@ -56,7 +56,7 @@ export default async function OrdersPage() {
       <div className="flex items-center gap-3">
         <Link
           href="/profile"
-          className="p-1.5 rounded-[8px] text-slate-300 hover:text-snow hover:bg-white/6 transition-colors"
+          className="cursor-pointer p-1.5 rounded-[8px] text-slate-300 hover:text-snow hover:bg-white/6 transition-colors"
         >
           <ArrowLeft size={16} />
         </Link>
@@ -82,7 +82,7 @@ export default async function OrdersPage() {
           </div>
           <Link
             href="/products"
-            className="mt-2 px-4 py-2 bg-ash-50 hover:bg-white text-graphite-700 text-sm font-semibold rounded-[8px] transition-colors"
+            className="cursor-pointer mt-2 px-4 py-2 bg-ash-50 hover:bg-white text-graphite-700 text-sm font-semibold rounded-[8px] transition-colors"
           >
             Ver catálogo
           </Link>
@@ -96,7 +96,7 @@ export default async function OrdersPage() {
             <Link
               key={order.id}
               href={`/profile/orders/${order.id}`}
-              className="bg-graphite-700/40 border border-white/8 hover:border-white/15 rounded-[14px] p-5 flex items-center justify-between gap-4 transition-all group"
+              className="cursor-pointer bg-graphite-700/40 border border-white/8 hover:border-white/15 rounded-[14px] p-5 flex items-center justify-between gap-4 transition-all group"
             >
               <div className="flex items-start gap-4">
                 <div className="w-9 h-9 rounded-[10px] bg-graphite-600/60 flex items-center justify-center shrink-0">

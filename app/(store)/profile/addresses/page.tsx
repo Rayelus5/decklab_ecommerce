@@ -37,7 +37,7 @@ export default async function AddressesPage() {
       <div className="flex items-center gap-3">
         <Link
           href="/profile"
-          className="p-1.5 rounded-[8px] text-slate-300 hover:text-snow hover:bg-white/6 transition-colors"
+          className="cursor-pointer p-1.5 rounded-[8px] text-slate-300 hover:text-snow hover:bg-white/6 transition-colors"
         >
           <ArrowLeft size={16} />
         </Link>

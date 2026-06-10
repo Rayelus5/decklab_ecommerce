@@ -122,7 +122,7 @@ export default async function AdminOrderDetailPage({
       <div className="flex items-center gap-3">
         <Link
           href="/admin/orders"
-          className="p-1.5 rounded-[8px] text-slate-300 hover:text-snow hover:bg-white/6 transition-colors"
+          className="cursor-pointer p-1.5 rounded-[8px] text-slate-300 hover:text-snow hover:bg-white/6 transition-colors"
         >
           <ArrowLeft size={16} />
         </Link>
@@ -263,7 +263,7 @@ export default async function AdminOrderDetailPage({
               )}
               <Link
                 href={`/admin/users/${order.user.id}`}
-                className="text-xs text-slate-300 hover:text-snow transition-colors mt-1"
+                className="cursor-pointer text-xs text-slate-300 hover:text-snow transition-colors mt-1"
               >
                 Ver perfil completo →
               </Link>

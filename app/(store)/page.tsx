@@ -93,13 +93,13 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <Link
               href="/products"
-              className="px-8 py-3.5 bg-ash-50 hover:bg-white text-graphite-700 font-semibold text-md rounded-full transition-colors text-center"
+              className="cursor-pointer px-8 py-3.5 bg-ash-50 hover:bg-white text-graphite-700 font-semibold text-md rounded-full transition-colors text-center"
             >
               Comprar ahora
             </Link>
             <Link
               href="/pricing"
-              className="px-8 py-3.5 bg-white/8 hover:bg-white/12 border-2 border-white/12 text-snow font-medium text-md rounded-full transition-all text-center backdrop-blur-sm"
+              className="cursor-pointer px-8 py-3.5 bg-white/8 hover:bg-white/12 border-2 border-white/12 text-snow font-medium text-md rounded-full transition-all text-center backdrop-blur-sm"
             >
               Házte PRO
             </Link>
@@ -190,7 +190,7 @@ export default function LandingPage() {
           <div className="text-center">
             <Link
               href="/pricing"
-              className="inline-flex items-center gap-2 px-8 py-3.5 bg-ash-50 hover:bg-white text-graphite-700 font-semibold text-sm rounded-[8px] transition-colors"
+              className="cursor-pointer inline-flex items-center gap-2 px-8 py-3.5 bg-ash-50 hover:bg-white text-graphite-700 font-semibold text-sm rounded-[8px] transition-colors"
             >
               Ver planes y precios
               <ArrowRight size={15} />
@@ -217,7 +217,7 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row gap-3 w-full">
             <Link
               href="/login"
-              className="flex-1 px-6 py-3 bg-ash-50 hover:bg-white text-graphite-700 font-semibold text-sm rounded-[8px] transition-colors text-center"
+              className="cursor-pointer flex-1 px-6 py-3 bg-ash-50 hover:bg-white text-graphite-700 font-semibold text-sm rounded-[8px] transition-colors text-center"
             >
               Acceder a la tienda
             </Link>
@@ -225,7 +225,7 @@ export default function LandingPage() {
               href="https://t.me/decklab_bot"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-snow font-medium text-sm rounded-[8px] transition-all text-center flex items-center justify-center gap-2"
+              className="cursor-pointer flex-1 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-snow font-medium text-sm rounded-[8px] transition-all text-center flex items-center justify-center gap-2"
             >
               Unirse al grupo
               <ArrowRight size={14} />

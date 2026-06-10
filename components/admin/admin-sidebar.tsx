@@ -50,7 +50,7 @@ export function AdminSidebar() {
   }
 
   return (
-    <aside className="w-60 shrink-0 flex flex-col border-r border-white/8 bg-graphite-800/80 min-h-screen sticky top-0">
+    <aside className="cursor-pointer w-60 shrink-0 flex flex-col border-r border-white/8 bg-graphite-800/80 min-h-screen sticky top-0">
       {/* Logo */}
       <div className="h-14 flex items-center gap-2 px-5 border-b border-white/8">
         <div className="w-6 h-6 rounded-[6px] bg-ash-50 flex items-center justify-center">
@@ -68,7 +68,7 @@ export function AdminSidebar() {
             <Link
               key={href}
               href={href}
-              className={clsx(
+              className={clsx("cursor-pointer", 
                 "flex items-center gap-3 px-3 py-2 rounded-[8px] text-sm transition-colors",
                 active
                   ? "bg-white/8 text-snow font-medium"

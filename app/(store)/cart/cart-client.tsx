@@ -43,7 +43,7 @@ export function CartClient({ isPro, proAllowanceBalance }: CartClientProps) {
         </div>
         <Link
           href="/products"
-          className="inline-flex items-center gap-1.5 text-sm text-slate-300 hover:text-snow transition-colors"
+          className="cursor-pointer inline-flex items-center gap-1.5 text-sm text-slate-300 hover:text-snow transition-colors"
         >
           <ArrowLeft size={15} />
           Seguir comprando
@@ -61,7 +61,7 @@ export function CartClient({ isPro, proAllowanceBalance }: CartClientProps) {
               Añade productos desde la tienda para empezar.
             </p>
           </div>
-          <Link href="/products">
+          <Link href="/products" className="cursor-pointer">
             <Button size="lg">Ir a la tienda</Button>
           </Link>
         </div>
@@ -79,7 +79,7 @@ export function CartClient({ isPro, proAllowanceBalance }: CartClientProps) {
                   </div>
                   <button
                     onClick={toggleProPricing}
-                    className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${useProPricing ? "bg-amber-500" : "bg-white/15"
+                    className={`cursor-pointer relative w-10 h-5 rounded-full transition-colors duration-200 ${useProPricing ? "bg-amber-500" : "bg-white/15"
                       }`}
                     aria-label={useProPricing ? "Desactivar precios PRO" : "Activar precios PRO"}
                   >
@@ -132,7 +132,7 @@ export function CartClient({ isPro, proAllowanceBalance }: CartClientProps) {
               <div className="pt-4 mt-4 border-t border-white/8">
                 <button
                   onClick={clearCart}
-                  className="text-xs text-slate-300 hover:text-ember-red transition-colors"
+                  className="cursor-pointer text-xs text-slate-300 hover:text-ember-red transition-colors"
                 >
                   Vaciar carrito
                 </button>
@@ -173,7 +173,7 @@ export function CartClient({ isPro, proAllowanceBalance }: CartClientProps) {
                 </span>
               </div>
 
-              <Link href="/checkout">
+              <Link href="/checkout" className="cursor-pointer">
                 <Button fullWidth size="lg">
                   Comprar ahora
                 </Button>

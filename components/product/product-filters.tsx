@@ -92,7 +92,7 @@ export function ProductFilters({
             <button
               type="button"
               onClick={clearSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-snow transition-colors"
+              className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-snow transition-colors"
               aria-label="Limpiar búsqueda"
             >
               <X size={14} />
@@ -101,7 +101,7 @@ export function ProductFilters({
         </div>
         <button
           type="submit"
-          className="px-4 py-2 bg-ash-50 text-graphite-700 text-sm font-medium rounded-[8px] hover:bg-white transition-colors"
+          className="cursor-pointer px-4 py-2 bg-ash-50 text-graphite-700 text-sm font-medium rounded-[8px] hover:bg-white transition-colors"
         >
           Buscar
         </button>

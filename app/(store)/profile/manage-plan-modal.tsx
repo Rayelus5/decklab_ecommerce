@@ -181,7 +181,7 @@ export function ManagePlanModal({
                   <button
                     onClick={handleCancel}
                     disabled={cancelling}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-[8px] text-sm font-semibold bg-ember-red/15 border border-ember-red/30 text-ember-red hover:bg-ember-red/25 disabled:opacity-60 transition-colors"
+                    className="cursor-pointer flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-[8px] text-sm font-semibold bg-ember-red/15 border border-ember-red/30 text-ember-red hover:bg-ember-red/25 disabled:opacity-60 transition-colors"
                   >
                     {cancelling ? <Loader2 size={13} className="animate-spin" /> : null}
                     Sí, cancelar
@@ -195,7 +195,7 @@ export function ManagePlanModal({
                   <button
                     onClick={handleOpenPortal}
                     disabled={portalLoading}
-                    className="inline-flex items-center justify-center gap-2 w-full px-3 py-2 rounded-[8px] text-sm text-slate-300 hover:text-snow bg-white/5 hover:bg-white/8 disabled:opacity-60 transition-colors"
+                    className="cursor-pointer inline-flex items-center justify-center gap-2 w-full px-3 py-2 rounded-[8px] text-sm text-slate-300 hover:text-snow bg-white/5 hover:bg-white/8 disabled:opacity-60 transition-colors"
                   >
                     {portalLoading
                       ? <Loader2 size={13} className="animate-spin" />
@@ -224,7 +224,7 @@ export function ManagePlanModal({
                 href={`https://t.me/${ADMIN_TELEGRAM}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sky-400 hover:underline inline-flex items-center gap-0.5"
+                className="cursor-pointer text-sky-400 hover:underline inline-flex items-center gap-0.5"
               >
                 @{ADMIN_TELEGRAM}
                 <Send size={10} className="inline" />

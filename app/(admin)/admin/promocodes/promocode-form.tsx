@@ -86,7 +86,7 @@ export function PromoCodeForm() {
       <button 
         type="submit" 
         disabled={loading} 
-        className="mt-2 bg-mint-signal hover:bg-mint-signal/80 text-black font-bold py-2 px-4 rounded-md transition-colors flex justify-center items-center"
+        className="cursor-pointer mt-2 bg-mint-signal hover:bg-mint-signal/80 text-black font-bold py-2 px-4 rounded-md transition-colors flex justify-center items-center"
       >
         {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Generar Código(s)"}
       </button>

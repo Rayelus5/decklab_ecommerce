@@ -108,7 +108,7 @@ export function IncubatorSection({ eggs, incubator, userId }: Props) {
                   <button
                     onClick={() => handleHatch(incubatingEgg.id)}
                     disabled={loading}
-                    className="bg-mint-signal hover:bg-mint-signal/80 text-black px-4 py-2 rounded-lg font-bold text-sm transition-colors"
+                    className="bg-mint-signal hover:bg-mint-signal/80 text-black px-4 py-2 rounded-lg font-bold text-sm transition-colors cursor-pointer"
                   >
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "¡Eclosionar!"}
                   </button>
@@ -144,7 +144,7 @@ export function IncubatorSection({ eggs, incubator, userId }: Props) {
                   <button
                     onClick={() => handleIncubate(egg.id)}
                     disabled={loading || !!incubatingEgg}
-                    className={`w-full ${colors.bg} hover:brightness-125 border ${colors.border} disabled:opacity-50 text-white text-xs py-1.5 rounded-lg font-medium transition-all`}
+                    className={`w-full ${colors.bg} hover:brightness-125 border ${colors.border} disabled:opacity-50 text-white text-xs py-1.5 rounded-lg font-medium transition-all cursor-pointer`}
                   >
                     Incubar
                   </button>

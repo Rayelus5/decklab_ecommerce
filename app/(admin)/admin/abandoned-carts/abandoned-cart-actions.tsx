@@ -93,7 +93,7 @@ export function AbandonedCartActions({
         onClick={handleDelete}
         disabled={deleting}
         title="Eliminar carrito y liberar stock"
-        className="p-1.5 rounded-[6px] text-slate-300 hover:text-ember-red hover:bg-white/5 transition-colors"
+        className="cursor-pointer p-1.5 rounded-[6px] text-slate-300 hover:text-ember-red hover:bg-white/5 transition-colors"
       >
         {deleting ? (
           <Loader2 size={14} className="animate-spin" />

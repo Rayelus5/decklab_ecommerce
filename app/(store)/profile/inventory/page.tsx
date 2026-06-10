@@ -2,8 +2,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { getUserGamificationData } from "@/lib/gamification";
-import { IncubatorSection } from "@/components/gamification/incubator-section";
-import { InventoryBoxes } from "@/components/gamification/inventory-boxes";
+import { GamificationTabs } from "@/components/gamification/gamification-tabs";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
@@ -51,17 +50,15 @@ export default async function InventoryPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sidebar: Incubator & Eggs */}
-        <div className="flex flex-col gap-6">
-          <IncubatorSection eggs={eggs} incubator={incubator} userId={session.user.id} />
-        </div>
-
-        {/* Main: Boxes */}
-        <div className="lg:col-span-2">
-          <InventoryBoxes pokemons={pokemons} boxesUnlocked={user?.boxesUnlocked || 8} userId={session.user.id} />
-        </div>
-      </div>
+      <GamificationTabs
+        userId={session.user.id}
+        eggs={eggs}
+        incubator={incubator}
+        pokemons={pokemons}
+        boxesUnlocked={user?.boxesUnlocked || 8}
+        balance={Number(user?.proAllowanceBalance || 0)}
+        pokemonedas={user?.pokemonedas || 0}
+      />
     </div>
   );
 }

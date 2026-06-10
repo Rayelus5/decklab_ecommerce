@@ -207,7 +207,7 @@ export function InventoryBoxes({ pokemons, boxesUnlocked, userId }: Props) {
                 </div>
 
                 {/* Artwork HD */}
-                <div className="w-48 h-48 mx-auto -mt-32 relative z-10 bg-white/5 rounded-full border-4 border-graphite-800 overflow-hidden shadow-2xl flex items-center justify-center p-4 bg-white">
+                <div className="w-48 h-48 mx-auto -mt-32 relative z-10 rounded-full border-4 border-graphite-800 overflow-hidden shadow-2xl flex items-center justify-center p-4 bg-white">
                   <img
                     src={getHqArtworkUrl(statsPokemon.pokedexNumber)}
                     alt="Pokemon Artwork"

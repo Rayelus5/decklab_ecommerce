@@ -229,6 +229,7 @@ export async function getUserGamificationData(userId: string) {
       select: {
         pokemonedas: true,
         boxesUnlocked: true,
+        proAllowanceBalance: true,
       },
     });
 
@@ -319,3 +320,78 @@ export async function movePokemon(userId: string, pokemonId: string, targetBox: 
   }
 }
 
+// ============================================================================
+// COMPRAR POKEMONEDAS (TIENDA)
+// ============================================================================
+export async function buyPokemonedas(userId: string, amountEuro: number) {
+  try {
+    if (amountEuro <= 0) return { success: false, error: "Cantidad no válida." };
+
+    return await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { proAllowanceBalance: true, pokemonedas: true },
+      });
+
+      if (!user) return { success: false, error: "Usuario no encontrado." };
+
+      if (Number(user.proAllowanceBalance) < amountEuro) {
+        return { success: false, error: "Saldo PRO insuficiente." };
+      }
+
+      // 1€ = 1000 pokemonedas
+      const pokemonedasToAdd = amountEuro * 1000;
+
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          proAllowanceBalance: { decrement: amountEuro },
+          pokemonedas: { increment: pokemonedasToAdd },
+        },
+      });
+
+      return { success: true, newBalance: Number(user.proAllowanceBalance) - amountEuro, newPokemonedas: user.pokemonedas + pokemonedasToAdd };
+    });
+  } catch (error: any) {
+    console.error("Error al comprar pokemonedas:", error);
+    return { success: false, error: "Error procesando la compra." };
+  }
+}
+
+// ============================================================================
+// CANJEAR POKEMONEDAS POR SALDO PRO
+// ============================================================================
+export async function redeemPokemonedas(userId: string, amountEuro: number) {
+  try {
+    if (amountEuro <= 0) return { success: false, error: "Cantidad no válida." };
+
+    return await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { proAllowanceBalance: true, pokemonedas: true },
+      });
+
+      if (!user) return { success: false, error: "Usuario no encontrado." };
+
+      // 1€ = 1500 pokemonedas
+      const costInPokemonedas = amountEuro * 1500;
+
+      if (user.pokemonedas < costInPokemonedas) {
+        return { success: false, error: "Pokemonedas insuficientes." };
+      }
+
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          pokemonedas: { decrement: costInPokemonedas },
+          proAllowanceBalance: { increment: amountEuro },
+        },
+      });
+
+      return { success: true, newBalance: Number(user.proAllowanceBalance) + amountEuro, newPokemonedas: user.pokemonedas - costInPokemonedas };
+    });
+  } catch (error: any) {
+    console.error("Error al canjear pokemonedas:", error);
+    return { success: false, error: "Error procesando el canje." };
+  }
+}

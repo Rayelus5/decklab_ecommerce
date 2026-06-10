@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ChevronLeft, ChevronRight, ImageOff, X, ZoomIn } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, ZoomIn } from "lucide-react";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 interface ProductImage {
   id: string;
@@ -102,27 +103,20 @@ export function ProductGallery({ images, productTitle }: ProductGalleryProps) {
       <div className="flex flex-col gap-3">
         {/* Main image */}
         <div className="relative aspect-square bg-graphite-700/40 border border-white/8 rounded-[16px] overflow-hidden group">
-          {currentImage ? (
-            <>
-              <img
-                src={currentImage.url}
-                alt={currentImage.alt ?? productTitle}
-                className="object-cover w-full h-full transition-opacity duration-500"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-              />
-              {/* Zoom button */}
-              <button
-                onClick={() => openLightbox(activeIndex)}
-                className="absolute top-3 right-3 p-2 bg-graphite-800/80 border border-white/10 rounded-[8px] text-slate-300 hover:text-snow opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm"
-                aria-label="Ampliar imagen"
-              >
-                <ZoomIn size={16} />
-              </button>
-            </>
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <ImageOff size={40} className="text-white/10" />
-            </div>
+          <ImageWithFallback
+            src={currentImage?.url}
+            alt={currentImage?.alt ?? productTitle}
+            className="w-full h-full"
+          />
+          {/* Zoom button */}
+          {currentImage && (
+            <button
+              onClick={() => openLightbox(activeIndex)}
+              className="absolute top-3 right-3 p-2 bg-graphite-800/80 border border-white/10 rounded-[8px] text-slate-300 hover:text-snow opacity-0 group-hover:opacity-100 transition-all duration-200 backdrop-blur-sm"
+              aria-label="Ampliar imagen"
+            >
+              <ZoomIn size={16} />
+            </button>
           )}
 
           {/* Prev / Next arrows (only when multiple images) */}
@@ -176,11 +170,10 @@ export function ProductGallery({ images, productTitle }: ProductGalleryProps) {
                     : "border-white/8 hover:border-white/20"
                 }`}
               >
-                <img
+                <ImageWithFallback
                   src={img.url}
                   alt={img.alt ?? `${productTitle} — imagen ${i + 1}`}
-                  className="object-cover w-full h-full"
-                  sizes="80px"
+                  className="w-full h-full"
                 />
                 {i === activeIndex && (
                   <div className="absolute inset-0 bg-white/5" />
@@ -218,7 +211,7 @@ export function ProductGallery({ images, productTitle }: ProductGalleryProps) {
             className="relative max-w-[90vw] max-h-[90vh] flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
+            <ImageWithFallback
               src={images[lightboxIndex]?.url}
               alt={images[lightboxIndex]?.alt ?? productTitle}
               className="max-w-full max-h-[90vh] object-contain rounded-[12px] select-none"
@@ -266,10 +259,10 @@ export function ProductGallery({ images, productTitle }: ProductGalleryProps) {
                         : "border-white/15 hover:border-white/35 opacity-60 hover:opacity-100"
                     }`}
                   >
-                    <img
+                    <ImageWithFallback
                       src={img.url}
                       alt={img.alt ?? `imagen ${i + 1}`}
-                      className="object-cover w-full h-full"
+                      className="w-full h-full"
                     />
                   </button>
                 ))}

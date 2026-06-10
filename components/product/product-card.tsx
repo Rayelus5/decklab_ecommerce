@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 // import Image from "next/image";
-import { Lock, Zap, ImageOff, Crown } from "lucide-react";
+import { Lock, Zap, Crown } from "lucide-react";
 import { clsx } from "clsx";
 import { ReservationProductBadge } from "@/components/reservations/reservation-product-badge";
+import { ImageWithFallback } from "@/components/ui/image-with-fallback";
 
 interface ProductVariantPreview {
   id: string;
@@ -72,18 +73,11 @@ export function ProductCard({
     >
       {/* ── Imagen ─────────────────────────────────────────── */}
       <div className="relative aspect-[1/1] bg-graphite-600/60 overflow-hidden">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={imageAlt ?? title}
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.07] w-full h-full"
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <ImageOff size={32} className="text-white/12" />
-          </div>
-        )}
+        <ImageWithFallback
+          src={imageUrl}
+          alt={imageAlt ?? title}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.07]"
+        />
 
         {/* Gradient fade al fondo — fusiona imagen con la info */}
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-graphite-700 via-graphite-700/60 to-transparent pointer-events-none" />

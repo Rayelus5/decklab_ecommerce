@@ -8,27 +8,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { movePokemon } from "@/lib/gamification";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-
-const POKEMON_NAMES = [
-  "bulbasaur", "ivysaur", "venusaur", "charmander", "charmeleon", "charizard",
-  "squirtle", "wartortle", "blastoise", "caterpie", "metapod", "butterfree",
-  "weedle", "kakuna", "beedrill", "pidgey", "pidgeotto", "pidgeot", "rattata", "raticate",
-  "spearow", "fearow", "ekans", "arbok", "pikachu", "raichu", "sandshrew", "sandslash",
-  "nidoran-f", "nidorina", "nidoqueen", "nidoran-m", "nidorino", "nidoking", "clefairy", "clefable",
-  "vulpix", "ninetales", "jigglypuff", "wigglytuff", "zubat", "golbat", "oddish", "gloom", "vileplume",
-  "paras", "parasect", "venonat", "venomoth", "diglett", "dugtrio", "meowth", "persian",
-  "psyduck", "golduck", "mankey", "primeape", "growlithe", "arcanine", "poliwag", "poliwhirl", "poliwrath",
-  "abra", "kadabra", "alakazam", "machop", "machoke", "machamp", "bellsprout", "weepinbell", "victreebel",
-  "tentacool", "tentacruel", "geodude", "graveler", "golem", "ponyta", "rapidash", "slowpoke", "slowbro",
-  "magnemite", "magneton", "farfetchd", "doduo", "dodrio", "seel", "dewgong", "grimer", "muk",
-  "shellder", "cloyster", "gastly", "haunter", "gengar", "onix", "drowzee", "hypno", "krabby", "kingler",
-  "voltorb", "electrode", "exeggcute", "exeggutor", "cubone", "marowak", "hitmonlee", "hitmonchan", "lickitung",
-  "koffing", "weezing", "rhyhorn", "rhydon", "chansey", "tangela", "kangaskhan", "horsea", "seadra",
-  "goldeen", "seaking", "staryu", "starmie", "mr-mime", "scyther", "jynx", "electabuzz", "magmar", "pinsir",
-  "tauros", "magikarp", "gyarados", "lapras", "ditto", "eevee", "vaporeon", "jolteon", "flareon", "porygon",
-  "omanyte", "omastar", "kabuto", "kabutops", "aerodactyl", "snorlax", "articuno", "zapdos", "moltres",
-  "dratini", "dragonair", "dragonite", "mewtwo", "mew"
-];
+import { POKEMON_NAMES, getSpriteUrl as _getSpriteUrl, getArtworkUrl as _getArtworkUrl } from "@/lib/pokemon-names";
 
 interface Props {
   pokemons: PokemonInstance[];
@@ -54,15 +34,8 @@ export function InventoryBoxes({ pokemons, boxesUnlocked, userId }: Props) {
     return { slotNum, pokemon };
   });
 
-  const getSpriteUrl = (pokedexNumber: number) => {
-    const name = POKEMON_NAMES[pokedexNumber - 1];
-    return name ? `https://img.pokemondb.net/sprites/lets-go-pikachu-eevee/normal/${name}.png` : "";
-  };
-
-  const getHqArtworkUrl = (pokedexNumber: number) => {
-    const name = POKEMON_NAMES[pokedexNumber - 1];
-    return name ? `https://img.pokemondb.net/artwork/large/${name}.jpg` : "";
-  };
+  const getSpriteUrl = _getSpriteUrl;
+  const getHqArtworkUrl = _getArtworkUrl;
 
   const handleSlotClick = async (slotNum: number, pokemon?: PokemonInstance) => {
     if (movingPokemon) {
@@ -221,39 +194,43 @@ export function InventoryBoxes({ pokemons, boxesUnlocked, userId }: Props) {
                     <h2 className="text-3xl font-black text-snow uppercase tracking-widest">
                       {POKEMON_NAMES[statsPokemon.pokedexNumber - 1]}
                     </h2>
-                    <p className="text-amber-400 font-bold mt-1 tracking-widest text-sm">LVL. WIP</p>
+                    <p className="text-amber-400 font-bold mt-1 tracking-widest text-sm">No. {String(statsPokemon.pokedexNumber).padStart(3, "0")}</p>
                   </div>
 
-                  {/* Stats (WIP) */}
-                  <div className="w-full bg-black/20 rounded-2xl p-4 border border-white/5 flex flex-col gap-3 relative">
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-sky-500/20 text-sky-400 border border-sky-500/20 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest backdrop-blur-sm">
-                      Funcionalidad en desarrollo
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <span className="w-10 text-xs font-bold text-slate-400 uppercase">HP</span>
-                      <div className="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500 w-0"></div>
+                  {/* Stats */}
+                  {(() => {
+                    const raw = statsPokemon.stats as { hp?: number; attack?: number; defense?: number } | null;
+                    const hp  = raw?.hp      ?? 0;
+                    const atk = raw?.attack   ?? 0;
+                    const def = raw?.defense  ?? 0;
+                    const pct = (v: number) => Math.round((v / 31) * 100);
+                    return (
+                      <div className="w-full bg-black/20 rounded-2xl p-4 border border-white/5 flex flex-col gap-3">
+                        <div className="flex items-center gap-3">
+                          <span className="w-10 text-xs font-bold text-slate-400 uppercase">HP</span>
+                          <div className="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-500 transition-all duration-700" style={{ width: `${pct(hp)}%` }} />
+                          </div>
+                          <span className="w-6 text-right text-xs font-bold text-snow">{hp}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="w-10 text-xs font-bold text-slate-400 uppercase">ATK</span>
+                          <div className="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-full bg-rose-500 transition-all duration-700" style={{ width: `${pct(atk)}%` }} />
+                          </div>
+                          <span className="w-6 text-right text-xs font-bold text-snow">{atk}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="w-10 text-xs font-bold text-slate-400 uppercase">DEF</span>
+                          <div className="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500 transition-all duration-700" style={{ width: `${pct(def)}%` }} />
+                          </div>
+                          <span className="w-6 text-right text-xs font-bold text-snow">{def}</span>
+                        </div>
+                        <p className="text-center text-[10px] text-slate-500 mt-1 tracking-wider uppercase">IVs — máximo 31</p>
                       </div>
-                      <span className="w-6 text-right text-xs font-bold text-snow">0</span>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <span className="w-10 text-xs font-bold text-slate-400 uppercase">ATK</span>
-                      <div className="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
-                        <div className="h-full bg-rose-500 w-0"></div>
-                      </div>
-                      <span className="w-6 text-right text-xs font-bold text-snow">0</span>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <span className="w-10 text-xs font-bold text-slate-400 uppercase">DEF</span>
-                      <div className="flex-1 h-3 bg-white/10 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-500 w-0"></div>
-                      </div>
-                      <span className="w-6 text-right text-xs font-bold text-snow">0</span>
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </div>
 
               </div>

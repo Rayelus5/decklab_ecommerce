@@ -59,6 +59,13 @@ enum EggStatus {
   HATCHED
 }
 
+enum BattleStatus {
+  ACTIVE
+  PLAYER_WON
+  ENEMY_WON
+  ABANDONED
+}
+
 // =============================================================
 // USUARIOS Y AUTENTICACIÓN
 // =============================================================
@@ -111,9 +118,10 @@ model User {
   usedPromoCodes PromoCode[]       @relation("UserWhoUsedCode")
   incubators     UserIncubator[]
   eggs           PokemonEgg[]
-  pokemons       PokemonInstance[]
-  adminLogs      AdminActionLog[]  @relation("AdminWhoActed")
-  abandonedCarts AbandonedCart[]
+  pokemons        PokemonInstance[]
+  adminLogs       AdminActionLog[]  @relation("AdminWhoActed")
+  abandonedCarts  AbandonedCart[]
+  battleSessions  BattleSession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -633,11 +641,38 @@ model PokemonInstance {
   boxNumber     Int
   slotNumber    Int
   stats         Json?
+  level         Int     @default(1)
+  experience    Int     @default(0)
   eggId         String? @unique
 
-  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  egg  PokemonEgg? @relation(fields: [eggId], references: [id])
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  egg           PokemonEgg?    @relation(fields: [eggId], references: [id])
+  battleSessions BattleSession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// =============================================================
+// ARENA DE BATALLAS
+// =============================================================
+
+model BattleSession {
+  id              String       @id @default(cuid())
+  userId          String
+  status          BattleStatus @default(ACTIVE)
+  playerPokemonId String
+  playerCurrentHp Int
+  enemyData       Json
+  enemyCurrentHp  Int
+  turnLog         Json         @default("[]")
+  rewardClaimed   Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playerPokemon PokemonInstance @relation(fields: [playerPokemonId], references: [id])
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
 }

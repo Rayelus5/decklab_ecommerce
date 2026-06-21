@@ -4,9 +4,10 @@ import { useState } from "react";
 import { IncubatorSection } from "./incubator-section";
 import { InventoryBoxes } from "./inventory-boxes";
 import { PokemonedasShop } from "./pokemonedas-shop";
-import { ItemsShopWip } from "./items-shop-wip";
-import { BattlesWip } from "./battles-wip";
-import { Egg, Store, Swords } from "lucide-react";
+import { ItemsShop } from "./items-shop-wip";
+import { Battles } from "./battles";
+import { Pokedex } from "./pokedex";
+import { Egg, Store, Swords, BookOpen } from "lucide-react";
 import { clsx } from "clsx";
 
 interface Props {
@@ -28,7 +29,7 @@ export function GamificationTabs({
   balance,
   pokemonedas,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<"collection" | "shop" | "battles">("collection");
+  const [activeTab, setActiveTab] = useState<"collection" | "shop" | "battles" | "pokedex">("collection");
 
   return (
     <div className="flex flex-col gap-8 mt-4">
@@ -67,6 +68,22 @@ export function GamificationTabs({
         </button>
 
         <button
+          onClick={() => setActiveTab("pokedex")}
+          className={clsx(
+            "flex items-center gap-2 px-6 py-3 font-semibold text-sm transition-all relative cursor-pointer",
+            activeTab === "pokedex"
+              ? "text-sky-400"
+              : "text-slate-400 hover:text-slate-200"
+          )}
+        >
+          <BookOpen size={18} />
+          Pokédex
+          {activeTab === "pokedex" && (
+            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-sky-400" />
+          )}
+        </button>
+
+        <button
           onClick={() => setActiveTab("battles")}
           className={clsx(
             "flex items-center gap-2 px-6 py-3 font-semibold text-sm transition-all relative cursor-pointer",
@@ -98,13 +115,19 @@ export function GamificationTabs({
       {activeTab === "shop" && (
         <div className="flex flex-col gap-10 animate-in fade-in duration-300">
           <PokemonedasShop userId={userId} balance={balance} pokemonedas={pokemonedas} />
-          <ItemsShopWip />
+          <ItemsShop userId={userId} pokemonedas={pokemonedas} />
+        </div>
+      )}
+
+      {activeTab === "pokedex" && (
+        <div className="animate-in fade-in duration-300">
+          <Pokedex pokemons={pokemons} />
         </div>
       )}
 
       {activeTab === "battles" && (
         <div className="animate-in fade-in duration-300">
-          <BattlesWip />
+          <Battles pokemons={pokemons} userId={userId} pokemonedas={pokemonedas} />
         </div>
       )}
     </div>

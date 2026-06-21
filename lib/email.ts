@@ -12,6 +12,8 @@ import { ShipmentTracking } from "@/emails/shipment-tracking";
 import { SubscriptionRenewal } from "@/emails/subscription-renewal";
 import { OrderCancellation } from "@/emails/order-cancellation";
 import { AbandonedCartEmail } from "@/emails/abandoned-cart";
+import { EggHatch } from "@/emails/egg-hatch";
+import { getArtworkUrl, getPokemonName } from "@/lib/pokemon-names";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Email de confirmación de pedido (con PDF de factura adjunto)
@@ -252,6 +254,43 @@ export async function sendOrderCancellationEmail(orderId: string, isRefund = fal
     from: FROM_EMAIL,
     to: order.user.email,
     subject,
+    html,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Email de eclosión de huevo Pokémon
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function sendEggHatchEmail(
+  userId: string,
+  pokedexNumber: number,
+  eggRarity: string
+): Promise<void> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true, email: true },
+  });
+
+  if (!user?.email) return;
+
+  const pokemonName = getPokemonName(pokedexNumber);
+  const artworkUrl = getArtworkUrl(pokedexNumber);
+
+  const html = await render(
+    EggHatch({
+      customerName: user.name ?? "Entrenador",
+      pokemonName,
+      pokedexNumber,
+      eggRarity,
+      artworkUrl,
+    })
+  );
+
+  await resend.emails.send({
+    from: FROM_EMAIL,
+    to: user.email,
+    subject: `¡Tu huevo ha eclosionado! Apareció un Pokémon — DECKLAB SHOP`,
     html,
   });
 }

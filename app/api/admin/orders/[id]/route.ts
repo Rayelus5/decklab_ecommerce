@@ -61,6 +61,14 @@ export async function PATCH(
       });
     }
 
+    // Pokémonedas reward cuando el pedido se marca como entregado (solo primera vez)
+    if (status === "DELIVERED" && order.status !== "DELIVERED") {
+      await prisma.user.update({
+        where: { id: order.userId },
+        data: { pokemonedas: { increment: 500 } },
+      }).catch((e) => console.error("[POKEMONEDAS DELIVERY]", e));
+    }
+
     // Telegram DM + email de tracking cuando el estado es SHIPPED
     if (status === "SHIPPED") {
       if (order.user.telegramId) {

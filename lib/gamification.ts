@@ -3,7 +3,8 @@
 import { prisma } from "@/lib/prisma";
 import { EggRarity, EggStatus, IncubatorType, Prisma } from "@prisma/client";
 
-import { INCUBATION_TIMES } from "./gamification-constants";
+import { INCUBATION_TIMES, POKEMON_POOLS, SHOP_ITEMS, ShopItemType } from "./gamification-constants";
+import { sendEggHatchEmail } from "./email";
 
 // ============================================================================
 // CANJEAR CÓDIGO PROMOCIONAL
@@ -168,8 +169,9 @@ export async function hatchEgg(userId: string, eggId: string) {
         throw new Error("No hay espacio en tus cajas.");
       }
 
-      // 2. Generar Pokémon Aleatorio (Gen 1: 1 a 151)
-      const pokedexNumber = Math.floor(Math.random() * 151) + 1;
+      // 2. Generar Pokémon del pool correspondiente a la rareza del huevo
+      const pool = POKEMON_POOLS[egg.rarity as EggRarity];
+      const pokedexNumber = pool[Math.floor(Math.random() * pool.length)];
 
       // 3. Crear Pokémon
       const pokemon = await tx.pokemonInstance.create({
@@ -211,6 +213,10 @@ export async function hatchEgg(userId: string, eggId: string) {
 
       return pokemon;
     });
+
+    // Email no bloqueante — falla silenciosamente si Resend no está disponible
+    sendEggHatchEmail(userId, pokemonData.pokedexNumber, egg.rarity)
+      .catch((e) => console.error("[EMAIL EGG HATCH]", e));
 
     return { success: true, pokemon: pokemonData };
   } catch (error: any) {
@@ -354,6 +360,63 @@ export async function buyPokemonedas(userId: string, amountEuro: number) {
     });
   } catch (error: any) {
     console.error("Error al comprar pokemonedas:", error);
+    return { success: false, error: "Error procesando la compra." };
+  }
+}
+
+// ============================================================================
+// COMPRAR OBJETO EN LA TIENDA DE GAMIFICACIÓN
+// ============================================================================
+function drawMysteryEggRarity(): EggRarity {
+  const r = Math.random() * 100;
+  if (r < 55)   return "COMMON";
+  if (r < 80)   return "UNCOMMON";
+  if (r < 93)   return "RARE";
+  if (r < 99)   return "EPIC";
+  if (r < 99.8) return "LEGENDARY";
+  return "MYTHIC";
+}
+
+export async function buyShopItem(userId: string, itemType: ShopItemType) {
+  const item = SHOP_ITEMS[itemType];
+  if (!item) return { success: false, error: "Objeto no válido." };
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { pokemonedas: true, boxesUnlocked: true },
+      });
+
+      if (!user) return { success: false, error: "Usuario no encontrado." };
+      if (user.pokemonedas < item.pkmPrice)
+        return { success: false, error: "Pokémonedas insuficientes." };
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { pokemonedas: { decrement: item.pkmPrice } },
+      });
+
+      if (itemType === "MYSTERY_EGG") {
+        const rarity = drawMysteryEggRarity();
+        await tx.pokemonEgg.create({
+          data: { userId, rarity, status: "INVENTORY" },
+        });
+      }
+
+      if (itemType === "BOX_EXPANSION") {
+        if (user.boxesUnlocked >= 24)
+          return { success: false, error: "Ya tienes el máximo de cajas (24)." };
+        await tx.user.update({
+          where: { id: userId },
+          data: { boxesUnlocked: Math.min(24, user.boxesUnlocked + 8) },
+        });
+      }
+
+      return { success: true };
+    });
+  } catch (error: any) {
+    console.error("Error al comprar objeto:", error);
     return { success: false, error: "Error procesando la compra." };
   }
 }

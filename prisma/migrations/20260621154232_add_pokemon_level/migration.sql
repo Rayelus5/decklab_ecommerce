@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "PokemonInstance" ADD COLUMN     "experience" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "level" INTEGER NOT NULL DEFAULT 1;

@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { startIncubation, hatchEgg } from "@/lib/gamification";
-import { INCUBATION_TIMES } from "@/lib/gamification-constants";
 import { useRouter } from "next/navigation";
-import { EggRarity, PokemonEgg, UserIncubator } from "@prisma/client";
+import { PokemonEgg, UserIncubator } from "@prisma/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -12,6 +11,7 @@ interface Props {
   eggs: PokemonEgg[];
   incubator: UserIncubator | null;
   userId: string;
+  hatchDeadlineMs: number | null;
 }
 
 const RARITY_COLORS: Record<string, { bg: string, border: string, text: string, hex: string }> = {
@@ -23,7 +23,7 @@ const RARITY_COLORS: Record<string, { bg: string, border: string, text: string, 
   MYTHIC: { bg: "bg-rose-500/10", border: "border-rose-500/30", text: "text-rose-400", hex: "f43f5e" },
 };
 
-export function IncubatorSection({ eggs, incubator, userId }: Props) {
+export function IncubatorSection({ eggs, incubator, userId, hatchDeadlineMs }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
@@ -31,30 +31,23 @@ export function IncubatorSection({ eggs, incubator, userId }: Props) {
   const incubatingEgg = eggs.find((e) => e.status === "INCUBATING");
   const inventoryEggs = eggs.filter((e) => e.status === "INVENTORY");
 
-  // Timer logic for incubating egg
+  // Timer basado en hatchDeadlineMs (número UTC absoluto calculado en el servidor)
+  // Evita ambigüedad de zona horaria al no hacer Date parsing en el cliente
   useEffect(() => {
-    if (!incubatingEgg || !incubatingEgg.incubatedAt) {
+    if (!incubatingEgg || hatchDeadlineMs === null) {
       setTimeLeft(null);
       return;
     }
 
-    const requiredMinutes = INCUBATION_TIMES[incubatingEgg.rarity as EggRarity];
-    const hatchTime = new Date(incubatingEgg.incubatedAt).getTime() + requiredMinutes * 60 * 1000;
-
     const updateTimer = () => {
-      const now = new Date().getTime();
-      const remaining = hatchTime - now;
-      if (remaining <= 0) {
-        setTimeLeft(0);
-      } else {
-        setTimeLeft(Math.floor(remaining / 1000)); // en segundos
-      }
+      const remaining = hatchDeadlineMs - Date.now();
+      setTimeLeft(remaining <= 0 ? 0 : Math.floor(remaining / 1000));
     };
 
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [incubatingEgg]);
+  }, [incubatingEgg, hatchDeadlineMs]);
 
   const handleIncubate = async (eggId: string) => {
     setLoading(true);
@@ -96,8 +89,9 @@ export function IncubatorSection({ eggs, incubator, userId }: Props) {
         
         {incubatingEgg ? (
           <div className="flex flex-col items-center gap-3">
-            <div className={`w-24 h-24 ${RARITY_COLORS[incubatingEgg.rarity]?.bg || "bg-white/5"} rounded-full flex items-center justify-center border-2 ${RARITY_COLORS[incubatingEgg.rarity]?.border || "border-amber-500/50"} animate-pulse overflow-hidden`}>
-              <img src={`https://placehold.co/100x100/${RARITY_COLORS[incubatingEgg.rarity]?.hex || "FBBF24"}/000000?text=Egg`} alt="Incubando Huevo" className="w-full h-full object-cover" />
+            <div className={`w-24 h-29 ${RARITY_COLORS[incubatingEgg.rarity]?.bg || "bg-white/5"} rounded-full flex items-center justify-center border-2 p-1 ${RARITY_COLORS[incubatingEgg.rarity]?.border || "border-amber-500/50"} animate-pulse overflow-hidden`}>
+              <img src="https://lh3.googleusercontent.com/l0SDuwjq-xKQLCFyja464SEgU3CQhouF1YuEI_81sAYNesICjMTq01ATE7p26qAz0LcgKf-EAnXN7B9vPruPENigknvyzIqsAiJF=e365-pa-nu-w513"
+              alt="Incubando Huevo" className="w-full h-full object-cover" />
             </div>
             <p className={`text-sm font-medium ${RARITY_COLORS[incubatingEgg.rarity]?.text || "text-amber-400"}`}>Incubando ({incubatingEgg.rarity})</p>
             {timeLeft !== null && (
@@ -137,8 +131,8 @@ export function IncubatorSection({ eggs, incubator, userId }: Props) {
               const colors = RARITY_COLORS[egg.rarity] || { bg: "bg-white/5", border: "border-white/10", text: "text-slate-300", hex: "FFFFFF" };
               return (
                 <div key={egg.id} className={`${colors.bg} border ${colors.border} rounded-xl p-3 flex flex-col items-center gap-2 transition-colors`}>
-                  <div className={`w-16 h-16 rounded-full overflow-hidden border ${colors.border}`}>
-                    <img src={`https://placehold.co/100x100/${colors.hex}/000000?text=Egg`} alt="Huevo" className="w-full h-full object-cover" />
+                  <div className={`w-16 h-20 p-1 overflow-hidden`}>
+                    <img src="https://lh3.googleusercontent.com/l0SDuwjq-xKQLCFyja464SEgU3CQhouF1YuEI_81sAYNesICjMTq01ATE7p26qAz0LcgKf-EAnXN7B9vPruPENigknvyzIqsAiJF=e365-pa-nu-w513" alt="Huevo" className="w-full h-full object-cover" />
                   </div>
                   <span className={`text-xs font-bold ${colors.text}`}>{egg.rarity}</span>
                   <button

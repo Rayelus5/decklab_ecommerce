@@ -27,6 +27,7 @@ interface NavbarProps {
 const NAV_LINKS = [
   { href: "/products", label: "Productos" },
   { href: "/pricing", label: "Házte PRO" },
+  { href: "/profile/inventory", label: "Inventario" },
   { href: "/cart", label: "Carrito" },
 ];
 

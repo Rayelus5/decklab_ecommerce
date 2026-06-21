@@ -18,6 +18,7 @@ interface Props {
   boxesUnlocked: number;
   balance: number;
   pokemonedas: number;
+  hatchDeadlineMs: number | null;
 }
 
 export function GamificationTabs({
@@ -28,6 +29,7 @@ export function GamificationTabs({
   boxesUnlocked,
   balance,
   pokemonedas,
+  hatchDeadlineMs,
 }: Props) {
   const [activeTab, setActiveTab] = useState<"collection" | "shop" | "battles" | "pokedex">("collection");
 
@@ -104,7 +106,7 @@ export function GamificationTabs({
       {activeTab === "collection" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
           <div className="flex flex-col gap-6">
-            <IncubatorSection eggs={eggs} incubator={incubator} userId={userId} />
+            <IncubatorSection eggs={eggs} incubator={incubator} userId={userId} hatchDeadlineMs={hatchDeadlineMs} />
           </div>
           <div className="lg:col-span-2">
             <InventoryBoxes pokemons={pokemons} boxesUnlocked={boxesUnlocked} userId={userId} />

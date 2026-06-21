@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { getUserGamificationData } from "@/lib/gamification";
+import { INCUBATION_TIMES } from "@/lib/gamification-constants";
 import { GamificationTabs } from "@/components/gamification/gamification-tabs";
+import { EggRarity } from "@prisma/client";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
@@ -25,6 +27,14 @@ export default async function InventoryPage() {
   }
 
   const { user, eggs, incubator, pokemons } = data;
+
+  // Calcular deadline de eclosión en el servidor (ms UTC, sin ambigüedad de zona horaria)
+  const incubatingEgg = eggs.find((e) => e.status === "INCUBATING");
+  const hatchDeadlineMs: number | null =
+    incubatingEgg?.incubatedAt
+      ? incubatingEgg.incubatedAt.getTime() +
+        INCUBATION_TIMES[incubatingEgg.rarity as EggRarity] * 60 * 1000
+      : null;
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 flex flex-col gap-8">
@@ -58,6 +68,7 @@ export default async function InventoryPage() {
         boxesUnlocked={user?.boxesUnlocked || 8}
         balance={Number(user?.proAllowanceBalance || 0)}
         pokemonedas={user?.pokemonedas || 0}
+        hatchDeadlineMs={hatchDeadlineMs}
       />
     </div>
   );

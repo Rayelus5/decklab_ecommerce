@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Save, RotateCcw, CheckCircle } from "lucide-react";
+import { Loader2, Save, RotateCcw, CheckCircle, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const STATUS_OPTIONS = [
@@ -15,6 +15,8 @@ const STATUS_OPTIONS = [
   { value: "CANCELLED", label: "Cancelado" },
   { value: "REFUNDED", label: "Reembolsado" },
 ];
+
+const DELETABLE_STATUSES = ["PENDING", "CANCELLED", "REFUNDED"];
 
 interface OrderActionsProps {
   orderId: string;
@@ -41,10 +43,13 @@ export function OrderActions({
   const [refundLoading, setRefundLoading] = useState(false);
   const [notifyLoading, setNotifyLoading] = useState(false);
   const [markPaidLoading, setMarkPaidLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const canRefund =
     (currentStatus === "PAID" || currentStatus === "PROCESSING") &&
     !!stripePaymentIntentId;
+
+  const isSafeToDelete = DELETABLE_STATUSES.includes(currentStatus);
 
   async function handleNotify() {
     setNotifyLoading(true);
@@ -236,6 +241,54 @@ export function OrderActions({
           </div>
         </>
       )}
+
+      <>
+        <hr className="border-white/8" />
+        <div>
+          <p className="text-xs text-slate-300 mb-2">
+            {isSafeToDelete
+              ? "Elimina el pedido permanentemente de la base de datos. Esta acción no se puede deshacer."
+              : "⚠️ Este pedido está en estado activo. Eliminarlo no reembolsará al cliente ni deshará el cobro en Stripe. Úsalo solo si ya gestionaste el reembolso manualmente."}
+          </p>
+          <button
+            onClick={async () => {
+              const warning = isSafeToDelete
+                ? "¿Eliminar este pedido permanentemente?\n\nSe borrará de la base de datos y no se podrá recuperar."
+                : `¿Eliminar este pedido en estado "${currentStatus}"?\n\n⚠️ ATENCIÓN: No se procesará ningún reembolso automático. Asegúrate de haber gestionado la devolución del dinero al cliente antes de continuar.\n\nEsta acción no se puede deshacer.`;
+              const confirmed = window.confirm(warning);
+              if (!confirmed) return;
+              setDeleteLoading(true);
+              try {
+                const res = await fetch(`/api/admin/orders/${orderId}/delete`, { method: "DELETE" });
+                const data = await res.json();
+                if (!res.ok) {
+                  toast.error(data.error ?? "Error al eliminar el pedido");
+                  return;
+                }
+                toast.success("Pedido eliminado correctamente");
+                router.push("/admin/orders");
+              } catch {
+                toast.error("Error de conexión");
+              } finally {
+                setDeleteLoading(false);
+              }
+            }}
+            disabled={deleteLoading}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-[8px] text-sm font-medium
+              bg-ember-red/5 border border-ember-red/20 text-ember-red/70
+              hover:bg-ember-red/10 hover:border-ember-red/30 hover:text-ember-red
+              disabled:opacity-50 disabled:cursor-not-allowed
+              transition-colors cursor-pointer"
+          >
+            {deleteLoading ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              <Trash2 size={14} />
+            )}
+            {deleteLoading ? "Eliminando..." : "Eliminar pedido"}
+          </button>
+        </div>
+      </>
     </div>
   );
 }

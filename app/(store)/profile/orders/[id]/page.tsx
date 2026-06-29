@@ -129,6 +129,48 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         </div>
       </div>
 
+      {/* Marketplace — banner informativo */}
+      {order.marketplaceShipping && order.marketplacePlatform && (
+        <div className={`border rounded-[12px] px-4 py-4 flex flex-col gap-3 ${
+          order.marketplacePlatform === "WALLAPOP"
+            ? "bg-orange-500/8 border-orange-500/20"
+            : "bg-emerald-500/8 border-emerald-500/20"
+        }`}>
+          <div className="flex items-center gap-2">
+            <Truck size={14} className={order.marketplacePlatform === "WALLAPOP" ? "text-orange-400 shrink-0" : "text-emerald-400 shrink-0"} />
+            <p className={`text-sm font-semibold ${order.marketplacePlatform === "WALLAPOP" ? "text-orange-300" : "text-emerald-300"}`}>
+              Envío por {order.marketplacePlatform === "WALLAPOP" ? "Wallapop" : "Vinted"}
+            </p>
+          </div>
+          {order.marketplacePayOption === "PLATFORM" && order.status === "PENDING" ? (
+            <div className="text-xs text-slate-300 leading-relaxed flex flex-col gap-1">
+              <p>Tu pedido está registrado. El equipo de DECKLAB creará un anuncio en{" "}
+                <strong className="text-snow">{order.marketplacePlatform === "WALLAPOP" ? "Wallapop" : "Vinted"}</strong>{" "}
+                y te lo enviará por Telegram en breve.</p>
+              <p className="text-slate-300/60">No necesitas hacer nada más hasta recibirlo.</p>
+            </div>
+          ) : order.marketplacePayOption === "WEB" ? (
+            <div className="text-xs text-slate-300 leading-relaxed">
+              <p>Has pagado los productos aquí. El equipo creará un anuncio de <strong className="text-snow">1€</strong>{" "}
+              en {order.marketplacePlatform === "WALLAPOP" ? "Wallapop" : "Vinted"} para que puedas comprar el envío con seguimiento de Correos.</p>
+            </div>
+          ) : null}
+          {order.marketplaceListingUrl && (
+            <a
+              href={order.marketplaceListingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-flex items-center gap-1.5 text-xs font-medium underline underline-offset-2 ${
+                order.marketplacePlatform === "WALLAPOP" ? "text-orange-300 hover:text-orange-100" : "text-emerald-300 hover:text-emerald-100"
+              } transition-colors`}
+            >
+              <ExternalLink size={12} />
+              {order.marketplacePayOption === "WEB" ? "Comprar envío en el anuncio" : "Ver anuncio en la plataforma"}
+            </a>
+          )}
+        </div>
+      )}
+
       {/* Envío unificado — banner informativo */}
       {order.consolidatedWith && (
         <div className="bg-sky-500/8 border border-sky-500/20 rounded-[12px] px-4 py-3 flex items-center gap-3">
@@ -324,11 +366,13 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
             )}
             <div className="flex justify-between">
               <span className="text-slate-300">
-                Envío ({order.shippingType.toLowerCase()})
+                {order.marketplaceShipping
+                  ? `Envío (${order.marketplacePlatform === "WALLAPOP" ? "Wallapop" : "Vinted"})`
+                  : `Envío (${order.shippingType.toLowerCase()})`}
               </span>
               <span className="text-snow tabular-nums">
                 {Number(order.shippingCost) === 0
-                  ? "Gratis"
+                  ? order.marketplaceShipping ? "En plataforma" : "Gratis"
                   : `${Number(order.shippingCost).toFixed(2).replace(".", ",")} €`}
               </span>
             </div>

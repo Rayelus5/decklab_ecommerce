@@ -93,11 +93,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     couponCode, couponId: metaCouponId, discountAmount: metaDiscountAmount,
     cartItems, isPro,
     consolidateOrderId, consolidateShippingDiff,
+    marketplaceShipping, marketplacePlatform, marketplacePayOption,
   } = session.metadata ?? {};
 
   const isConsolidation = Boolean(consolidateOrderId);
+  const isMarketplace = marketplaceShipping === "true";
 
-  if (!userId || !addressId || (!shippingRateId && !isConsolidation) || !cartItems) {
+  if (!userId || !addressId || (!shippingRateId && !isConsolidation && !isMarketplace) || !cartItems) {
     console.error("[WEBHOOK] Missing metadata in session", session.id);
     return;
   }
@@ -198,6 +200,11 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         consolidatedWithOrderId: isConsolidation && consolidateOrderId
           ? consolidateOrderId
           : null,
+        // Marketplace
+        marketplaceShipping: isMarketplace,
+        marketplacePlatform: isMarketplace ? (marketplacePlatform ?? null) : null,
+        marketplacePayOption: isMarketplace ? (marketplacePayOption ?? null) : null,
+        marketplaceListingStatus: isMarketplace ? "PENDING" : null,
         items: {
           create: parsedItems.map((item) => {
             const variant = variants.find((v) => v.id === item.variantId);

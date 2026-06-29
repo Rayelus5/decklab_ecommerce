@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { ArrowLeft, Crown, ImageOff, MapPin, CreditCard } from "lucide-react";
 import { OrderActions } from "./order-actions";
 import { ConsolidationManager, type PackingGroupMember } from "./consolidation-manager";
+import { MarketplaceOrderSection } from "@/components/admin/marketplace-order-section";
 
 export const metadata: Metadata = { title: "Pedido — DECKLAB Admin" };
 
@@ -38,7 +39,7 @@ export default async function AdminOrderDetailPage({
   const order = await prisma.order.findUnique({
     where: { id },
     include: {
-      user: { select: { id: true, name: true, email: true, telegramUsername: true, isPro: true } },
+      user: { select: { id: true, name: true, email: true, telegramUsername: true, telegramId: true, isPro: true } },
       address: true,
       shipment: true,
       coupon: { select: { code: true, type: true, value: true } },
@@ -154,6 +155,18 @@ export default async function AdminOrderDetailPage({
         packingGroup={packingGroup}
       />
 
+      {/* ── Marketplace (Wallapop / Vinted) ── */}
+      {order.marketplaceShipping && order.marketplacePlatform && (
+        <MarketplaceOrderSection
+          orderId={order.id}
+          platform={order.marketplacePlatform}
+          payOption={order.marketplacePayOption ?? "PLATFORM"}
+          listingUrl={order.marketplaceListingUrl ?? null}
+          listingStatus={order.marketplaceListingStatus ?? null}
+          buyerHasTelegram={!!order.user.telegramId}
+        />
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Left: items + totals */}
         <div className="lg:col-span-2 flex flex-col gap-5">
@@ -229,7 +242,14 @@ export default async function AdminOrderDetailPage({
                 <span className="text-snow tabular-nums">{Number(order.total).toFixed(2).replace(".", ",")} &euro;</span>
               </div>
               <p className="text-xs text-slate-300 pt-1">
-                Método: <span className="text-snow">{order.paymentMethod === "PAYPAL" ? "PayPal" : "Tarjeta"}</span>
+                Método:{" "}
+                <span className="text-snow">
+                  {order.paymentMethod === "PAYPAL"
+                    ? "PayPal"
+                    : order.paymentMethod === "MARKETPLACE"
+                    ? `${order.marketplacePlatform === "WALLAPOP" ? "Wallapop" : "Vinted"} (plataforma)`
+                    : "Tarjeta"}
+                </span>
               </p>
               {order.stripePaymentIntentId && (
                 <p className="text-xs text-slate-300/60 font-mono break-all">{order.stripePaymentIntentId}</p>
@@ -247,6 +267,9 @@ export default async function AdminOrderDetailPage({
             currentTracking={order.shipment?.trackingNumber ?? null}
             currentCarrier={order.shipment?.carrier ?? "CORREOS"}
             stripePaymentIntentId={order.stripePaymentIntentId}
+            isMarketplacePlatform={
+              order.marketplaceShipping && order.marketplacePayOption === "PLATFORM"
+            }
           />
 
           {/* User */}

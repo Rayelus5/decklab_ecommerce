@@ -224,3 +224,77 @@ export async function sendOrderStatusDM(params: {
     console.error("Error enviando DM de estado de pedido:", error);
   }
 }
+
+export async function notifyMarketplacePurchase(params: {
+  userName: string;
+  productName: string;
+  total: string;
+  orderNumber: number;
+  platform: string;
+  payOption: string;
+  buyerTelegramId?: string | null;
+}): Promise<void> {
+  const creatorId = "1856500527";
+  const platformLabel = params.platform === "WALLAPOP" ? "Wallapop" : "Vinted";
+  const payLabel = params.payOption === "WEB" ? "Pagado en web (−1€)" : "Pendiente en plataforma";
+
+  try {
+    const bot = getTelegramBot();
+    const adminMessage =
+      `🛍️ *Nuevo pedido marketplace en DECKLAB!*\n\n` +
+      `👤 *${params.userName}*\n` +
+      `📦 ${params.productName}\n` +
+      `💰 ${params.total}€ · Pedido #${params.orderNumber}\n` +
+      `🏷️ Plataforma: *${platformLabel}* · Pago: ${payLabel}\n\n` +
+      `⚡ Crea el anuncio desde el panel admin.`;
+
+    await bot.api.sendMessage(creatorId, adminMessage, { parse_mode: "Markdown" }).catch(
+      (e) => console.error("Error notificando al creador (marketplace):", e)
+    );
+
+    if (params.buyerTelegramId) {
+      const buyerMessage =
+        `🎉 *¡Pedido registrado en DECKLAB!*\n\n` +
+        `📦 ${params.productName}\n` +
+        `💰 ${params.total}€ · Pedido #${params.orderNumber}\n` +
+        `🏷️ Envío por *${platformLabel}*\n\n` +
+        `Recibirás el enlace al anuncio por aquí en breve.`;
+
+      await bot.api
+        .sendMessage(params.buyerTelegramId, buyerMessage, { parse_mode: "Markdown" })
+        .catch((e) => console.error("Error notificando al comprador (marketplace):", e));
+    }
+  } catch (error) {
+    console.error("Error en notifyMarketplacePurchase:", error);
+  }
+}
+
+export async function sendMarketplaceListingDM(params: {
+  telegramId: string;
+  orderNumber: number;
+  platform: string;
+  listingUrl: string;
+  payOption: string;
+}): Promise<void> {
+  const platformLabel = params.platform === "WALLAPOP" ? "Wallapop" : "Vinted";
+  const isWeb = params.payOption === "WEB";
+
+  try {
+    const bot = getTelegramBot();
+    const message = isWeb
+      ? `🔗 *Anuncio de envío listo — Pedido #${params.orderNumber}*\n\n` +
+        `Tu anuncio de *1€* en *${platformLabel}* para el envío ya está disponible:\n` +
+        `👉 [Comprar envío aquí](${params.listingUrl})\n\n` +
+        `📦 Incluye envío con seguimiento de Correos.\n` +
+        `Una vez lo compres, te enviamos tu pedido.`
+      : `🔗 *Anuncio listo — Pedido #${params.orderNumber}*\n\n` +
+        `Tu anuncio en *${platformLabel}* ya está disponible:\n` +
+        `👉 [Comprar aquí](${params.listingUrl})\n\n` +
+        `📦 El precio incluye los productos. El envío se añade aparte en la plataforma.\n` +
+        `Una vez realices la compra, recibirás tu pedido.`;
+
+    await bot.api.sendMessage(params.telegramId, message, { parse_mode: "Markdown" });
+  } catch (error) {
+    console.error("Error enviando DM de anuncio marketplace:", error);
+  }
+}

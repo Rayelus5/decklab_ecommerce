@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { sendOrderStatusDM } from "@/lib/telegram";
 import { sendShipmentTrackingEmail } from "@/lib/email";
+import { updateUserVipStats } from "@/lib/vip";
 
 const updateOrderSchema = z.object({
   status: z.enum(["PENDING", "PAID", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]).optional(),
@@ -31,15 +32,44 @@ export async function PATCH(
 
     const order = await prisma.order.findUnique({
       where: { id },
-      include: { shipment: true, user: { select: { telegramId: true, name: true } } },
+      include: {
+        shipment: true,
+        user: { select: { telegramId: true, name: true } },
+        items: { select: { variantId: true, quantity: true } },
+      },
     });
 
     if (!order) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
-    // Update order status
+    // Para pedidos marketplace PLATFORM: al marcar PAID decrementar stock y activar VIP
+    const isMarketplacePlatformPayment =
+      order.marketplaceShipping &&
+      order.marketplacePayOption === "PLATFORM" &&
+      !order.isPaid &&
+      status === "PAID";
+
+    if (isMarketplacePlatformPayment) {
+      await prisma.$transaction(async (tx) => {
+        await tx.order.update({ where: { id }, data: { status: "PAID", isPaid: true } });
+        for (const item of order.items) {
+          await tx.$executeRaw`
+            UPDATE "ProductVariant"
+            SET "stock" = "stock" - ${item.quantity},
+                "reservedStock" = GREATEST(0, "reservedStock" - ${item.quantity})
+            WHERE id = ${item.variantId}
+          `;
+        }
+      });
+      // Activar VIP + cashback (fire-and-forget)
+      updateUserVipStats(order.userId, Number(order.total)).catch(
+        (e) => console.error("[MARKETPLACE PAID VIP]", e)
+      );
+    }
+
+    // Update order status (siempre, sea marketplace o no)
     const updatedOrder = await prisma.order.update({
       where: { id },
-      data: status ? { status } : {},
+      data: status ? { status, ...(isMarketplacePlatformPayment ? { isPaid: true } : {}) } : {},
     });
 
     // Update or create shipment if tracking info provided

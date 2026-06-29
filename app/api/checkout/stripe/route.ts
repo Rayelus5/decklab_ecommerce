@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
       couponCode,
       useProPricing,
       items,
+      marketplaceShipping,
+      marketplacePlatform,
     } = body as {
       addressId: string;
       shippingRateId?: string;
@@ -42,9 +44,13 @@ export async function POST(req: NextRequest) {
       couponCode?: string;
       useProPricing?: boolean;
       items: CartItemInput[];
+      marketplaceShipping?: boolean;
+      marketplacePlatform?: string;
     };
 
-    if (!addressId || (!shippingRateId && !consolidateOrderId) || !items?.length) {
+    const isMarketplace = marketplaceShipping === true && !!marketplacePlatform;
+
+    if (!addressId || (!isMarketplace && !shippingRateId && !consolidateOrderId) || !items?.length) {
       return NextResponse.json({ error: "Datos de checkout incompletos" }, { status: 400 });
     }
 
@@ -73,7 +79,14 @@ export async function POST(req: NextRequest) {
     };
     let consolidateInfo: ConsolidateInfo | null = null;
 
-    if (consolidateOrderId) {
+    if (isMarketplace) {
+      // Rama marketplace (Wallapop / Vinted) — sin coste de envío en Stripe
+      const region = address.country.toUpperCase() === "ES" ? "NATIONAL" : "EUROPE";
+      resolvedShippingType = marketplacePlatform!;
+      resolvedShippingRegion = region;
+      resolvedShippingRateName = marketplacePlatform === "WALLAPOP" ? "Wallapop" : "Vinted";
+      resolvedBaseShippingCost = 0;
+    } else if (consolidateOrderId) {
       // Validación preliminar — cargar el pedido original
       const originalOrder = await prisma.order.findFirst({
         where: {
@@ -355,6 +368,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // 7b. Descuento de 1€ para pedidos marketplace WEB
+    const marketplaceWebDiscount = isMarketplace ? 1.0 : 0;
+
     // 8. Validar cupón y crear cupón temporal en Stripe (si hay)
     let couponId: string | null = null;
     let discountAmount = 0;
@@ -397,15 +413,27 @@ export async function POST(req: NextRequest) {
             ? `${validation.coupon.value}% — ${validation.coupon.code}`
             : `${discountAmount.toFixed(2)}€ — ${validation.coupon.code}`;
 
+        const totalOff = Math.round((discountAmount + marketplaceWebDiscount) * 100);
         const stripeCoupon = await stripe.coupons.create({
-          name: `Descuento ${label}`,
-          amount_off: Math.round(discountAmount * 100),
+          name: `Descuento ${label}${isMarketplace ? " + envío marketplace −1€" : ""}`,
+          amount_off: totalOff,
           currency: "eur",
           duration: "once",
         });
 
         stripeCouponId = stripeCoupon.id;
       }
+    }
+
+    // Si solo hay descuento marketplace (sin cupón de usuario)
+    if (!stripeCouponId && marketplaceWebDiscount > 0) {
+      const stripeCoupon = await stripe.coupons.create({
+        name: "Descuento envío marketplace −1€",
+        amount_off: Math.round(marketplaceWebDiscount * 100),
+        currency: "eur",
+        duration: "once",
+      });
+      stripeCouponId = stripeCoupon.id;
     }
 
     // 9. Crear sesión de Stripe
@@ -433,7 +461,7 @@ export async function POST(req: NextRequest) {
         shippingRegion: resolvedShippingRegion,
         couponCode: couponCode ?? "",
         couponId: couponId ?? "",
-        discountAmount: discountAmount.toFixed(2),
+        discountAmount: (discountAmount + marketplaceWebDiscount).toFixed(2),
         cartItems: JSON.stringify(cartMetaItems),
         isPro: wantsProPricing ? "true" : "false",
         // Campos de consolidación (vacíos si es pedido normal)
@@ -441,6 +469,10 @@ export async function POST(req: NextRequest) {
         consolidateShippingDiff: consolidateOrderId
           ? effectiveShippingCost.toFixed(2)
           : "",
+        // Campos marketplace
+        marketplaceShipping: isMarketplace ? "true" : "",
+        marketplacePlatform: isMarketplace ? (marketplacePlatform ?? "") : "",
+        marketplacePayOption: isMarketplace ? "WEB" : "",
       },
       locale: "es",
     });

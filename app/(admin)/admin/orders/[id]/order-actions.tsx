@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Save, RotateCcw } from "lucide-react";
+import { Loader2, Save, RotateCcw, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const STATUS_OPTIONS = [
@@ -22,6 +22,7 @@ interface OrderActionsProps {
   currentTracking: string | null;
   currentCarrier: string;
   stripePaymentIntentId?: string | null;
+  isMarketplacePlatform?: boolean;
 }
 
 export function OrderActions({
@@ -30,6 +31,7 @@ export function OrderActions({
   currentTracking,
   currentCarrier,
   stripePaymentIntentId,
+  isMarketplacePlatform = false,
 }: OrderActionsProps) {
   const router = useRouter();
   const [status, setStatus] = useState(currentStatus);
@@ -38,6 +40,7 @@ export function OrderActions({
   const [loading, setLoading] = useState(false);
   const [refundLoading, setRefundLoading] = useState(false);
   const [notifyLoading, setNotifyLoading] = useState(false);
+  const [markPaidLoading, setMarkPaidLoading] = useState(false);
 
   const canRefund =
     (currentStatus === "PAID" || currentStatus === "PROCESSING") &&
@@ -159,6 +162,53 @@ export function OrderActions({
       <Button onClick={handleNotify} loading={notifyLoading} variant="outline" className="cursor-pointer mt-2 text-slate-300 border-white/10 hover:bg-white/5">
         Notificar estado por Telegram
       </Button>
+
+      {isMarketplacePlatform && currentStatus === "PENDING" && (
+        <>
+          <hr className="border-white/8" />
+          <div>
+            <p className="text-xs text-slate-300 mb-2">
+              Cuando el comprador realice la compra en la plataforma, marca el pedido como pagado para activar el envío y los beneficios VIP.
+            </p>
+            <button
+              onClick={async () => {
+                setMarkPaidLoading(true);
+                try {
+                  const res = await fetch(`/api/admin/orders/${orderId}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ status: "PAID" }),
+                  });
+                  const data = await res.json();
+                  if (!res.ok) {
+                    toast.error(data.error ?? "Error al actualizar el pedido");
+                    return;
+                  }
+                  toast.success("Pedido marcado como PAGADO");
+                  router.refresh();
+                } catch {
+                  toast.error("Error de conexión");
+                } finally {
+                  setMarkPaidLoading(false);
+                }
+              }}
+              disabled={markPaidLoading}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-[8px] text-sm font-medium
+                bg-mint-signal/10 border border-mint-signal/25 text-mint-signal
+                hover:bg-mint-signal/15 hover:border-mint-signal/40
+                disabled:opacity-50 disabled:cursor-not-allowed
+                transition-colors cursor-pointer"
+            >
+              {markPaidLoading ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <CheckCircle size={14} />
+              )}
+              {markPaidLoading ? "Procesando..." : "Marcar como Pagado"}
+            </button>
+          </div>
+        </>
+      )}
 
       {canRefund && (
         <>

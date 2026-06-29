@@ -28,14 +28,17 @@ const STATUS_COLORS: Record<string, string> = {
 export default async function AdminOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; page?: string }>;
+  searchParams: Promise<{ status?: string; page?: string; marketplace?: string }>;
 }) {
   const sp = await searchParams;
   const statusFilter = sp.status;
+  const marketplaceFilter = sp.marketplace === "1";
   const page = parseInt(sp.page ?? "1");
   const PAGE_SIZE = 20;
 
-  const where = statusFilter ? { status: statusFilter as never } : {};
+  const where: Record<string, unknown> = {};
+  if (statusFilter) where.status = statusFilter;
+  if (marketplaceFilter) where.marketplaceShipping = true;
 
   const [orders, total] = await Promise.all([
     prisma.order.findMany({
@@ -51,6 +54,10 @@ export default async function AdminOrdersPage({
         paymentMethod: true,
         createdAt: true,
         consolidatedWithOrderId: true,
+        marketplaceShipping: true,
+        marketplacePlatform: true,
+        marketplacePayOption: true,
+        marketplaceListingStatus: true,
         user: { select: { name: true, email: true } },
         _count: { select: { items: true, consolidatedOrders: true } },
         shipment: { select: { trackingNumber: true } },
@@ -71,6 +78,11 @@ export default async function AdminOrdersPage({
     { label: "Cancelado", value: "CANCELLED" },
   ];
 
+  const MARKETPLACE_PLATFORM_COLORS: Record<string, string> = {
+    WALLAPOP: "text-orange-400 bg-orange-400/10 border-orange-400/20",
+    VINTED: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
+  };
+
   return (
     <div className="p-6 flex flex-col gap-6 max-w-6xl">
       <div className="flex items-center justify-between">
@@ -87,7 +99,7 @@ export default async function AdminOrdersPage({
             key={value}
             href={value ? `/admin/orders?status=${value}` : "/admin/orders"}
             className={`cursor-pointer px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-              (statusFilter ?? "") === value
+              (statusFilter ?? "") === value && !marketplaceFilter
                 ? "bg-ash-50 text-graphite-700"
                 : "bg-graphite-700/60 border border-white/8 text-slate-300 hover:text-snow"
             }`}
@@ -95,6 +107,16 @@ export default async function AdminOrdersPage({
             {label}
           </Link>
         ))}
+        <Link
+          href="/admin/orders?marketplace=1"
+          className={`cursor-pointer px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+            marketplaceFilter
+              ? "bg-orange-400 text-graphite-700"
+              : "bg-orange-400/10 border border-orange-400/20 text-orange-400 hover:bg-orange-400/20"
+          }`}
+        >
+          Marketplace
+        </Link>
       </div>
 
       {/* Table */}
@@ -138,6 +160,16 @@ export default async function AdminOrdersPage({
                           Base ×{order._count.consolidatedOrders}
                         </span>
                       )}
+                      {order.marketplaceShipping && order.marketplacePlatform && (
+                        <span className={`inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${MARKETPLACE_PLATFORM_COLORS[order.marketplacePlatform] ?? "text-slate-400 bg-white/5 border-white/10"}`}>
+                          {order.marketplacePlatform === "WALLAPOP" ? "Wallapop" : "Vinted"}
+                        </span>
+                      )}
+                      {order.marketplaceShipping && order.marketplacePayOption === "PLATFORM" && order.status === "PENDING" && (
+                        <span className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-full border font-medium text-amber-400 bg-amber-400/10 border-amber-400/20">
+                          Pago ext. pendiente
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-3">
@@ -151,7 +183,13 @@ export default async function AdminOrdersPage({
                   </td>
                   <td className="px-4 py-3 text-slate-300 text-xs">{order._count.items}</td>
                   <td className="px-4 py-3 text-slate-300 text-xs">
-                    {order.paymentMethod === "PAYPAL" ? "PayPal" : "Tarjeta"}
+                    {order.paymentMethod === "PAYPAL"
+                      ? "PayPal"
+                      : order.paymentMethod === "MARKETPLACE"
+                      ? order.marketplacePlatform === "WALLAPOP" ? "Wallapop" : "Vinted"
+                      : order.marketplaceShipping
+                      ? `${order.marketplacePlatform === "WALLAPOP" ? "Wallapop" : "Vinted"} (web)`
+                      : "Tarjeta"}
                   </td>
                   <td className="px-4 py-3 text-right text-snow font-semibold tabular-nums">
                     {Number(order.total).toFixed(2).replace(".", ",")} &euro;

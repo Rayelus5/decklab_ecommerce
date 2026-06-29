@@ -16,6 +16,8 @@ import { useCart } from "@/lib/hooks/use-cart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { checkoutSchema, type CheckoutFormData } from "@/lib/validations";
+import { MarketplaceInfoModal } from "@/components/checkout/marketplace-info-modal";
+import Image from "next/image";
 
 interface Address {
   id: string;
@@ -107,6 +109,10 @@ export function CheckoutClient({
   const [couponLoading, setCouponLoading] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
 
+  // — Marketplace (Wallapop / Vinted) —
+  const [marketplacePlatform, setMarketplacePlatform] = useState<"WALLAPOP" | "VINTED" | null>(null);
+  const [marketplacePayOption, setMarketplacePayOption] = useState<"WEB" | "PLATFORM" | null>(null);
+
   // — Envío unificado —
   const [eligibleOrders, setEligibleOrders] = useState<EligibleOrder[]>([]);
   const [eligibleLoading, setEligibleLoading] = useState(false);
@@ -139,15 +145,19 @@ export function CheckoutClient({
 
   const selectedRate = applicableRates.find((r) => r.id === selectedShippingRateId);
 
-  // Coste de envío efectivo: consolidación, PRO gratis, o tarifa normal
+  // Coste de envío efectivo: marketplace siempre 0, consolidación, PRO gratis, o tarifa normal
   const shippingCost = (() => {
+    if (marketplacePlatform) return 0;
     if (consolidateOrderId) {
       return hasFreeShipping ? 0 : (consolidateEstimate?.difference ?? 0);
     }
     return hasFreeShipping ? 0 : (selectedRate?.price ?? 0);
   })();
 
-  const total = subtotal + shippingCost - couponDiscount;
+  // Descuento −1€ para envío marketplace pagando en web
+  const marketplaceWebDiscount = marketplacePlatform && marketplacePayOption === "WEB" ? 1 : 0;
+
+  const total = subtotal + shippingCost - couponDiscount - marketplaceWebDiscount;
 
   // ── Fetch pedidos elegibles al entrar en step 2 ──
   useEffect(() => {
@@ -226,7 +236,7 @@ export function CheckoutClient({
   }
 
   async function handleStripeCheckout() {
-    if (!selectedAddressId || (!selectedShippingRateId && !consolidateOrderId)) {
+    if (!selectedAddressId || (!selectedShippingRateId && !consolidateOrderId && !marketplacePlatform)) {
       toast.error("Selecciona una dirección y método de envío");
       return;
     }
@@ -237,11 +247,16 @@ export function CheckoutClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           addressId: selectedAddressId,
-          shippingRateId: consolidateOrderId ? undefined : selectedShippingRateId,
+          shippingRateId: consolidateOrderId || marketplacePlatform ? undefined : selectedShippingRateId,
           consolidateOrderId: consolidateOrderId || undefined,
           couponCode: couponCode || undefined,
           useProPricing,
           items: items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
+          // Marketplace WEB
+          ...(marketplacePlatform ? {
+            marketplaceShipping: true,
+            marketplacePlatform,
+          } : {}),
         }),
       });
       const data = await res.json();
@@ -249,12 +264,42 @@ export function CheckoutClient({
         toast.error(data.error ?? "Error al iniciar el pago");
         return;
       }
-      // Guardar sessionId en el store para poder liberar la reserva si el usuario
-      // vacía el carrito antes de completar el pago
       if (data.sessionId) {
         setPendingSessionId(data.sessionId);
       }
       window.location.href = data.url;
+    } catch {
+      toast.error("Error de conexión. Inténtalo de nuevo.");
+    } finally {
+      setPaymentLoading(false);
+    }
+  }
+
+  async function handleMarketplacePlatformOrder() {
+    if (!selectedAddressId || !marketplacePlatform) {
+      toast.error("Selecciona una dirección y plataforma de envío");
+      return;
+    }
+    setPaymentLoading(true);
+    try {
+      const res = await fetch("/api/checkout/marketplace-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          addressId: selectedAddressId,
+          items: items.map((i) => ({ variantId: i.variantId, quantity: i.quantity })),
+          marketplacePlatform,
+          couponCode: couponCode || undefined,
+          useProPricing,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Error al registrar el pedido");
+        return;
+      }
+      clearCart();
+      window.location.href = `/profile/orders/${data.orderId}?marketplace=1`;
     } catch {
       toast.error("Error de conexión. Inténtalo de nuevo.");
     } finally {
@@ -414,6 +459,154 @@ export function CheckoutClient({
                     </p>
                   </div>
                 )}
+
+                {/* ── Métodos de envío marketplace (prioridad) ── */}
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs font-semibold text-snow flex items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 bg-mint-signal/10 border border-mint-signal/20 text-mint-signal rounded-full font-semibold uppercase tracking-wide">
+                      Recomendado
+                    </span>
+                    Ahorra en envío
+                  </p>
+
+                  {(["WALLAPOP", "VINTED"] as const).map((platform) => {
+                    const platformLabel = platform === "WALLAPOP" ? "Wallapop" : "Vinted";
+                    const iconPath = platform === "WALLAPOP" ? "/wallapop.webp" : "/vinted.webp";
+                    const isSelected = marketplacePlatform === platform;
+
+                    return (
+                      <div
+                        key={platform}
+                        className={clsx(
+                          "rounded-[11px] border transition-all overflow-hidden",
+                          isSelected ? "border-ash-50/40 bg-ash-50/5" : "border-white/8 hover:border-white/15"
+                        )}
+                      >
+                        {/* Card header — clickable */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setMarketplacePlatform(null);
+                              setMarketplacePayOption(null);
+                            } else {
+                              setMarketplacePlatform(platform);
+                              setMarketplacePayOption("PLATFORM");
+                              // Deseleccionar envío normal
+                              const event = { target: { value: "" } };
+                              register("shippingRateId").onChange(event as React.ChangeEvent<HTMLInputElement>);
+                              setConsolidateOrderId(null);
+                              setConsolidateEstimate(null);
+                            }
+                          }}
+                          className="w-full flex items-center gap-3 p-4 text-left cursor-pointer"
+                        >
+                          {/* Radio visual */}
+                          <div className={clsx(
+                            "w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
+                            isSelected ? "border-ash-50 bg-ash-50" : "border-white/30 bg-transparent"
+                          )}>
+                            {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-graphite-700" />}
+                          </div>
+
+                          {/* Icon */}
+                          <div className="w-8 h-8 rounded-[8px] bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                            <Image
+                              src={iconPath}
+                              alt={platformLabel}
+                              width={40}
+                              height={40}
+                              className="object-contain"
+                              onError={() => {}}
+                            />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-snow">{platformLabel}</span>
+                              <span className="text-[10px] px-1.5 py-0.5 bg-mint-signal/10 border border-mint-signal/20 text-mint-signal rounded-full font-semibold">
+                                Económico
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
+                              Envío con seguimiento de Correos a precios de plataforma
+                            </p>
+                          </div>
+
+                          <div className="shrink-0">
+                            <MarketplaceInfoModal platform={platform} />
+                          </div>
+                        </button>
+
+                        {/* Sub-opciones de pago (visible solo si esta plataforma está seleccionada) */}
+                        {isSelected && (
+                          <div className="px-4 pb-4 flex flex-col gap-2 border-t border-white/8 pt-3">
+                            <p className="text-xs text-slate-300 font-medium">¿Cómo quieres pagar?</p>
+                            <div className="flex flex-col gap-1.5">
+                              {/* Opción PLATFORM */}
+                              <label className={clsx(
+                                "flex items-start gap-3 p-3 rounded-[9px] border cursor-pointer transition-all",
+                                marketplacePayOption === "PLATFORM"
+                                  ? "border-ash-50/40 bg-ash-50/5"
+                                  : "border-white/8 hover:border-white/15"
+                              )}>
+                                <input
+                                  type="radio"
+                                  name={`${platform}-payOption`}
+                                  checked={marketplacePayOption === "PLATFORM"}
+                                  onChange={() => setMarketplacePayOption("PLATFORM")}
+                                  className="mt-0.5 accent-ash-50"
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium text-snow">Pagar en {platformLabel}</span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-300 mt-0.5">
+                                    Recibirás un anuncio en {platformLabel}. Pagas allí el total + envío.
+                                  </p>
+                                </div>
+                              </label>
+
+                              {/* Opción WEB */}
+                              <label className={clsx(
+                                "flex items-start gap-3 p-3 rounded-[9px] border cursor-pointer transition-all",
+                                marketplacePayOption === "WEB"
+                                  ? "border-ash-50/40 bg-ash-50/5"
+                                  : "border-white/8 hover:border-white/15"
+                              )}>
+                                <input
+                                  type="radio"
+                                  name={`${platform}-payOption`}
+                                  checked={marketplacePayOption === "WEB"}
+                                  onChange={() => setMarketplacePayOption("WEB")}
+                                  className="mt-0.5 accent-ash-50"
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs font-medium text-snow">Pagar aquí</span>
+                                    <span className="text-[10px] font-semibold text-mint-signal bg-mint-signal/10 border border-mint-signal/20 px-1.5 py-0.5 rounded-full">
+                                      −1€
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-300 mt-0.5">
+                                    Pagas los productos aquí con 1€ de descuento. Recibirás un anuncio de 1€ en {platformLabel} para el envío.
+                                  </p>
+                                </div>
+                              </label>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Separador */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-white/8" />
+                  <span className="text-xs text-slate-300/50">o envío convencional</span>
+                  <div className="flex-1 h-px bg-white/8" />
+                </div>
 
                 {/* ── Card de envío unificado (solo si hay pedidos elegibles) ── */}
                 {eligibleLoading && (
@@ -610,8 +803,18 @@ export function CheckoutClient({
                     Volver
                   </Button>
                   <Button
-                    onClick={() => (selectedShippingRateId || consolidateOrderId) && setStep(3)}
-                    disabled={!selectedShippingRateId && !consolidateOrderId}
+                    onClick={() => {
+                      const canProceed =
+                        selectedShippingRateId ||
+                        consolidateOrderId ||
+                        (marketplacePlatform && marketplacePayOption);
+                      if (canProceed) setStep(3);
+                    }}
+                    disabled={
+                      !selectedShippingRateId &&
+                      !consolidateOrderId &&
+                      !(marketplacePlatform && marketplacePayOption)
+                    }
                     size="lg"
                     className="flex-1"
                   >
@@ -677,37 +880,73 @@ export function CheckoutClient({
               <div className="bg-graphite-700/40 border border-white/8 rounded-[16px] p-5 flex flex-col gap-4">
                 <h2 className="text-base font-semibold text-snow flex items-center gap-2">
                   <CreditCard size={16} className="text-slate-300" />
-                  Pago seguro con Stripe
+                  {marketplacePlatform && marketplacePayOption === "PLATFORM"
+                    ? "Confirmar pedido"
+                    : "Pago seguro con Stripe"}
                 </h2>
 
-                <p className="text-sm text-slate-300">
-                  Acepta Visa, Mastercard, American Express, Google Pay y Apple Pay.
-                </p>
-
-                {/* Aviso de no devoluciones */}
-                <div className="bg-ember-red/10 border border-ember-red/20 rounded-[8px] px-3 py-2.5">
-                  <p className="text-xs text-ember-red font-medium flex items-center gap-1.5">
-                    <AlertTriangle size={12} />
-                    Sin devoluciones
-                  </p>
-                  <p className="text-xs text-slate-300 mt-0.5">
-                    Al confirmar la compra aceptas que no se realizan devoluciones en ningún producto de DECKLAB.
-                  </p>
-                </div>
+                {marketplacePlatform && marketplacePayOption === "PLATFORM" ? (
+                  <div className="flex flex-col gap-3">
+                    <div className="bg-white/4 border border-white/8 rounded-[10px] p-4 text-sm text-slate-300 leading-relaxed">
+                      <p className="text-snow font-medium mb-1">¿Qué pasa al confirmar?</p>
+                      <ol className="list-decimal list-inside space-y-1 text-xs">
+                        <li>Tu pedido queda registrado en DECKLAB.</li>
+                        <li>El equipo creará un anuncio en {marketplacePlatform === "WALLAPOP" ? "Wallapop" : "Vinted"} con el importe de tu pedido.</li>
+                        <li>Recibirás el enlace por Telegram para comprarlo junto con el envío.</li>
+                        <li>Tu nivel VIP y cashback se calcularán cuando realices el pago.</li>
+                      </ol>
+                    </div>
+                    <div className="bg-ember-red/10 border border-ember-red/20 rounded-[8px] px-3 py-2.5">
+                      <p className="text-xs text-ember-red font-medium flex items-center gap-1.5">
+                        <AlertTriangle size={12} />
+                        Sin devoluciones
+                      </p>
+                      <p className="text-xs text-slate-300 mt-0.5">
+                        Al confirmar el pedido aceptas que no se realizan devoluciones en ningún producto de DECKLAB.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-slate-300">
+                      Acepta Visa, Mastercard, American Express, Google Pay y Apple Pay.
+                    </p>
+                    <div className="bg-ember-red/10 border border-ember-red/20 rounded-[8px] px-3 py-2.5">
+                      <p className="text-xs text-ember-red font-medium flex items-center gap-1.5">
+                        <AlertTriangle size={12} />
+                        Sin devoluciones
+                      </p>
+                      <p className="text-xs text-slate-300 mt-0.5">
+                        Al confirmar la compra aceptas que no se realizan devoluciones en ningún producto de DECKLAB.
+                      </p>
+                    </div>
+                  </>
+                )}
 
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={() => setStep(3)} size="lg" className="flex-1">
                     <ArrowLeft size={15} />
                     Volver
                   </Button>
-                  <Button
-                    onClick={handleStripeCheckout}
-                    loading={paymentLoading}
-                    size="lg"
-                    className="cursor-pointer flex-1"
-                  >
-                    Confirmar y pagar
-                  </Button>
+                  {marketplacePlatform && marketplacePayOption === "PLATFORM" ? (
+                    <Button
+                      onClick={handleMarketplacePlatformOrder}
+                      loading={paymentLoading}
+                      size="lg"
+                      className="cursor-pointer flex-1"
+                    >
+                      Confirmar pedido
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleStripeCheckout}
+                      loading={paymentLoading}
+                      size="lg"
+                      className="cursor-pointer flex-1"
+                    >
+                      Confirmar y pagar
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
@@ -744,23 +983,38 @@ export function CheckoutClient({
                     <span className="tabular-nums">-{couponDiscount.toFixed(2).replace(".", ",")} €</span>
                   </div>
                 )}
-                <div className="flex justify-between text-slate-300">
-                  <span>{consolidateOrderId ? "Suplemento envío" : "Envío"}</span>
-                  <span className="tabular-nums">
-                    {consolidateOrderId
-                      ? (hasFreeShipping || consolidateEstimate?.difference === 0)
-                        ? <span className="text-mint-signal text-xs">Gratis</span>
-                        : consolidateEstimate
-                          ? `${consolidateEstimate.difference.toFixed(2).replace(".", ",")} €`
-                          : "—"
-                      : selectedRate
-                        ? hasFreeShipping
-                          ? "Gratis"
-                          : `${selectedRate.price.toFixed(2).replace(".", ",")} €`
-                        : "—"}
-                  </span>
-                </div>
-                {(selectedRate || consolidateOrderId) && (
+                {marketplacePlatform ? (
+                  <>
+                    <div className="flex justify-between text-slate-300">
+                      <span>Envío ({marketplacePlatform === "WALLAPOP" ? "Wallapop" : "Vinted"})</span>
+                      <span className="text-mint-signal text-xs tabular-nums">En plataforma</span>
+                    </div>
+                    {marketplaceWebDiscount > 0 && (
+                      <div className="flex justify-between text-mint-signal">
+                        <span>Descuento marketplace</span>
+                        <span className="tabular-nums">-{marketplaceWebDiscount.toFixed(2).replace(".", ",")} €</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex justify-between text-slate-300">
+                    <span>{consolidateOrderId ? "Suplemento envío" : "Envío"}</span>
+                    <span className="tabular-nums">
+                      {consolidateOrderId
+                        ? (hasFreeShipping || consolidateEstimate?.difference === 0)
+                          ? <span className="text-mint-signal text-xs">Gratis</span>
+                          : consolidateEstimate
+                            ? `${consolidateEstimate.difference.toFixed(2).replace(".", ",")} €`
+                            : "—"
+                        : selectedRate
+                          ? hasFreeShipping
+                            ? "Gratis"
+                            : `${selectedRate.price.toFixed(2).replace(".", ",")} €`
+                          : "—"}
+                    </span>
+                  </div>
+                )}
+                {(selectedRate || consolidateOrderId || marketplacePlatform) && (
                   <div className="flex justify-between font-semibold text-snow border-t border-white/8 pt-2 mt-1">
                     <span>Total</span>
                     <span className="tabular-nums">{total.toFixed(2).replace(".", ",")} €</span>

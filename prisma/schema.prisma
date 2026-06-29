@@ -439,7 +439,7 @@ model Order {
   // --- Pago ---
   stripePaymentIntentId String? @unique // Stripe
   paypalOrderId         String? @unique // PayPal
-  paymentMethod         String  @default("STRIPE") // "STRIPE" | "PAYPAL"
+  paymentMethod         String  @default("STRIPE") // "STRIPE" | "PAYPAL" | "MARKETPLACE"
 
   // --- Cupón ---
   couponId   String?
@@ -447,6 +447,13 @@ model Order {
 
   // --- Facturación ---
   invoiceUrl String? // URL del PDF de factura generado
+
+  // --- Marketplace (Wallapop / Vinted) ---
+  marketplaceShipping      Boolean @default(false)
+  marketplacePlatform      String? // "WALLAPOP" | "VINTED"
+  marketplacePayOption     String? // "WEB" | "PLATFORM"
+  marketplaceListingUrl    String? // URL del anuncio creado por el admin
+  marketplaceListingStatus String? // "PENDING" | "LISTING_CREATED" | "SOLD"
 
   // --- Envío unificado ---
   // Pedido con el que se comparte la bolsa de envío (paga solo la diferencia de tarifa)

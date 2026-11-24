@@ -57,7 +57,7 @@ export function ProductCard({
   const originalPrice = variant?.price ?? 0;
 
   return (
-    <Link
+    <Link prefetch={false}
       href={`/products/${slug}`}
       className={clsx(
         "group relative flex flex-col rounded-[20px] overflow-hidden",

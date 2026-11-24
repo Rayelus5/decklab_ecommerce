@@ -6,7 +6,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations";
-import { verifySessionToken } from "@/app/api/auth/telegram/route";
+import { verifySessionToken } from "@/lib/telegram-session";
 
 // -------------------------------------------------------
 // Configuración NextAuth v5

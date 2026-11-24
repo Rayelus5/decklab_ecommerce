@@ -28,10 +28,10 @@ export function Footer() {
 
           {/* Links tienda */}
           <nav className="flex items-center gap-4" aria-label="Navegación principal">
-            <Link href="/products" className="cursor-pointer text-xs text-slate-300 hover:text-snow transition-colors">
+            <Link prefetch={false} href="/products" className="cursor-pointer text-xs text-slate-300 hover:text-snow transition-colors">
               Tienda
             </Link>
-            <Link href="/pricing" className="cursor-pointer text-xs text-slate-300 hover:text-snow transition-colors">
+            <Link prefetch={false} href="/pricing" className="cursor-pointer text-xs text-slate-300 hover:text-snow transition-colors">
               PRO
             </Link>
             <span className="text-xs text-slate-300/40" aria-hidden="true">·</span>

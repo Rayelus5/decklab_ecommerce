@@ -24,6 +24,9 @@ interface NavbarProps {
   isAdmin?: boolean;
 }
 
+// Los enlaces a rutas privadas llevan prefetch={false}: son dinámicas y sin
+// loading.tsx, así que el prefetch apenas adelanta nada, pero cada uno
+// ejecutaba el proxy (Auth.js) y una función en Vercel en cada página vista.
 const NAV_LINKS = [
   { href: "/products", label: "Productos" },
   { href: "/pricing", label: "Házte PRO" },
@@ -63,7 +66,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
         {/* Nav links — desktop */}
         <nav className="hidden sm:flex items-center gap-1" aria-label="Navegación principal">
           {NAV_LINKS.map((link) => (
-            <Link
+            <Link prefetch={false}
               key={link.href}
               href={link.href}
               className={clsx("cursor-pointer", 
@@ -77,7 +80,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
             </Link>
           ))}
           {isAdmin && (
-            <Link
+            <Link prefetch={false}
               href="/admin"
               className={clsx("cursor-pointer", 
                 "px-3 py-1.5 text-sm rounded-[8px] transition-colors",
@@ -94,7 +97,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
         {/* Acciones */}
         <div className="flex items-center gap-2">
           {/* Carrito */}
-          <Link
+          <Link prefetch={false}
             href="/cart"
             className="cursor-pointer relative p-2 text-slate-300 hover:text-snow hover:bg-white/5 rounded-[8px] transition-colors"
             aria-label={`Carrito${itemCount > 0 ? `, ${itemCount} items` : ""}`}
@@ -136,7 +139,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
                       <p className="text-xs text-slate-300 truncate">{userName}</p>
                     </div>
                   )}
-                  <Link
+                  <Link prefetch={false}
                     href="/profile"
                     onClick={() => setUserMenuOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:text-snow hover:bg-white/5 transition-colors"
@@ -144,7 +147,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
                     <User size={14} />
                     Mi perfil
                   </Link>
-                  <Link
+                  <Link prefetch={false}
                     href="/profile/orders"
                     onClick={() => setUserMenuOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:text-snow hover:bg-white/5 transition-colors"
@@ -153,7 +156,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
                     Mis pedidos
                   </Link>
                   {!isPro && (
-                    <Link
+                    <Link prefetch={false}
                       href="/pricing"
                       onClick={() => setUserMenuOpen(false)}
                       className="flex items-center gap-2.5 px-3 py-2 text-sm text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 transition-colors"
@@ -162,7 +165,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
                       Hazte PRO
                     </Link>
                   )}
-                  <Link
+                  <Link prefetch={false}
                     href="/profile/settings"
                     onClick={() => setUserMenuOpen(false)}
                     className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-200 hover:text-snow hover:bg-white/5 transition-colors"
@@ -200,7 +203,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
       {menuOpen && (
         <div className="sm:hidden border-t border-white/8 bg-deep-charcoal/95 px-4 py-3 flex flex-col gap-1">
           {NAV_LINKS.map((link) => (
-            <Link
+            <Link prefetch={false}
               key={link.href}
               href={link.href}
               onClick={() => setMenuOpen(false)}
@@ -215,7 +218,7 @@ export function Navbar({ userName, isPro, isAdmin }: NavbarProps) {
             </Link>
           ))}
           {isAdmin && (
-            <Link
+            <Link prefetch={false}
               href="/admin"
               onClick={() => setMenuOpen(false)}
               className="px-3 py-2 text-sm text-ember-red hover:bg-ember-red/10 rounded-[8px] transition-colors"

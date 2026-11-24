@@ -18,7 +18,7 @@ export function ProductCard({ product }: ProductCardProps) {
     // Tomamos la primera variante para mostrar precios "desde"
     const mainVariant = product.variants[0];
     const hasProPrice = mainVariant?.pricePro !== null;
-    const image = product.images[0]?.url || "/placeholder.jpg";
+    const image = product.images[0]?.url || "/placeholder.svg";
 
     return (
         <Link href={`/products/${product.slug}`} className="group block h-full">

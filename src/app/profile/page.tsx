@@ -1,12 +1,10 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { User, Mail, MapPin, LogOut, Link } from "lucide-react";
 import ProStatusCard from "@/components/profile/pro-status-card";
 import RecentOrders from "@/components/profile/recent-orders";
 import { SignOutButton } from "@/components/layout/auth-buttons";
-
-const prisma = new PrismaClient();
 
 async function getUserProfile(userId: string) {
     return await prisma.user.findUnique({

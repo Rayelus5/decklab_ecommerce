@@ -1,14 +1,9 @@
 "use server";
 
 import { auth, signOut } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
-import Stripe from "stripe";
+import { prisma } from "@/lib/prisma";
+import { stripe } from "@/lib/stripe";
 import { redirect } from "next/navigation";
-
-const prisma = new PrismaClient();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2024-12-18.acacia",
-});
 
 export async function deleteAccount() {
     const session = await auth();

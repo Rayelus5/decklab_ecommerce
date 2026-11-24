@@ -1,11 +1,20 @@
 import { auth } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Plus, MapPin, Trash2 } from "lucide-react";
 import { addAddress, deleteAddress } from "@/actions/addresses"; // Actions que acabamos de crear
 
-const prisma = new PrismaClient();
+// <form action> exige acciones que devuelvan void; el resultado no se usa aquí.
+async function addAddressAction(formData: FormData) {
+    "use server";
+    await addAddress(formData);
+}
+
+async function deleteAddressAction(addressId: string) {
+    "use server";
+    await deleteAddress(addressId);
+}
 
 export default async function AddressesPage() {
     const session = await auth();
@@ -32,7 +41,7 @@ export default async function AddressesPage() {
                     <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                         <Plus className="w-5 h-5 text-primary" /> Nueva Dirección
                     </h2>
-                    <form action={addAddress} className="space-y-4">
+                    <form action={addAddressAction} className="space-y-4">
                         <div>
                             <label className="text-xs uppercase font-bold text-muted-foreground">Etiqueta (Ej. Casa, Oficina)</label>
                             <input name="label" required placeholder="Casa" className="w-full mt-1 bg-input border border-white/10 rounded-lg px-4 py-2 text-white focus:border-primary outline-none" />
@@ -85,7 +94,7 @@ export default async function AddressesPage() {
                                     </div>
 
                                     {/* Botón Borrar (Server Action directo) */}
-                                    <form action={deleteAddress.bind(null, addr.id)}>
+                                    <form action={deleteAddressAction.bind(null, addr.id)}>
                                         <button className="text-muted-foreground hover:text-red-400 p-1 rounded hover:bg-red-500/10 transition">
                                             <Trash2 className="w-4 h-4" />
                                         </button>

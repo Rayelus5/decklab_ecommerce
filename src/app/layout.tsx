@@ -1,22 +1,22 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/layout/navbar";
-import { Providers } from "@/components/providers"; // <--- Importamos
-import { auth } from "@/lib/auth"; // <--- Importamos auth para obtener sesión server-side
+import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
   title: "DECKLAB SHOP",
   description: "Tienda exclusiva para miembros PRO",
+  // Proyecto privado: no indexar en buscadores ni en crawlers de IA
+  robots: { index: false, follow: false, nocache: true },
 };
 
-export default async function RootLayout({
+// IMPORTANTE: no leer la sesión (auth(), cookies(), headers()) en este layout.
+// Haría dinámicas TODAS las rutas (incluida la 404) y dispararía el consumo de CPU.
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Obtenemos la sesión en el servidor
-  const session = await auth();
-
   return (
     <html lang="es" className="dark">
       <body className="bg-background text-foreground min-h-screen flex flex-col">

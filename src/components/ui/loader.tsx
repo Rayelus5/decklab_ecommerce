@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-// Importamos dinámicamente o registramos el componente web
-import { ring2 } from 'ldrs';
+// ldrs define custom elements (extends HTMLElement): importarlo arriba rompe el SSR/prerender.
+// Se carga solo en el navegador y se registra al montar.
+const registerRing2 = () => import('ldrs').then(({ ring2 }) => ring2.register());
 
 export default function Loader({
     size = 40,
@@ -15,8 +16,8 @@ export default function Loader({
 }) {
 
     useEffect(() => {
-        // Registramos el componente web al montar
-        ring2.register();
+        // Registramos el componente web al montar (solo cliente)
+        registerRing2();
     }, []);
 
     return (
@@ -37,7 +38,7 @@ export default function Loader({
 // Versión a pantalla completa para cargas iniciales
 export function FullPageLoader() {
     useEffect(() => {
-        ring2.register();
+        registerRing2();
     }, []);
 
     return (

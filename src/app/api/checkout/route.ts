@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
-
-const prisma = new PrismaClient();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2024-12-18.acacia", // Usa la última versión disponible o la que te sugiera VSCode
-});
+import { stripe } from "@/lib/stripe";
 
 export async function POST(req: Request) {
     try {
@@ -34,11 +30,16 @@ export async function POST(req: Request) {
         const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
         let dbOrderItems = []; // Para guardar referencia luego si queremos
 
+        // Una sola consulta para todas las variantes (antes: una por item)
+        const variantIds: string[] = items.map((item: { variantId: string }) => item.variantId);
+        const variants = await prisma.productVariant.findMany({
+            where: { id: { in: variantIds } },
+            include: { product: true },
+        });
+        const variantsById = new Map(variants.map((v) => [v.id, v]));
+
         for (const item of items) {
-            const variant = await prisma.productVariant.findUnique({
-                where: { id: item.variantId },
-                include: { product: true },
-            });
+            const variant = variantsById.get(item.variantId);
 
             if (!variant) continue;
 

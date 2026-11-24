@@ -1,12 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
-import Stripe from "stripe";
-
-const prisma = new PrismaClient();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2024-12-18.acacia",
-});
+import { stripe } from "@/lib/stripe";
 
 export async function POST(req: Request) {
     try {

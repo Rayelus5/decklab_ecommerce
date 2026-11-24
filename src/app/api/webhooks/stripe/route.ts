@@ -1,12 +1,9 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { revalidatePath } from "next/cache";
+import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
-
-const prisma = new PrismaClient();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2024-12-18.acacia", // Usa la misma versión que en checkout
-});
+import { stripe } from "@/lib/stripe";
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
@@ -126,8 +123,9 @@ export async function POST(req: Request) {
                 // E) Crear Envío (Shipment)
                 await tx.shipment.create({
                     data: {
+                        // El modelo Shipment no tiene "status": pendiente = shippedAt null.
+                        // Enviar "status" hacía fallar la transacción y el pedido no se guardaba.
                         orderId: order.id,
-                        status: "PENDING", // Pendiente de envío
                         trackingNumber: null,
                     }
                 });
@@ -146,6 +144,10 @@ export async function POST(req: Request) {
             }); // Fin Transacción
 
             console.log(`✅ Orden creada para el usuario ${userId}`);
+
+            // El stock ha cambiado: invalidamos las páginas ISR del catálogo para que
+            // se regeneren en la siguiente visita en vez de esperar al revalidate.
+            revalidatePath("/", "layout");
 
         } catch (error) {
             console.error("Error creando orden en DB:", error);

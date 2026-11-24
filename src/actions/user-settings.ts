@@ -1,12 +1,10 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-
-const prisma = new PrismaClient();
 
 // Esquemas de validación
 const ProfileSchema = z.object({
@@ -29,7 +27,7 @@ export async function updateProfile(formData: FormData) {
     const name = formData.get("name") as string;
     const parsed = ProfileSchema.safeParse({ name });
 
-    if (!parsed.success) return { error: parsed.error.errors[0].message };
+    if (!parsed.success) return { error: parsed.error.issues[0].message };
 
     try {
         await prisma.user.update({
@@ -53,7 +51,7 @@ export async function changePassword(formData: FormData) {
 
     const parsed = PasswordSchema.safeParse({ currentPassword, newPassword, confirmPassword });
 
-    if (!parsed.success) return { error: parsed.error.errors[0].message };
+    if (!parsed.success) return { error: parsed.error.issues[0].message };
 
     // 1. Verificar contraseña actual
     const user = await prisma.user.findUnique({ where: { id: session.user.id } });

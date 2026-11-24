@@ -1,9 +1,10 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { Check, ShieldCheck, Zap, Info } from "lucide-react";
 import SubscribeButton from "@/components/pricing/subscribe-button";
 import { cn } from "@/lib/utils";
 
-const prisma = new PrismaClient();
+// ISR: se sirve estática desde la CDN y se regenera como mucho cada 10 min.
+export const revalidate = 600;
 
 async function getTiers() {
     return await prisma.proTier.findMany({

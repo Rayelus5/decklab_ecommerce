@@ -2,7 +2,6 @@
 
 import CartItems from "@/components/cart/cart-items";
 import CartSummary from "@/components/cart/cart-summary";
-import { SessionProvider } from "next-auth/react";
 
 export default function CartPage() {
     return (

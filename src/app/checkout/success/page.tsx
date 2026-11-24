@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import Link from "next/link";
-import { CheckCircle, Home } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart";
 import { useSearchParams } from "next/navigation";
 
-export default function SuccessPage() {
+// Lee ?session_id en el cliente. Debe ir dentro de <Suspense> para que la página
+// pueda prerenderizarse estática.
+function ClearCartOnSuccess() {
     const clearCart = useCartStore((state) => state.clearCart);
     const searchParams = useSearchParams();
     const sessionId = searchParams.get("session_id");
@@ -17,8 +19,15 @@ export default function SuccessPage() {
         }
     }, [sessionId, clearCart]);
 
+    return null;
+}
+
+export default function SuccessPage() {
     return (
         <div className="min-h-[70vh] flex flex-col items-center justify-center p-4 text-center">
+            <Suspense fallback={null}>
+                <ClearCartOnSuccess />
+            </Suspense>
             <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mb-6 text-green-500 animate-in zoom-in duration-300">
                 <CheckCircle className="w-10 h-10" />
             </div>

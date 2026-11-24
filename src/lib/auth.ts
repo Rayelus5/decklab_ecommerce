@@ -1,15 +1,15 @@
 import NextAuth from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/lib/prisma"
+import type { Adapter } from "next-auth/adapters"
 import Google from "next-auth/providers/google"
 import Credentials from "next-auth/providers/credentials"
 import { z } from "zod"
 import bcrypt from "bcryptjs"
 
-const prisma = new PrismaClient()
-
 export const { handlers, auth, signIn, signOut } = NextAuth({
-    adapter: PrismaAdapter(prisma),
+    // Cast: @auth/prisma-adapter trae su propia copia de @auth/core y sus tipos no casan
+    adapter: PrismaAdapter(prisma) as Adapter,
     providers: [
         Google({
             clientId: process.env.GOOGLE_CLIENT_ID,

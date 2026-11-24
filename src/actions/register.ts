@@ -1,10 +1,8 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-
-const prisma = new PrismaClient();
 
 // Esquema de validación
 const RegisterSchema = z.object({

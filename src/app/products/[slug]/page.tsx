@@ -1,10 +1,11 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import ProductDetails from "@/components/product/product-details";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-const prisma = new PrismaClient();
+// ISR: se sirve estática desde la CDN y se regenera como mucho cada 10 min.
+export const revalidate = 600;
 
 // Generar rutas estáticas para SEO y rendimiento (opcional pero recomendado)
 export async function generateStaticParams() {

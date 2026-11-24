@@ -1,10 +1,11 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import Image from "next/image";
 import { ProductCard } from "@/components/product/product-card";
 import { ArrowRight, Truck, ShieldCheck, Zap, Star } from "lucide-react";
 
-const prisma = new PrismaClient();
+// ISR: se sirve estática desde la CDN y se regenera como mucho cada 10 min.
+export const revalidate = 600;
 
 // Función para obtener productos destacados o recientes
 async function getFeaturedProducts() {

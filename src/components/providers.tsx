@@ -8,7 +8,9 @@ interface ProvidersProps {
 
 export function Providers({ children }: ProvidersProps) {
     return (
-        <SessionProvider>
+        // refetchOnWindowFocus: cada cambio de pestaña llamaba a /api/auth/session
+        // (una invocación de función) sin aportar nada: el JWT no se refresca solo.
+        <SessionProvider refetchOnWindowFocus={false}>
             {children}
         </SessionProvider>
     );

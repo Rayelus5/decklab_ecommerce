@@ -1,8 +1,6 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 // Definimos los países que consideramos "Nacionales" (Solo España por ahora)
 const NATIONAL_CODES = ["ES", "ESP"];

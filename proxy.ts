@@ -70,8 +70,22 @@ export default auth((req) => {
 });
 
 export const config = {
-  // Aplicar middleware a todas las rutas excepto recursos estáticos y API routes
+  // El proxy SOLO se ejecuta en las rutas que tienen alguna regla arriba.
+  // Cada ejecución corre Auth.js (descifra y re-firma el JWT, y cada 5 min
+  // consulta la BD), así que no debe correr en: la landing, /legal,
+  // /acceso-privado, /api/* (cada route valida su sesión), el túnel de Sentry
+  // (/monitoring), archivos de public/, robots.txt ni las URLs que prueban los bots.
+  // ⚠️ Si añades una ruta a PROTECTED_ROUTES / ADMIN_ROUTES / AUTH_ROUTES,
+  // añádela también aquí.
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|public|api/auth|api/webhooks).*)",
+    "/login/:path*",
+    "/register/:path*",
+    "/admin/:path*",
+    "/products/:path*",
+    "/cart/:path*",
+    "/checkout/:path*",
+    "/order-success/:path*",
+    "/pricing/:path*",
+    "/profile/:path*",
   ],
 };
